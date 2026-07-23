@@ -13,16 +13,25 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["segment_id", "text", "purpose"],
+        "required": ["segment_id", "text", "purpose", "target_duration", "visual_hint", "source_refs", "status"],
+        "additionalProperties": false,
         "properties": {
           "segment_id": {"type": "string"},
           "text": {"type": "string"},
           "purpose": {"type": "string"},
-          "target_duration": {"type": ["number", "null"]},
-          "visual_hint": {"type": ["string", "null"]},
+          "target_duration": {"type": "number", "exclusiveMinimum": 0},
+          "visual_hint": {"type": "string", "minLength": 1},
+          "source_refs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "status": {"type": "string", "enum": ["draft", "reviewed", "approved"]},
           "notes": {"type": ["string", "null"]}
         }
-      }
+      },
+      "minItems": 1
     },
     "generated_at": {"type": "string", "format": "date-time"}
   }

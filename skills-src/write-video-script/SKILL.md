@@ -70,7 +70,9 @@ report_format: |
       "purpose": "hook",
       "target_duration": 5.0,
       "visual_hint": "标题卡 + 快速剪辑",
-      "notes": "源自 reference shot s001-s003"
+      "source_refs": ["input/idea.md"],
+      "status": "draft",
+      "notes": "源自 reference recipe 的结构，不复制原文案"
     }
   ],
   "generated_at": "2026-07-20T..."

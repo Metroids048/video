@@ -544,6 +544,38 @@ def assets_validate(episode_id: str) -> None:
     sys.exit(0)
 
 
+@assets.command("approve")
+@click.argument("episode_id")
+def assets_approve(episode_id: str) -> None:
+    """确认素材与占位声明完整，状态 → ASSETS_READY。"""
+    from avs.config import Config
+    from avs.content.schema import validate_content_bundle
+    from avs.models.episode import EpisodeModel
+    from avs.paths import PathError, episode_json_path, find_episode_dir
+
+    root = _find_project_root()
+    cfg = Config(root)
+    try:
+        ep_dir = find_episode_dir(cfg.episodes_root, episode_id)
+    except PathError as exc:
+        console.print(f"[red]✗ {exc}[/red]")
+        sys.exit(1)
+    if ep_dir is None:
+        console.print(f"[red]✗ Episode {episode_id!r} 不存在[/red]")
+        sys.exit(1)
+    try:
+        validate_content_bundle(ep_dir)
+        model = EpisodeModel.load(episode_json_path(ep_dir))
+        model.ensure_stage("assets", "ASSETS_READY")
+        model.complete_stage("assets")
+        model.save(episode_json_path(ep_dir))
+    except Exception as exc:
+        console.print(f"[red]✗ 素材确认失败: {exc}[/red]")
+        sys.exit(1)
+    console.print("[green]✓ 素材与缺口声明已确认，状态 → ASSETS_READY[/green]")
+    sys.exit(0)
+
+
 # ── reference ─────────────────────────────────────────────────────────
 @main.group()
 def reference() -> None:
@@ -712,7 +744,7 @@ def content_validate(episode_id: str) -> None:
     """校验 script.json 和 storyboard.json Schema。"""
     from avs.config import Config
     from avs.paths import PathError, find_episode_dir
-    from avs.content.schema import load_script, load_storyboard
+    from avs.content.schema import load_script, load_storyboard, validate_content_bundle
     import jsonschema
 
     root = _find_project_root()
@@ -758,6 +790,12 @@ def content_validate(episode_id: str) -> None:
             console.print(f"[red]✗ {e}[/red]")
         sys.exit(1)
 
+    try:
+        validate_content_bundle(ep_dir)
+    except Exception as exc:
+        console.print(f"[red]✗ 内容可追溯性校验失败: {exc}[/red]")
+        sys.exit(1)
+
     console.print("\n[green]✓ 所有内容产物校验通过[/green]")
     sys.exit(0)
 
@@ -769,7 +807,7 @@ def content_approve(episode_id: str) -> None:
     from avs.config import Config
     from avs.models.episode import EpisodeModel
     from avs.paths import PathError, find_episode_dir, episode_json_path
-    from avs.content.schema import load_script, load_storyboard
+    from avs.content.schema import load_script, load_storyboard, validate_content_bundle, save_script
 
     root = _find_project_root()
     cfg = Config(root)
@@ -785,8 +823,9 @@ def content_approve(episode_id: str) -> None:
 
     # 验证产物存在
     try:
-        load_script(ep_dir)
+        script = load_script(ep_dir)
         load_storyboard(ep_dir)
+        validate_content_bundle(ep_dir)
     except Exception as exc:
         console.print(f"[red]✗ 内容产物缺失或校验失败: {exc}[/red]")
         sys.exit(1)
@@ -796,6 +835,9 @@ def content_approve(episode_id: str) -> None:
     try:
         model = EpisodeModel.load(ep_json)
         model.ensure_stage("content", "CONTENT_READY")
+        for segment in script["segments"]:
+            segment["status"] = "approved"
+        save_script(ep_dir, script)
         model.complete_stage("content")
         model.save(ep_json)
         console.print("[green]✓ 内容已审核通过，状态 → CONTENT_READY[/green]")

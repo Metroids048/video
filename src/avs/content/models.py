@@ -19,6 +19,8 @@ class ScriptSegment:
         *,
         target_duration: float | None = None,
         visual_hint: str | None = None,
+        source_refs: list[str] | None = None,
+        status: str = "draft",
         notes: str | None = None,
     ) -> None:
         self.segment_id = segment_id
@@ -26,6 +28,8 @@ class ScriptSegment:
         self.purpose = purpose
         self.target_duration = target_duration
         self.visual_hint = visual_hint
+        self.source_refs = source_refs or []
+        self.status = status
         self.notes = notes
 
     def to_dict(self) -> dict[str, Any]:
@@ -35,6 +39,8 @@ class ScriptSegment:
             "purpose": self.purpose,
             "target_duration": self.target_duration,
             "visual_hint": self.visual_hint,
+            "source_refs": self.source_refs,
+            "status": self.status,
             "notes": self.notes,
         }
 
@@ -65,35 +71,38 @@ class StoryboardShot:
     """分镜镜头。"""
     def __init__(
         self,
-        shot_id: str,
-        order: int,
-        description: str,
+        scene_id: str,
+        script_segment_ids: list[str],
+        duration: float,
+        visual_type: str,
         *,
-        duration_estimate: float | None = None,
-        asset_ref: str | None = None,
-        gap: bool = False,
-        gap_note: str | None = None,
-        visual_treatment: str | None = None,
+        asset_ids: list[str] | None = None,
+        caption: str = "",
+        motion_template: str | None = None,
+        missing_assets: list[str] | None = None,
+        notes: str | None = None,
     ) -> None:
-        self.shot_id = shot_id
-        self.order = order
-        self.description = description
-        self.duration_estimate = duration_estimate
-        self.asset_ref = asset_ref
-        self.gap = gap
-        self.gap_note = gap_note
-        self.visual_treatment = visual_treatment
+        self.scene_id = scene_id
+        self.script_segment_ids = script_segment_ids
+        self.duration = duration
+        self.visual_type = visual_type
+        self.asset_ids = asset_ids or []
+        self.caption = caption
+        self.motion_template = motion_template
+        self.missing_assets = missing_assets or []
+        self.notes = notes
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "shot_id": self.shot_id,
-            "order": self.order,
-            "description": self.description,
-            "duration_estimate": self.duration_estimate,
-            "asset_ref": self.asset_ref,
-            "gap": self.gap,
-            "gap_note": self.gap_note,
-            "visual_treatment": self.visual_treatment,
+            "scene_id": self.scene_id,
+            "script_segment_ids": self.script_segment_ids,
+            "duration": self.duration,
+            "visual_type": self.visual_type,
+            "asset_ids": self.asset_ids,
+            "caption": self.caption,
+            "motion_template": self.motion_template,
+            "missing_assets": self.missing_assets,
+            "notes": self.notes,
         }
 
 

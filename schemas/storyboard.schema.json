@@ -12,18 +12,21 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["shot_id", "order", "description"],
+        "required": ["scene_id", "script_segment_ids", "duration", "visual_type", "asset_ids", "caption", "motion_template", "missing_assets", "notes"],
+        "additionalProperties": false,
         "properties": {
-          "shot_id": {"type": "string"},
-          "order": {"type": "integer", "minimum": 0},
-          "description": {"type": "string"},
-          "duration_estimate": {"type": ["number", "null"]},
-          "asset_ref": {"type": ["string", "null"]},
-          "gap": {"type": "boolean", "default": false},
-          "gap_note": {"type": ["string", "null"]},
-          "visual_treatment": {"type": ["string", "null"]}
+          "scene_id": {"type": "string", "minLength": 1},
+          "script_segment_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+          "duration": {"type": "number", "exclusiveMinimum": 0},
+          "visual_type": {"type": "string", "enum": ["screen_recording", "image", "video", "b_roll", "motion_graphic", "placeholder"]},
+          "asset_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "caption": {"type": "string"},
+          "motion_template": {"type": ["string", "null"], "enum": ["HookTitle", "InfoCard", "EndCard", null]},
+          "missing_assets": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "notes": {"type": ["string", "null"]}
         }
-      }
+      },
+      "minItems": 1
     },
     "asset_gaps": {
       "type": "array",

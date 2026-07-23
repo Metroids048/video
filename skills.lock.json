@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-07-23T13:43:48.025087+00:00",
+  "locked_at": "2026-07-23T13:54:41.009043+00:00",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
   "project_skills": {
     "create-episode": {
@@ -35,7 +35,7 @@
       "status": "synced",
       "implemented_in_module": 5,
       "description": "根据内容简报和参考分析生成 script.json 和 script.md",
-      "source_sha256": "41749c88cedbbb97284ebaa543e14e125248aa966b58b35606cd6a7e85d3c3bd"
+      "source_sha256": "b8af6f968d05c448f0bb4849a4e3eed2cbd4c9c4c92505a2afb024e9a631d52f"
     },
     "create-storyboard": {
       "source": "skills-src/create-storyboard",
@@ -46,7 +46,7 @@
       "status": "synced",
       "implemented_in_module": 5,
       "description": "将脚本转化为分镜，标注素材缺口和占位",
-      "source_sha256": "632976d4dd3eb4d009e6a2d1e837b5021edb9ec7a7e9e16e4c86e4189d2fddb6"
+      "source_sha256": "0fd364b35f01c11ca63a55e61bbf7a28675d3e9c5609933dbb401b1589920a19"
     },
     "prepare-assets": {
       "source": "skills-src/prepare-assets",

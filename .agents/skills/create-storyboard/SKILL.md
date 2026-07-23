@@ -62,26 +62,29 @@ report_format: |
   "episode_id": "EP-XXX",
   "shots": [
     {
-      "shot_id": "shot001",
-      "order": 0,
-      "description": "开场标题卡",
-      "duration_estimate": 3.0,
-      "asset_ref": null,
-      "gap": true,
-      "gap_note": "需要品牌标题卡素材",
-      "visual_treatment": "HookTitle component"
+      "scene_id": "scene001",
+      "script_segment_ids": ["seg001"],
+      "duration": 3.0,
+      "visual_type": "motion_graphic",
+      "asset_ids": [],
+      "caption": "开场标题卡",
+      "motion_template": "HookTitle",
+      "missing_assets": ["需要品牌标题卡素材"],
+      "notes": "可用 HyperFrames HookTitle 动态生成"
     },
     {
-      "shot_id": "shot002",
-      "order": 1,
-      "description": "产品截图展示",
-      "duration_estimate": 5.0,
-      "asset_ref": "images_product_screenshot.png",
-      "gap": false,
-      "visual_treatment": "contain + zoom"
+      "scene_id": "scene002",
+      "script_segment_ids": ["seg002"],
+      "duration": 5.0,
+      "visual_type": "image",
+      "asset_ids": ["asset_product_screenshot"],
+      "caption": "产品截图展示",
+      "motion_template": null,
+      "missing_assets": [],
+      "notes": "contain + zoom"
     }
   ],
-  "asset_gaps": ["shot001"],
+  "asset_gaps": ["scene001"],
   "generated_at": "2026-07-20T..."
 }
 ```
