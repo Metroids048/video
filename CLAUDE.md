@@ -10,7 +10,7 @@
 1. `AGENTS.md` — 项目总规则（核心约束、状态机、媒体规则、完成报告格式）
 2. `docs/Agent-Video-Studio-V1.md` — 项目规范快速参考
 3. `tools-manifest.yaml` — 工具版本约束
-4. 当前模块的 Prompt（见 `docx/Agent_Video_Studio_V1_逐模块开发_Prompts.md`）
+4. 当前模块的 Prompt（见 `docs/Agent_Video_Studio_V1_逐模块开发_Prompts.md`）
 
 ## 业务 CLI
 
@@ -28,6 +28,8 @@ python -m avs run <ID>            # 全流程
 ```
 
 npm 命令是薄包装，所有业务逻辑在 Python CLI 中实现。
+
+Windows 环境由 npm 包装脚本统一调用 `AGENT_PYTHON`，不要创建或调用项目 `.venv`。
 
 ## Subagents
 

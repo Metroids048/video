@@ -7,15 +7,21 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "bootstrap": "node scripts/bootstrap-check.mjs && (pwsh -NoProfile -File scripts/bootstrap.ps1 2>NUL || bash scripts/bootstrap.sh)",
-    "doctor": "python -m avs doctor",
-    "demo": "python -m avs run EP-DEMO-REF && python -m avs run EP-DEMO-SCREEN",
-    "demo:reference": "python -m avs run EP-DEMO-REF",
-    "demo:screen": "python -m avs run EP-DEMO-SCREEN",
+    "bootstrap": "node scripts/bootstrap-check.mjs && pwsh -NoProfile -File scripts/bootstrap.ps1",
+    "doctor": "node scripts/run-python.mjs -m avs doctor",
+    "demo": "node scripts/run-python.mjs scripts/run_e2e_demo.py --all",
+    "demo:reference": "node scripts/run-python.mjs scripts/run_e2e_demo.py --mode reference",
+    "demo:screen": "node scripts/run-python.mjs scripts/run_e2e_demo.py --mode screen",
     "verify": "node scripts/verify.mjs",
+    "test": "node scripts/run-python.mjs -m pytest -q",
+    "lint": "ruff check src tests scripts",
+    "typecheck": "mypy src",
+    "lock:python": "node scripts/run-python.mjs scripts/lock_python_deps.py",
     "skills:install": "node scripts/install_skills.mjs",
-    "skills:sync": "python scripts/sync_skills.py",
-    "skills:check": "python scripts/sync_skills.py --check"
+    "skills:sync": "node scripts/run-python.mjs scripts/sync_skills.py",
+    "skills:check": "node scripts/run-python.mjs scripts/sync_skills.py --check"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "hyperframes": "0.7.68"
+  }
 }

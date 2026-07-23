@@ -1,69 +1,67 @@
 #!/usr/bin/env node
-/**
- * scripts/verify.mjs — 环境验证脚本
- * 用法：node scripts/verify.mjs
- * 或：   npm run verify
- *
- * 检查核心可执行文件和项目目录结构，返回 0 = 通过，1 = 失败。
- */
-import { execSync } from "child_process";
-import { existsSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
+import process from "node:process";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, "..");
-
+const ROOT = join(import.meta.dirname, "..");
+const python = process.env.AGENT_PYTHON || (process.platform === "win32" ? "python" : "python3");
 const errors = [];
 let checks = 0;
 
 function check(label, fn) {
-  checks++;
+  checks += 1;
   try {
     fn();
     console.log(`[OK] ${label}`);
-  } catch (e) {
-    errors.push(`${label}: ${e.message}`);
-    console.error(`[FAIL] ${label}: ${e.message}`);
+  } catch (error) {
+    errors.push(`${label}: ${error.message}`);
+    console.error(`[FAIL] ${label}: ${error.message}`);
   }
 }
 
-function requireFile(rel) {
-  const p = join(ROOT, rel);
-  if (!existsSync(p)) throw new Error(`不存在: ${rel}`);
+function requireFile(relative) {
+  if (!existsSync(join(ROOT, relative))) throw new Error(`不存在: ${relative}`);
 }
 
-function requireCmd(cmd) {
-  execSync(cmd, { stdio: "pipe", cwd: ROOT });
+function run(command, args) {
+  const result = spawnSync(command, args, {
+    cwd: ROOT,
+    env: { ...process.env, PYTHONPATH: join(ROOT, "src") },
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    const output = `${result.stdout || ""}${result.stderr || ""}`.trim();
+    throw new Error(output.slice(-1200) || `exit ${result.status}`);
+  }
 }
 
-// ── 文件存在性检查 ─────────────────────────────────────────────────
-check("AGENTS.md",            () => requireFile("AGENTS.md"));
-check("CLAUDE.md",            () => requireFile("CLAUDE.md"));
-check("tools-manifest.yaml",  () => requireFile("tools-manifest.yaml"));
-check("skills.lock.json",     () => requireFile("skills.lock.json"));
-check(".gitignore",           () => requireFile(".gitignore"));
-check("docs/architecture.md", () => requireFile("docs/architecture.md"));
-check("docs/decisions/0001",  () => requireFile("docs/decisions/0001-python-cli.md"));
-check("docs/decisions/0002",  () => requireFile("docs/decisions/0002-timeline-contract.md"));
-check("docs/decisions/0003",  () => requireFile("docs/decisions/0003-hyperframes-boundary.md"));
-check("docs/decisions/0004",  () => requireFile("docs/decisions/0004-agent-skill-layout.md"));
-check("pyproject.toml",       () => requireFile("pyproject.toml"));
-check("package.json",         () => requireFile("package.json"));
+const hyperframes = join(ROOT, "node_modules", "hyperframes", "bin", "hyperframes.mjs");
 
-// ── CLI 可执行性检查 ────────────────────────────────────────────────
-check("python -m avs --help", () => requireCmd("python -m avs --help"));
-check("python -m avs doctor", () => requireCmd("python -m avs doctor"));
+for (const file of [
+  "AGENTS.md", "CLAUDE.md", "tools-manifest.yaml", "skills.lock.json",
+  "requirements.lock.txt", ".gitignore", ".claude/settings.json",
+  ".claude/agents/content-worker.md", ".claude/agents/media-worker.md",
+  ".claude/agents/reviewer.md", "pyproject.toml", "package.json",
+]) {
+  check(file, () => requireFile(file));
+}
 
-// ── Skills 检查 ────────────────────────────────────────────────────
-check("skills:check", () => requireCmd("python scripts/sync_skills.py --check"));
+check("Python compile", () => run(python, ["-m", "compileall", "-q", "src", "tests", "scripts"]));
+check("AVS CLI", () => run(python, ["-m", "avs", "--help"]));
+check("AVS doctor", () => run(python, ["-m", "avs", "doctor"]));
+check("Skills sync", () => run(python, ["scripts/sync_skills.py", "--check"]));
+check("Ruff", () => run("ruff", ["check", "src", "tests", "scripts"]));
+check("Mypy", () => run("mypy", ["src"]));
+check("Pytest", () => run(python, ["-m", "pytest", "-q"]));
+for (const component of ["HookTitle", "InfoCard", "EndCard"]) {
+  check(`HyperFrames lint ${component}`, () =>
+    run(process.execPath, [hyperframes, "lint", `renderers/hyperframes/components/${component}`]));
+}
 
 console.log(`\n${checks - errors.length}/${checks} 项通过`);
-if (errors.length > 0) {
-  console.error(`\n[FAIL] ${errors.length} 项失败：`);
-  errors.forEach((e) => console.error(`  - ${e}`));
+if (errors.length) {
+  console.error(`\n[FAIL] ${errors.length} 项失败`);
   process.exit(1);
-} else {
-  console.log("[OK] 所有验证通过");
-  process.exit(0);
 }
+console.log("[OK] 所有验证通过");

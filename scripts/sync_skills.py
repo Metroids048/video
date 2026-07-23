@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import shutil
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 REQUIRED_FRONTMATTER_FIELDS = [
@@ -38,6 +40,47 @@ TARGETS = [
 
 def _compute_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _compute_tree_hash(skill_dir: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(p for p in skill_dir.rglob("*") if p.is_file()):
+        digest.update(path.relative_to(skill_dir).as_posix().encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def _update_or_check_lock(root: Path, skill_dirs: list[Path], check_only: bool) -> list[str]:
+    lock_path = root / "skills.lock.json"
+    if not lock_path.exists():
+        return ["skills.lock.json 不存在"]
+    try:
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"skills.lock.json 无法读取: {exc}"]
+
+    entries = lock.setdefault("project_skills", {})
+    errors: list[str] = []
+    changed = False
+    for skill_dir in skill_dirs:
+        expected_hash = _compute_tree_hash(skill_dir)
+        entry = entries.get(skill_dir.name)
+        if not isinstance(entry, dict):
+            errors.append(f"skills.lock.json 缺少项目 Skill: {skill_dir.name}")
+            continue
+        if check_only:
+            if entry.get("status") != "synced" or entry.get("source_sha256") != expected_hash:
+                errors.append(f"skills.lock.json 状态过期: {skill_dir.name}")
+            continue
+        if entry.get("status") != "synced" or entry.get("source_sha256") != expected_hash:
+            entry["status"] = "synced"
+            entry["source_sha256"] = expected_hash
+            changed = True
+
+    if changed:
+        lock["locked_at"] = datetime.now(timezone.utc).isoformat()
+        lock_path.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return errors
 
 
 def _validate_skill(skill_dir: Path) -> list[str]:
@@ -95,6 +138,8 @@ def sync_skills(root: Path, check_only: bool = False) -> int:
                         errors.append(f"未同步: {target_rel}/{skill_dir.name}/{rel}")
                     elif _compute_hash(src_file) != _compute_hash(dst_file):
                         errors.append(f"内容不同步: {target_rel}/{skill_dir.name}/{rel}")
+
+    errors.extend(_update_or_check_lock(root, skill_dirs, check_only))
 
     if errors:
         for e in errors:

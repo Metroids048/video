@@ -1,0 +1,15 @@
+{
+  "env": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(node scripts/*)",
+      "Bash(npx hyperframes *)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ]
+  }
+}

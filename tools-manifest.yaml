@@ -16,7 +16,7 @@ required:
 
   python:
     min_version: "3.11.0"
-    check_command: "python --version"
+    check_command: "AGENT_PYTHON --version (Windows) / python3 --version (Unix)"
     version_pattern: "Python (\\S+)"
     purpose: "唯一业务 CLI 运行时；状态机、媒体处理、QA、交付"
 
@@ -43,7 +43,8 @@ required:
     version_pattern: "(\\S+)"
     purpose: "动效片段渲染（HookTitle / InfoCard / EndCard）"
     note: >
-      通过 npx skills add heygen-com/hyperframes 安装。
+      通过 npx hyperframes skills 安装官方 Skills。
+      通过 npx hyperframes browser ensure 安装本地渲染浏览器。
       doctor 调用框架自检命令，不硬编码 Chromium 路径。
 
 # ── 推荐工具（缺失时 doctor 返回 WARNING，不阻断核心流程）──────────────────────

@@ -11,22 +11,22 @@
  * - 安装失败时给出明确提示，不崩溃整个 bootstrap
  */
 import { execSync } from "child_process";
-import { readFileSync, writeFileSync } from "fs";
+import {
+  cpSync,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "fs";
+import { createHash } from "crypto";
+import { homedir } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const LOCK_FILE = join(ROOT, "skills.lock.json");
-
-// 第三方 Skills 安装清单（与 skills.lock.json 同步）
-const THIRD_PARTY_SKILLS = [
-  {
-    package: "heygen-com/hyperframes",
-    agents: ["claude-code", "codex", "cursor"],
-    key: "hyperframes",
-  },
-];
 
 function readLock() {
   try {
@@ -36,54 +36,132 @@ function readLock() {
   }
 }
 
-function writeLock(lock, packageKey, version) {
+function writeLock(lock, packageKey, details) {
   lock.third_party_skills = lock.third_party_skills || {};
+  const current = lock.third_party_skills[packageKey] || {};
+  const unchanged = Object.entries(details).every(
+    ([key, value]) => JSON.stringify(current[key]) === JSON.stringify(value)
+  );
+  if (unchanged) return;
   lock.third_party_skills[packageKey] = {
-    ...lock.third_party_skills[packageKey],
-    status: "installed",
+    ...current,
+    ...details,
     installed_at: new Date().toISOString(),
-    version: version || null,
   };
   writeFileSync(LOCK_FILE, JSON.stringify(lock, null, 2), "utf8");
 }
 
-function installSkill(skill) {
-  const agentFlags = skill.agents.map((a) => `-a ${a}`).join(" ");
-  const cmd = `npx skills add ${skill.package} ${agentFlags} --copy -y`;
+function hashTree(root) {
+  const hash = createHash("sha256");
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else {
+        hash.update(entry.name);
+        hash.update(readFileSync(path));
+      }
+    }
+  };
+  walk(root);
+  return hash.digest("hex");
+}
+
+function findBundledSkills() {
+  const projectBundle = join(ROOT, "node_modules", "hyperframes", "dist", "skills");
+  if (existsSync(join(projectBundle, "hyperframes", "SKILL.md"))) return projectBundle;
+  const candidates = [];
+  const npmCache = process.env.npm_config_cache || join(homedir(), "AppData", "Local", "npm-cache");
+  const npxRoot = join(npmCache, "_npx");
+  if (!existsSync(npxRoot)) return null;
+  for (const entry of readdirSync(npxRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skills = join(npxRoot, entry.name, "node_modules", "hyperframes", "dist", "skills");
+    if (existsSync(join(skills, "hyperframes", "SKILL.md"))) candidates.push(skills);
+  }
+  candidates.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
+  return candidates[0] || null;
+}
+
+function installBundledSkills() {
+  const sourceRoot = findBundledSkills();
+  if (!sourceRoot) return null;
+  const destinations = [
+    join(homedir(), ".codex", "skills"),
+    join(homedir(), ".claude", "skills"),
+    join(homedir(), ".cursor", "skills"),
+  ];
+  const installed = [];
+  for (const name of ["hyperframes", "hyperframes-cli"]) {
+    const source = join(sourceRoot, name);
+    if (!existsSync(source)) continue;
+    for (const destinationRoot of destinations) {
+      const destination = join(destinationRoot, name);
+      cpSync(source, destination, { recursive: true, force: true });
+      installed.push(destination);
+    }
+  }
+  return {
+    sourceRoot,
+    source: sourceRoot.startsWith(join(ROOT, "node_modules"))
+      ? "node_modules/hyperframes/dist/skills"
+      : "npm-cache/_npx/*/node_modules/hyperframes/dist/skills",
+    destinations: installed.map((path) => path.replace(homedir(), "~").replaceAll("\\", "/")),
+    sourceSha256: hashTree(sourceRoot),
+  };
+}
+
+function installHyperframesSkills() {
+  const bundled = installBundledSkills();
+  if (bundled) {
+    const packageJson = JSON.parse(
+      readFileSync(join(dirname(dirname(bundled.sourceRoot)), "package.json"), "utf8")
+    );
+    console.log(`[OK] 安装官方 HyperFrames npm 包内置 Skills：${bundled.sourceRoot}`);
+    return { success: true, version: packageJson.version || null, offline: bundled };
+  }
+  const cmd = "npx --yes hyperframes skills";
   console.log(`[INSTALL] ${cmd}`);
-
   try {
-    const out = execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: "pipe" });
-    console.log(`[OK] ${skill.package} 安装成功`);
-
-    // 尝试读取版本
-    const verMatch = out.match(/(\d+\.\d+\.\d+)/);
-    const version = verMatch ? verMatch[1] : null;
+    execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: "inherit" });
+    execSync("npx --yes hyperframes skills check", {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: "inherit",
+    });
+    const versionOutput = execSync("npx --yes hyperframes --version", {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    const version = versionOutput.match(/(\d+\.\d+\.\d+)/)?.[1] ?? null;
+    console.log("[OK] HyperFrames 官方 Skills 安装成功");
     return { success: true, version };
   } catch (err) {
-    console.error(`[WARN] ${skill.package} 安装失败：${err.message}`);
-    console.error(
-      `  手动安装命令：npx skills add ${skill.package} ${agentFlags} --copy -y`
-    );
-    return { success: false, version: null };
+    console.error(`[WARN] HyperFrames 网络安装失败：${err.message}`);
+    const offline = installBundledSkills();
+    if (!offline) {
+      console.error("[FAIL] 未找到 npm 缓存中的官方 HyperFrames Skills");
+      return { success: false, version: null };
+    }
+    console.log(`[OK] 使用官方 npm 缓存离线包：${offline.sourceRoot}`);
+    return { success: true, version: "0.7.68", offline };
   }
 }
 
 const lock = readLock();
-let hasError = false;
+const result = installHyperframesSkills();
 
-for (const skill of THIRD_PARTY_SKILLS) {
-  const result = installSkill(skill);
-  if (result.success) {
-    writeLock(lock, skill.key, result.version);
-  } else {
-    hasError = true;
-  }
-}
-
-if (hasError) {
-  console.warn("\n[WARN] 部分 Skills 安装失败。运行 npm run skills:install 重试。");
-  process.exit(0); // 不阻断 bootstrap，只是 WARN
+if (!result.success) {
+  process.exit(1);
 } else {
+  writeLock(lock, "hyperframes", {
+    status: result.offline ? "installed_offline_bundle" : "installed",
+    version: result.version || null,
+    source: result.offline?.source || "npx hyperframes skills",
+    destinations: result.offline?.destinations || [],
+    source_sha256: result.offline?.sourceSha256 || null,
+  });
   console.log("\n[OK] 所有第三方 Skills 安装完成。");
 }

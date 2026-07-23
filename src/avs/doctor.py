@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+import importlib.util
+import os
 import shutil
 import subprocess
 import sys
@@ -91,6 +93,36 @@ def check_python() -> CheckResult:
     return CheckResult("Python", required=True, passed=passed, version=ver, message=msg)
 
 
+def check_python_environment(project_root: Path) -> CheckResult:
+    """检查当前解释器及 AVS 必需模块。"""
+    required_modules = ("click", "pydantic", "jsonschema", "yaml", "rich", "PIL")
+    missing = [name for name in required_modules if importlib.util.find_spec(name) is None]
+    configured = os.environ.get("AGENT_PYTHON")
+    executable = Path(sys.executable).resolve()
+    if configured and executable != Path(configured).resolve():
+        return CheckResult(
+            "Python environment",
+            required=True,
+            passed=False,
+            version=str(executable),
+            message=f"当前解释器不是 AGENT_PYTHON: {configured}",
+        )
+    if missing:
+        return CheckResult(
+            "Python environment",
+            required=True,
+            passed=False,
+            version=str(executable),
+            message=f"缺少 Python 模块: {', '.join(missing)}；运行 npm run bootstrap",
+        )
+    return CheckResult(
+        "Python environment",
+        required=True,
+        passed=True,
+        version=str(executable),
+    )
+
+
 def check_git() -> CheckResult:
     code, out = _run(["git", "--version"])
     if code == 127:
@@ -100,6 +132,19 @@ def check_git() -> CheckResult:
     passed = bool(ver_tuple and ver_tuple >= MIN_GIT)
     msg = "" if passed else f"需要 Git {'.'.join(map(str, MIN_GIT))}+，当前 {ver_str}"
     return CheckResult("Git", required=True, passed=passed, version=ver_str, message=msg)
+
+
+def check_git_repository(project_root: Path) -> CheckResult:
+    code, out = _run([
+        "git", "-C", str(project_root), "rev-parse", "--is-inside-work-tree",
+    ])
+    passed = code == 0 and out.strip().lower() == "true"
+    return CheckResult(
+        "Git repository",
+        required=True,
+        passed=passed,
+        message="" if passed else "项目目录尚未初始化为 Git 仓库",
+    )
 
 
 def check_node() -> CheckResult:
@@ -139,22 +184,39 @@ def check_ffprobe() -> CheckResult:
     return CheckResult("FFprobe", required=True, passed=passed, version=ver_str)
 
 
-def check_hyperframes() -> CheckResult:
-    """检查 HyperFrames CLI（通过 npx）。"""
-    code, out = _run(["npx", "hyperframes", "--version"])
+def _hyperframes_command(project_root: Path) -> list[str]:
+    cli = project_root / "node_modules" / "hyperframes" / "bin" / "hyperframes.mjs"
+    return ["node", str(cli)]
+
+
+def check_hyperframes(project_root: Path) -> CheckResult:
+    """检查项目锁定的 HyperFrames CLI。"""
+    command = _hyperframes_command(project_root)
+    code, out = _run([*command, "--version"])
     if code == 127 or "not found" in out.lower() or "npm error" in out.lower():
         return CheckResult(
             "HyperFrames", required=True, passed=False,
             message=(
-                "未找到 HyperFrames CLI。\n"
-                "安装命令：npx skills add heygen-com/hyperframes "
-                "-a claude-code -a codex -a cursor --copy -y"
+                "未找到项目锁定的 HyperFrames CLI；运行 npm ci"
             ),
         )
     passed = code == 0
     ver = _parse_semver(out)
     ver_str = ".".join(map(str, ver)) if ver else out[:40]
     return CheckResult("HyperFrames", required=True, passed=passed, version=ver_str)
+
+
+def check_hyperframes_browser(project_root: Path) -> CheckResult:
+    """检查 HyperFrames 本地渲染浏览器。"""
+    code, out = _run([*_hyperframes_command(project_root), "browser", "path"])
+    passed = code == 0 and "not found" not in out.lower() and bool(out.strip())
+    return CheckResult(
+        "HyperFrames browser",
+        required=True,
+        passed=passed,
+        version=out.strip().splitlines()[-1][:120] if passed else None,
+        message="" if passed else "缺少本地渲染浏览器；运行 npm run bootstrap",
+    )
 
 
 def check_git_lfs() -> CheckResult:
@@ -213,6 +275,32 @@ def check_skills(project_root: Path) -> CheckResult:
     return CheckResult("Skills", required=False, passed=True, version=f"{len(dirs)} skills")
 
 
+def check_skill_sync(project_root: Path) -> CheckResult:
+    """检查 skills-src 与 Codex/Claude 项目目标是否逐文件一致。"""
+    source_root = project_root / "skills-src"
+    targets = (project_root / ".agents" / "skills", project_root / ".claude" / "skills")
+    if not source_root.exists():
+        return CheckResult("Skill sync", required=True, passed=False, message="skills-src/ 不存在")
+
+    mismatches: list[str] = []
+    for source in source_root.rglob("*"):
+        if not source.is_file():
+            continue
+        relative = source.relative_to(source_root)
+        for target_root in targets:
+            target = target_root / relative
+            if not target.exists() or source.read_bytes() != target.read_bytes():
+                mismatches.append(target.relative_to(project_root).as_posix())
+    passed = not mismatches
+    return CheckResult(
+        "Skill sync",
+        required=True,
+        passed=passed,
+        version=f"{len(list(source_root.glob('*/SKILL.md')))} project skills" if passed else None,
+        message="" if passed else f"未同步或内容不同: {', '.join(mismatches[:5])}",
+    )
+
+
 def check_disk_space(project_root: Path) -> CheckResult:
     """检查可用磁盘空间（至少 5 GB）。"""
     MIN_GB = 5
@@ -234,14 +322,17 @@ def run_doctor(project_root: Path) -> DoctorReport:
     """运行所有检查，返回报告。"""
     report = DoctorReport()
     report.add(check_python())
+    report.add(check_python_environment(project_root))
     report.add(check_git())
+    report.add(check_git_repository(project_root))
     report.add(check_node())
     report.add(check_ffmpeg())
     report.add(check_ffprobe())
-    report.add(check_hyperframes())
+    report.add(check_hyperframes(project_root))
+    report.add(check_hyperframes_browser(project_root))
     report.add(check_git_lfs())
-    report.add(check_venv(project_root))
     report.add(check_project_dirs(project_root))
     report.add(check_skills(project_root))
+    report.add(check_skill_sync(project_root))
     report.add(check_disk_space(project_root))
     return report

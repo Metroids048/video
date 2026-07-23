@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-video-studio"
@@ -13,6 +13,7 @@ dependencies = [
     "jsonschema>=4.21",
     "pyyaml>=6.0",
     "rich>=13.7",
+    "pillow>=11.0",
 ]
 
 [project.optional-dependencies]
@@ -20,7 +21,12 @@ dev = [
     "pytest>=7.4",
     "pytest-mock>=3.12",
     "coverage>=7.3",
+    "ruff>=0.15",
+    "mypy>=1.20",
 ]
+
+[project.scripts]
+avs = "avs.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

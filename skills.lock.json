@@ -1,85 +1,133 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-07-20T00:00:00Z",
+  "locked_at": "2026-07-23T13:05:50.574290+00:00",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
-
   "project_skills": {
     "create-episode": {
       "source": "skills-src/create-episode",
-      "targets": [".claude/skills/create-episode", ".agents/skills/create-episode"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/create-episode",
+        ".agents/skills/create-episode"
+      ],
+      "status": "synced",
       "implemented_in_module": 2,
-      "description": "创建 Episode 目录结构和 episode.json，设置初始状态"
+      "description": "创建 Episode 目录结构和 episode.json，设置初始状态",
+      "source_sha256": "1144e7bb7d05f7e045bd6daf104ba59b585102ebdeb550151f75f3db4485fdc8"
     },
     "analyze-reference": {
       "source": "skills-src/analyze-reference",
-      "targets": [".claude/skills/analyze-reference", ".agents/skills/analyze-reference"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/analyze-reference",
+        ".agents/skills/analyze-reference"
+      ],
+      "status": "synced",
       "implemented_in_module": 4,
-      "description": "分析参考视频，生成 reference-recipe.json 和结构报告"
+      "description": "分析参考视频，生成 reference-recipe.json 和结构报告",
+      "source_sha256": "94b59bf07af23bdf67061c9abe3f5720827122a004abe20240c86acfaea9f0b4"
     },
     "write-video-script": {
       "source": "skills-src/write-video-script",
-      "targets": [".claude/skills/write-video-script", ".agents/skills/write-video-script"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/write-video-script",
+        ".agents/skills/write-video-script"
+      ],
+      "status": "synced",
       "implemented_in_module": 5,
-      "description": "根据内容简报和参考分析生成 script.json 和 script.md"
+      "description": "根据内容简报和参考分析生成 script.json 和 script.md",
+      "source_sha256": "41749c88cedbbb97284ebaa543e14e125248aa966b58b35606cd6a7e85d3c3bd"
     },
     "create-storyboard": {
       "source": "skills-src/create-storyboard",
-      "targets": [".claude/skills/create-storyboard", ".agents/skills/create-storyboard"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/create-storyboard",
+        ".agents/skills/create-storyboard"
+      ],
+      "status": "synced",
       "implemented_in_module": 5,
-      "description": "将脚本转化为分镜，标注素材缺口和占位"
+      "description": "将脚本转化为分镜，标注素材缺口和占位",
+      "source_sha256": "632976d4dd3eb4d009e6a2d1e837b5021edb9ec7a7e9e16e4c86e4189d2fddb6"
     },
     "prepare-assets": {
       "source": "skills-src/prepare-assets",
-      "targets": [".claude/skills/prepare-assets", ".agents/skills/prepare-assets"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/prepare-assets",
+        ".agents/skills/prepare-assets"
+      ],
+      "status": "synced",
       "implemented_in_module": 3,
-      "description": "识别、校验和标准化输入素材，生成 asset-manifest.json"
+      "description": "识别、校验和标准化输入素材，生成 asset-manifest.json",
+      "source_sha256": "090b42036b5c7ef495bc53ae9880a616f43285b24803d49a751d932665a7bd78"
     },
     "create-rough-cut": {
       "source": "skills-src/create-rough-cut",
-      "targets": [".claude/skills/create-rough-cut", ".agents/skills/create-rough-cut"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/create-rough-cut",
+        ".agents/skills/create-rough-cut"
+      ],
+      "status": "synced",
       "implemented_in_module": 6,
-      "description": "从 timeline.json 调用 FFmpeg 生成基础粗剪"
+      "description": "从 timeline.json 调用 FFmpeg 生成基础粗剪",
+      "source_sha256": "4c318b4e94953732b8061e2d84c23cc87ca2b579393439e507d75278cb0c71e1"
     },
     "revise-video": {
       "source": "skills-src/revise-video",
-      "targets": [".claude/skills/revise-video", ".agents/skills/revise-video"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/revise-video",
+        ".agents/skills/revise-video"
+      ],
+      "status": "synced",
       "implemented_in_module": 9,
-      "description": "根据用户修改建议更新时间线和局部渲染"
+      "description": "根据用户修改建议更新时间线和局部渲染",
+      "source_sha256": "639de2f48cbc724595d7f59852634f5a4edecc0723e7be1f139e975093b03453"
     },
     "quality-review": {
       "source": "skills-src/quality-review",
-      "targets": [".claude/skills/quality-review", ".agents/skills/quality-review"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/quality-review",
+        ".agents/skills/quality-review"
+      ],
+      "status": "synced",
       "implemented_in_module": 8,
-      "description": "对粗剪执行视觉 QA，读取联系表生成可读性和节奏建议"
+      "description": "对粗剪执行视觉 QA，读取联系表生成可读性和节奏建议",
+      "source_sha256": "f578dab4b49649dd905ef6501beba67cbd723861e71239bbb75d808375faa70a"
     },
     "create-publish-pack": {
       "source": "skills-src/create-publish-pack",
-      "targets": [".claude/skills/create-publish-pack", ".agents/skills/create-publish-pack"],
-      "status": "pending",
+      "targets": [
+        ".claude/skills/create-publish-pack",
+        ".agents/skills/create-publish-pack"
+      ],
+      "status": "synced",
       "implemented_in_module": 8,
-      "description": "生成抖音和小红书发布文案；REFERENCE_CLONE 不生成可发布标记"
+      "description": "生成抖音和小红书发布文案；REFERENCE_CLONE 不生成可发布标记",
+      "source_sha256": "87d2d488565512ed0d0cb5591172b7bc87626a0f0858f5069f0839fafc0b6d69"
     }
   },
-
   "third_party_skills": {
     "hyperframes": {
       "package": "heygen-com/hyperframes",
-      "install_command": "npx skills add heygen-com/hyperframes -a claude-code -a codex -a cursor --copy -y",
-      "targets": [".claude/skills/hyperframes", ".agents/skills/hyperframes"],
-      "status": "pending",
-      "installed_at": null,
-      "version": null,
+      "install_command": "npx --yes hyperframes skills",
+      "targets": [
+        "Codex global skills",
+        "Claude Code global skills",
+        "Cursor global skills"
+      ],
+      "status": "installed_offline_bundle",
+      "installed_at": "2026-07-23T13:25:32.441Z",
+      "version": "0.7.68",
       "implemented_in_module": 1,
-      "note": "使用 --copy 模式避免 Windows 符号链接权限问题"
+      "note": "使用 --copy 模式避免 Windows 符号链接权限问题",
+      "source": "node_modules/hyperframes/dist/skills",
+      "destinations": [
+        "~/.codex/skills/hyperframes",
+        "~/.claude/skills/hyperframes",
+        "~/.cursor/skills/hyperframes",
+        "~/.codex/skills/hyperframes-cli",
+        "~/.claude/skills/hyperframes-cli",
+        "~/.cursor/skills/hyperframes-cli"
+      ],
+      "source_sha256": "73f79c7a5409cc1d2a2022d6e26fe132578e6ba704fc3641bef6c81fddae2c6f"
     }
   }
 }

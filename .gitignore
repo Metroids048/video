@@ -42,23 +42,18 @@ yarn-error.log*
 .pnp.js
 .yarn/cache/
 .yarn/unplugged/
+.hyperframes/
+renders/
 
-# ── User raw assets (never commit original media) ────────────────────────────
-# Episode input directories contain user-supplied originals — keep them local
-episodes/inbox/*/input/
-episodes/active/*/input/
-episodes/completed/*/input/
-episodes/archived/*/input/
-
-# ── Generated episode outputs ────────────────────────────────────────────────
-episodes/*/renders/
-episodes/*/logs/
-episodes/*/work/prepared/
-episodes/*/work/reference/keyframes/
-episodes/*/work/reference/contact-sheet.jpg
-episodes/inbox/*/renders/
-episodes/active/*/renders/
-episodes/completed/*/renders/
+# ── Episodes (all user inputs and generated work stay local) ─────────────────
+episodes/inbox/*
+episodes/active/*
+episodes/completed/*
+episodes/archived/*
+!episodes/inbox/.gitkeep
+!episodes/active/.gitkeep
+!episodes/completed/.gitkeep
+!episodes/archived/.gitkeep
 
 # ── Project-level generated dirs ─────────────────────────────────────────────
 cache/

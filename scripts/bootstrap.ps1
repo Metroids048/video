@@ -2,7 +2,7 @@
 # 用法：pwsh -NoProfile -File scripts/bootstrap.ps1
 # 或通过 npm run bootstrap 调用
 #
-# 功能：创建 Python venv、安装依赖、安装/同步 Skills、创建必要目录
+# 功能：使用全局 Agent Python 安装依赖、安装/同步 Skills、创建必要目录
 # 不会写入真实密钥。
 
 param(
@@ -24,9 +24,14 @@ Write-Step "Agent Video Studio — Bootstrap (Windows)"
 Write-Step "DryRun=$DryRun | Root=$ROOT"
 
 # ── 1. 检查必需工具 ────────────────────────────────────────────────
-Write-Step "检查 Python 3.11+..."
-$pyVer = python --version 2>&1
-if ($LASTEXITCODE -ne 0) { Write-Fail "未找到 Python，请安装 3.11+"; exit 1 }
+Write-Step "检查 AGENT_PYTHON (Python 3.11+)..."
+$agentPython = $env:AGENT_PYTHON
+if (-not $agentPython -or -not (Test-Path -LiteralPath $agentPython)) {
+    Write-Fail "AGENT_PYTHON 未配置或文件不存在。请先运行全局 Agent Python 安装脚本。"
+    exit 1
+}
+$pyVer = & $agentPython --version 2>&1
+if ($LASTEXITCODE -ne 0) { Write-Fail "AGENT_PYTHON 无法运行"; exit 1 }
 Write-OK $pyVer
 
 Write-Step "检查 Node.js 22+..."
@@ -34,36 +39,34 @@ $nodeVer = node --version 2>&1
 if ($LASTEXITCODE -ne 0) { Write-Fail "未找到 Node.js，请安装 22+"; exit 1 }
 Write-OK "Node.js $nodeVer"
 
-# ── 2. 创建 Python 虚拟环境 ────────────────────────────────────────
-$VENV = Join-Path $ROOT ".venv"
-if (-not (Test-Path $VENV)) {
-    Write-Step "创建 Python 虚拟环境..."
-    if (-not $DryRun) { python -m venv $VENV }
-    Write-OK ".venv 已创建"
-} else {
-    Write-OK ".venv 已存在，跳过"
-}
-
-# ── 3. 安装 Python 依赖 ────────────────────────────────────────────
-Write-Step "安装 Python 依赖..."
-$PIP = Join-Path $VENV "Scripts\pip.exe"
+# ── 2. 安装 Node/Python 依赖 ───────────────────────────────────────
+Write-Step "安装锁定的 Node.js 依赖..."
 if (-not $DryRun) {
-    & $PIP install --quiet -e ".[dev]"
+    npm ci
+    if ($LASTEXITCODE -ne 0) { Write-Fail "npm ci 失败"; exit 1 }
+}
+Write-OK "Node.js 依赖安装完成"
+
+Write-Step "安装 Python 依赖..."
+if (-not $DryRun) {
+    & $agentPython -m pip install --disable-pip-version-check -e ".[dev]"
     if ($LASTEXITCODE -ne 0) { Write-Fail "pip install 失败"; exit 1 }
 }
 Write-OK "Python 依赖安装完成"
 
-# ── 4. 安装/同步 Skills ────────────────────────────────────────────
+# ── 3. 安装/同步 Skills 与 HyperFrames 浏览器 ─────────────────────
 Write-Step "安装项目 Skills..."
 if (-not $DryRun) {
     node scripts/install_skills.mjs
-    if ($LASTEXITCODE -ne 0) { Write-Warn "Skills 安装失败，可运行 npm run skills:install 重试" }
-    python scripts/sync_skills.py
-    if ($LASTEXITCODE -ne 0) { Write-Warn "Skills 同步失败，可运行 npm run skills:sync 重试" }
+    if ($LASTEXITCODE -ne 0) { Write-Fail "HyperFrames Skills 安装失败"; exit 1 }
+    & $agentPython scripts/sync_skills.py
+    if ($LASTEXITCODE -ne 0) { Write-Fail "项目 Skills 同步失败"; exit 1 }
+    node node_modules/hyperframes/bin/hyperframes.mjs browser ensure
+    if ($LASTEXITCODE -ne 0) { Write-Fail "HyperFrames 浏览器安装失败"; exit 1 }
 }
 Write-OK "Skills 处理完成"
 
-# ── 5. 创建必要目录 ────────────────────────────────────────────────
+# ── 4. 创建必要目录 ────────────────────────────────────────────────
 Write-Step "创建必要目录..."
 $dirs = @(
     "episodes/inbox", "episodes/active", "episodes/completed", "episodes/archived",
@@ -77,7 +80,7 @@ foreach ($d in $dirs) {
     }
 }
 
-# ── 6. 创建 .env（如不存在）────────────────────────────────────────
+# ── 5. 创建 .env（如不存在）────────────────────────────────────────
 $envFile = Join-Path $ROOT ".env"
 $envExample = Join-Path $ROOT ".env.example"
 if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
@@ -85,4 +88,4 @@ if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
     Write-OK ".env 已从 .env.example 创建（请填写真实密钥）"
 }
 
-Write-OK "Bootstrap 完成！运行 python -m avs doctor 验证环境。"
+Write-OK "Bootstrap 完成！运行 npm run doctor 验证环境。"

@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 # 将 src/ 加入路径
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -22,16 +20,19 @@ from avs.doctor import (
     DoctorReport,
     _parse_semver,
     _version_ok,
-    check_disk_space,
     check_ffmpeg,
     check_ffprobe,
     check_git,
+    check_git_repository,
     check_git_lfs,
+    check_hyperframes,
+    check_hyperframes_browser,
     check_node,
     check_project_dirs,
     check_python,
+    check_python_environment,
     check_skills,
-    check_venv,
+    check_skill_sync,
     run_doctor,
 )
 
@@ -177,24 +178,48 @@ class TestCheckGitLfs:
         assert result.passed is True
 
 
-# ── check_venv ─────────────────────────────────────────────────────────
-class TestCheckVenv:
-    def test_no_venv(self, tmp_path):
-        result = check_venv(tmp_path)
-        assert result.required is False
-        assert result.passed is False
-        assert "bootstrap" in result.message.lower()
+class TestCheckHyperframes:
+    def test_uses_project_locked_cli(self, tmp_path):
+        with patch("avs.doctor._run", return_value=(0, "0.7.68")) as run:
+            result = check_hyperframes(tmp_path)
+        assert result.passed is True
+        command = run.call_args.args[0]
+        assert command[0] == "node"
+        assert command[1] == str(
+            tmp_path / "node_modules" / "hyperframes" / "bin" / "hyperframes.mjs"
+        )
 
-    def test_venv_exists_unix(self, tmp_path):
-        (tmp_path / ".venv" / "bin").mkdir(parents=True)
-        (tmp_path / ".venv" / "bin" / "python").touch()
-        result = check_venv(tmp_path)
+    def test_missing_browser_fails(self, tmp_path):
+        with patch("avs.doctor._run", return_value=(1, "not found")):
+            result = check_hyperframes_browser(tmp_path)
+        assert result.required is True
+        assert result.passed is False
+
+
+# ── check_venv ─────────────────────────────────────────────────────────
+class TestCheckPythonEnvironment:
+    def test_missing_required_module_fails(self, tmp_path):
+        with patch("avs.doctor.importlib.util.find_spec", return_value=None):
+            result = check_python_environment(tmp_path)
+        assert result.required is True
+        assert result.passed is False
+
+    def test_required_modules_available(self, tmp_path):
+        with patch("avs.doctor.importlib.util.find_spec", return_value=object()):
+            result = check_python_environment(tmp_path)
         assert result.passed is True
 
-    def test_venv_exists_windows(self, tmp_path):
-        (tmp_path / ".venv" / "Scripts").mkdir(parents=True)
-        (tmp_path / ".venv" / "Scripts" / "python.exe").touch()
-        result = check_venv(tmp_path)
+
+class TestCheckGitRepository:
+    def test_not_a_repository(self, tmp_path):
+        with patch("avs.doctor._run", return_value=(128, "not a git repository")):
+            result = check_git_repository(tmp_path)
+        assert result.required is True
+        assert result.passed is False
+
+    def test_repository_passes(self, tmp_path):
+        with patch("avs.doctor._run", return_value=(0, "true")):
+            result = check_git_repository(tmp_path)
         assert result.passed is True
 
 
@@ -233,6 +258,27 @@ class TestCheckSkills:
             d.mkdir(parents=True)
             (d / "SKILL.md").write_text("# skill")
         result = check_skills(tmp_path)
+        assert result.passed is True
+
+
+class TestCheckSkillSync:
+    def test_missing_target_fails(self, tmp_path):
+        source = tmp_path / "skills-src" / "create-episode"
+        source.mkdir(parents=True)
+        (source / "SKILL.md").write_text("# source", encoding="utf-8")
+        result = check_skill_sync(tmp_path)
+        assert result.required is True
+        assert result.passed is False
+
+    def test_matching_targets_pass(self, tmp_path):
+        source = tmp_path / "skills-src" / "create-episode"
+        source.mkdir(parents=True)
+        (source / "SKILL.md").write_text("# source", encoding="utf-8")
+        for target in (".agents/skills", ".claude/skills"):
+            dest = tmp_path / target / "create-episode"
+            dest.mkdir(parents=True)
+            (dest / "SKILL.md").write_text("# source", encoding="utf-8")
+        result = check_skill_sync(tmp_path)
         assert result.passed is True
 
 
