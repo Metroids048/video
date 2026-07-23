@@ -18,7 +18,7 @@
         "properties": {
           "asset_id": {"type": "string"},
           "source_path": {"type": "string"},
-          "working_path": {"type": "string"},
+          "working_path": {"type": ["string", "null"]},
           "kind": {"type": "string", "enum": ["video", "audio", "image", "text", "link", "unknown"]},
           "mime_type": {"type": "string"},
           "duration": {"type": ["number", "null"]},
@@ -26,6 +26,10 @@
           "height": {"type": ["integer", "null"]},
           "fps": {"type": ["number", "null"]},
           "has_audio": {"type": ["boolean", "null"]},
+          "codec_video": {"type": ["string", "null"]},
+          "codec_audio": {"type": ["string", "null"]},
+          "layout": {"type": ["string", "null"], "enum": ["contain", "cover", "layout", null]},
+          "duplicate_of": {"type": ["string", "null"]},
           "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
           "status": {"type": "string", "enum": ["ok", "missing", "corrupt", "unsupported"]},
           "notes": {"type": ["string", "null"]}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -16,8 +17,7 @@ from avs.ingest.probe import probe_media
 log = logging.getLogger(__name__)
 
 _CACHE_FILE = "work/.ingest-cache.json"
-_INGEST_CONFIG_KEYS = ["canvas_w", "canvas_h", "video_crf"]
-_INGEST_CONFIG = {"canvas_w": 1080, "canvas_h": 1920, "video_crf": 28}
+_INGEST_CONFIG = {"canvas_w": 540, "canvas_h": 960, "video_crf": 28}
 
 
 def _load_cache(episode_dir: Path) -> dict:
@@ -53,7 +53,9 @@ def _asset_id(rel_path: str) -> str:
     # 替换非法字符
     import re
     slug = re.sub(r"[^A-Za-z0-9_\-.]", "_", slug)
-    return slug[:128]
+    import hashlib
+    suffix = hashlib.sha256(rel_path.encode("utf-8")).hexdigest()[:8]
+    return f"{slug[:119]}-{suffix}"
 
 
 def run_ingest(
@@ -61,13 +63,15 @@ def run_ingest(
     episode_id: str,
     *,
     force: bool = False,
+    config: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """扫描 input/、探测媒体、创建工作副本，生成 asset-manifest.json。
 
     返回 asset 字典列表（同时写入 manifest）。
     force=True 时跳过幂等缓存，重新转码所有文件。
     """
-    cfg_hash = config_hash(_INGEST_CONFIG)
+    ingest_config = {**_INGEST_CONFIG, **(config or {})}
+    cfg_hash = config_hash(ingest_config)
     cache = {} if force else _load_cache(episode_dir)
 
     files = discover_inputs(episode_dir)
@@ -85,6 +89,13 @@ def run_ingest(
         except Exception as exc:
             log.warning("无法哈希 %s: %s — 标记为 corrupt", rel, exc)
             assets.append(_corrupt_record(df, str(exc)))
+            continue
+
+        if df.kind == "unknown":
+            assets.append(_unsupported_record(df, file_hash))
+            cache[rel] = {
+                "sha256": file_hash, "cfg_hash": cfg_hash, "status": "unsupported",
+            }
             continue
 
         # --- 幂等检查 ---
@@ -121,16 +132,19 @@ def run_ingest(
 
         # --- 规范化（创建工作副本）---
         try:
-            normalize_asset(src, dst, df.kind, media_probe)
+            normalize_asset(src, dst, df.kind, media_probe, config=ingest_config)
         except Exception as exc:
-            log.warning("规范化失败 %s: %s — 尝试直接复制", rel, exc)
-            import shutil
-            try:
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
-            except Exception as copy_exc:
-                assets.append(_corrupt_record(df, f"规范化+复制均失败: {copy_exc}"))
-                continue
+            log.warning("规范化失败 %s: %s", rel, exc)
+            rec = _corrupt_record(df, f"规范化失败: {exc}")
+            rec["sha256"] = file_hash
+            assets.append(rec)
+            cache[cache_key] = {
+                "sha256": file_hash, "cfg_hash": cfg_hash, "status": "corrupt",
+            }
+            continue
+
+        if sha256_file(src) != file_hash:
+            raise IngestError(f"原始素材在规范化过程中发生变化: {rel}")
 
         # --- 构建 asset 记录 ---
         record = _build_record(df, file_hash, dst_rel, media_probe)
@@ -146,12 +160,47 @@ def run_ingest(
                        "codec_video", "codec_audio")},
         }
 
-    # --- 写 manifest ---
+    # 标记内容重复项，但保留各自工作副本和来源追踪。
+    first_by_hash: dict[str, str] = {}
+    for asset in assets:
+        duplicate_of = first_by_hash.get(asset["sha256"])
+        asset["duplicate_of"] = duplicate_of
+        if asset["status"] == "ok" and duplicate_of is None:
+            first_by_hash[asset["sha256"]] = asset["asset_id"]
+
+    # --- 写 manifest 和日志 ---
     save_manifest(episode_dir, episode_id, assets)
     _save_cache(episode_dir, cache)
+    _write_ingest_log(episode_dir, episode_id, assets, cfg_hash)
     log.info("ingest 完成：%d 个素材（%d corrupt）",
              len(assets), sum(1 for a in assets if a["status"] == "corrupt"))
     return assets
+
+
+def _write_ingest_log(
+    episode_dir: Path,
+    episode_id: str,
+    assets: list[dict[str, Any]],
+    cfg_hash: str,
+) -> None:
+    log_path = episode_dir / "logs" / "ingest.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    event = {
+        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        "episode_id": episode_id,
+        "config_hash": cfg_hash,
+        "assets": [
+            {
+                "source_path": asset["source_path"],
+                "working_path": asset["working_path"],
+                "sha256": asset["sha256"],
+                "status": asset["status"],
+            }
+            for asset in assets
+        ],
+    }
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
 def _build_record(df, sha: str, dst_rel: str, probe: dict) -> dict:
@@ -168,6 +217,9 @@ def _build_record(df, sha: str, dst_rel: str, probe: dict) -> dict:
         "height": probe.get("height"),
         "fps": probe.get("fps"),
         "has_audio": probe.get("has_audio"),
+        "codec_video": probe.get("codec_video"),
+        "codec_audio": probe.get("codec_audio"),
+        "layout": "contain" if df.kind == "video" else None,
         "notes": None,
     }
 
@@ -176,7 +228,7 @@ def _corrupt_record(df, reason: str) -> dict:
     return {
         "asset_id": _asset_id(df.rel_path),
         "source_path": df.rel_path,
-        "working_path": df.rel_path,   # 损坏文件不复制，保留原路径
+        "working_path": None,
         "kind": df.kind,
         "mime_type": df.mime_type,
         "sha256": "0" * 64,            # 占位，防止 Schema 拒绝
@@ -190,20 +242,31 @@ def _corrupt_record(df, reason: str) -> dict:
     }
 
 
+def _unsupported_record(df, sha: str) -> dict:
+    record = _corrupt_record(df, "不支持的文件类型，未创建工作副本")
+    record["sha256"] = sha
+    record["status"] = "unsupported"
+    return record
+
+
 def _rebuild_from_cache(df, cached: dict, sha: str, dst_rel: str) -> dict:
     probe = cached.get("probe", {})
+    status = cached.get("status", "ok")
     return {
         "asset_id": _asset_id(df.rel_path),
         "source_path": df.rel_path,
-        "working_path": dst_rel,
+        "working_path": dst_rel if status == "ok" else None,
         "kind": df.kind,
         "mime_type": df.mime_type,
         "sha256": sha,
-        "status": cached.get("status", "ok"),
+        "status": status,
         "duration": probe.get("duration"),
         "width": probe.get("width"),
         "height": probe.get("height"),
         "fps": probe.get("fps"),
         "has_audio": probe.get("has_audio"),
+        "codec_video": probe.get("codec_video"),
+        "codec_audio": probe.get("codec_audio"),
+        "layout": "contain" if df.kind == "video" else None,
         "notes": None,
     }

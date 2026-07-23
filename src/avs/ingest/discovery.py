@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import mimetypes
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from avs.ingest.errors import PathTraversalError

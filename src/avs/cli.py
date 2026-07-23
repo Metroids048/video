@@ -374,12 +374,35 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
         sys.exit(1)
 
     try:
-        assets = run_ingest(ep_dir, model.id, force=force)
+        proxy = cfg.visual.get("visual", {}).get("proxy", {})
+        assets = run_ingest(
+            ep_dir,
+            model.id,
+            force=force,
+            config={
+                "canvas_w": proxy.get("width", 540),
+                "canvas_h": proxy.get("height", 960),
+                "video_crf": proxy.get("crf", 28),
+            },
+        )
     except Exception as exc:
         console.print(f"[red]✗ ingest 失败: {exc}[/red]")
         model.fail(str(exc))
         model.save(ep_json)
         sys.exit(1)
+
+    if not assets:
+        try:
+            if model.status != "WAITING_FOR_INPUT":
+                model.transition("WAITING_FOR_INPUT")
+            model.save(ep_json)
+        except Exception as exc:
+            console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
+            sys.exit(1)
+        console.print(
+            "[yellow]⚠ input/ 中没有素材，已生成空清单；状态 → WAITING_FOR_INPUT[/yellow]"
+        )
+        sys.exit(0)
 
     # 状态转换 → INGESTED；不允许静默跳过非法状态
     try:
@@ -504,7 +527,7 @@ def assets_validate(episode_id: str) -> None:
         if _P(a["working_path"]).is_absolute():
             errors.append(f"{aid}: working_path 为绝对路径")
         # ok 状态的工作副本必须存在
-        if a["status"] == "ok":
+        if a["status"] == "ok" and a.get("working_path"):
             wp = ep_dir / a["working_path"]
             if not wp.exists():
                 errors.append(f"{aid}: working_path 不存在 ({a['working_path']})")
