@@ -1,0 +1,23 @@
+{
+  "name": "InfoCard",
+  "version": "1.0.0",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "duration": 4.0,
+  "description": "关键信息展示卡",
+  "props": {
+    "icon": {
+      "type": "string",
+      "default": "💡"
+    },
+    "heading": {
+      "type": "string",
+      "default": "关键信息"
+    },
+    "content": {
+      "type": "string",
+      "default": "这里展示重要的数据或观点"
+    }
+  }
+}

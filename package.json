@@ -1,0 +1,21 @@
+{
+  "name": "agent-video-studio",
+  "version": "1.0.0",
+  "description": "通用短视频结构分析与粗剪生产系统",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap-check.mjs && (pwsh -NoProfile -File scripts/bootstrap.ps1 2>NUL || bash scripts/bootstrap.sh)",
+    "doctor": "python -m avs doctor",
+    "demo": "python -m avs run EP-DEMO-REF && python -m avs run EP-DEMO-SCREEN",
+    "demo:reference": "python -m avs run EP-DEMO-REF",
+    "demo:screen": "python -m avs run EP-DEMO-SCREEN",
+    "verify": "node scripts/verify.mjs",
+    "skills:install": "node scripts/install_skills.mjs",
+    "skills:sync": "python scripts/sync_skills.py",
+    "skills:check": "python scripts/sync_skills.py --check"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "delivery-manifest.schema.json",
+  "title": "DeliveryManifest",
+  "description": "交付包清单",
+  "type": "object",
+  "required": ["episode_id", "publishable", "files", "generated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "publishable": {"type": "boolean"},
+    "platforms": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "path", "required"],
+        "properties": {
+          "name": {"type": "string"},
+          "path": {"type": "string"},
+          "required": {"type": "boolean"},
+          "size_bytes": {"type": ["integer", "null"]},
+          "sha256": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "edit_notes_path": {"type": ["string", "null"]},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

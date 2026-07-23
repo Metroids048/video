@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920">
+  <title>HookTitle</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+      padding: 80px;
+      animation: fadeInUp 0.8s ease-out;
+    }
+    .title {
+      font-size: 72px;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      margin-bottom: 40px;
+      animation: scaleIn 0.6s ease-out 0.2s both;
+    }
+    .subtitle {
+      font-size: 42px;
+      color: rgba(255,255,255,0.9);
+      animation: fadeIn 0.8s ease-out 0.5s both;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(60px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title" id="title">钩子标题</div>
+    <div class="subtitle" id="subtitle">吸引用户停留</div>
+  </div>
+  <script>
+    // 从 URL params 或全局变量读取文案
+    const params = new URLSearchParams(window.location.search);
+    const titleText = params.get('title') || window.HYPERFRAMES_DATA?.title || '钩子标题';
+    const subtitleText = params.get('subtitle') || window.HYPERFRAMES_DATA?.subtitle || '吸引用户停留';
+    document.getElementById('title').textContent = titleText;
+    document.getElementById('subtitle').textContent = subtitleText;
+  </script>
+</body>
+</html>

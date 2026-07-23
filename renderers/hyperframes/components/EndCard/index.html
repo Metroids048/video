@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920">
+  <title>EndCard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
+    }
+    .cta {
+      text-align: center;
+      animation: zoomIn 0.8s ease-out;
+    }
+    .emoji {
+      font-size: 160px;
+      margin-bottom: 60px;
+      animation: rotate 1.5s ease-in-out infinite;
+    }
+    .message {
+      font-size: 64px;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      margin-bottom: 40px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .action {
+      font-size: 48px;
+      color: rgba(255,255,255,0.95);
+      animation: fadeIn 1s ease-out 0.5s both;
+    }
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes rotate {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(10deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cta">
+    <div class="emoji" id="emoji">👍</div>
+    <div class="message" id="message">喜欢就点赞</div>
+    <div class="action" id="action">关注不迷路</div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const emoji = params.get('emoji') || window.HYPERFRAMES_DATA?.emoji || '👍';
+    const message = params.get('message') || window.HYPERFRAMES_DATA?.message || '喜欢就点赞';
+    const action = params.get('action') || window.HYPERFRAMES_DATA?.action || '关注不迷路';
+    document.getElementById('emoji').textContent = emoji;
+    document.getElementById('message').textContent = message;
+    document.getElementById('action').textContent = action;
+  </script>
+</body>
+</html>

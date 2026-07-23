@@ -1,0 +1,92 @@
+# ── Secrets & credentials ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+*.token
+*.cookie
+*.session
+secrets/
+credentials/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+.yarn/cache/
+.yarn/unplugged/
+
+# ── User raw assets (never commit original media) ────────────────────────────
+# Episode input directories contain user-supplied originals — keep them local
+episodes/inbox/*/input/
+episodes/active/*/input/
+episodes/completed/*/input/
+episodes/archived/*/input/
+
+# ── Generated episode outputs ────────────────────────────────────────────────
+episodes/*/renders/
+episodes/*/logs/
+episodes/*/work/prepared/
+episodes/*/work/reference/keyframes/
+episodes/*/work/reference/contact-sheet.jpg
+episodes/inbox/*/renders/
+episodes/active/*/renders/
+episodes/completed/*/renders/
+
+# ── Project-level generated dirs ─────────────────────────────────────────────
+cache/
+logs/
+output/
+
+# ── Claude Code private settings ─────────────────────────────────────────────
+.claude/settings.local.json
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Temp & scratch ────────────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.orig
+scratch/

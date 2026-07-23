@@ -1,0 +1,176 @@
+"""src/avs/models/episode.py — Episode 数据模型与 episode.json 读写。
+
+时间一律使用带时区 ISO 8601 字符串（datetime.timezone.utc）。
+"""
+from __future__ import annotations
+
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import jsonschema
+
+from avs.state import EpisodeStatus, TransitionError, assert_transition
+
+# Schema 路径（相对于此文件向上三级到项目根）
+_SCHEMA_REL = Path(__file__).resolve().parents[3] / "schemas" / "episode.schema.json"
+
+
+def _now_iso() -> str:
+    """当前时间，UTC，带时区 ISO 8601。"""
+    return datetime.now(tz=timezone.utc).isoformat()
+
+
+def _load_schema() -> dict[str, Any]:
+    if not _SCHEMA_REL.exists():
+        raise FileNotFoundError(f"Schema 文件缺失: {_SCHEMA_REL}")
+    with _SCHEMA_REL.open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+class EpisodeValidationError(Exception):
+    """episode.json Schema 校验失败。"""
+
+
+class EpisodeModel:
+    """episode.json 的读写与状态转换封装。"""
+
+    # REFERENCE_CLONE 强制 publishable=false
+    _UNPUBLISHABLE_MODES = frozenset({"REFERENCE_CLONE"})
+
+    def __init__(self, data: dict[str, Any]) -> None:
+        self._data = data
+
+    # ── 属性快捷方式 ─────────────────────────────────────────────────
+
+    @property
+    def id(self) -> str:
+        return self._data["id"]
+
+    @property
+    def status(self) -> str:
+        return self._data["status"]
+
+    @property
+    def mode(self) -> str:
+        return self._data["mode"]
+
+    @property
+    def publishable(self) -> bool:
+        return bool(self._data["publishable"])
+
+    @property
+    def last_error(self) -> str | None:
+        return self._data.get("last_error")
+
+    @property
+    def completed_stages(self) -> list[str]:
+        return list(self._data.get("completed_stages", []))
+
+    @property
+    def artifacts(self) -> dict[str, str]:
+        return dict(self._data.get("artifacts", {}))
+
+    # ── 工厂方法 ──────────────────────────────────────────────────────
+
+    @classmethod
+    def create(
+        cls,
+        episode_id: str,
+        *,
+        mode: str = "REFERENCE_ADAPT",
+        platforms: list[str] | None = None,
+    ) -> "EpisodeModel":
+        """构建全新 Episode 数据（不写磁盘）。"""
+        if platforms is None:
+            platforms = ["douyin", "xiaohongshu"]
+
+        publishable = mode not in cls._UNPUBLISHABLE_MODES
+        now = _now_iso()
+
+        data: dict[str, Any] = {
+            "id": episode_id,
+            "mode": mode,
+            "publishable": publishable,
+            "status": EpisodeStatus.CREATED,
+            "platforms": platforms,
+            "completed_stages": [],
+            "last_error": None,
+            "artifacts": {},
+            "title": None,
+            "created_at": now,
+            "updated_at": now,
+        }
+        return cls(data)
+
+    # ── 读写 ──────────────────────────────────────────────────────────
+
+    @classmethod
+    def load(cls, path: Path) -> "EpisodeModel":
+        """从 episode.json 加载并 Schema 校验。"""
+        if not path.exists():
+            raise FileNotFoundError(f"episode.json 不存在: {path}")
+        with path.open(encoding="utf-8") as fh:
+            data = json.load(fh)
+        instance = cls(data)
+        instance.validate_schema()
+        return instance
+
+    def save(self, path: Path) -> None:
+        """将当前状态写入 episode.json（原子写：先写临时文件再重命名）。"""
+        self._data["updated_at"] = _now_iso()
+        tmp = path.with_suffix(".json.tmp")
+        try:
+            with tmp.open("w", encoding="utf-8") as fh:
+                json.dump(self._data, fh, ensure_ascii=False, indent=2)
+            tmp.replace(path)
+        except Exception:
+            tmp.unlink(missing_ok=True)
+            raise
+
+    # ── 状态转换 ──────────────────────────────────────────────────────
+
+    def transition(self, target: str, *, force: bool = False) -> None:
+        """执行状态转换；非法时抛出 TransitionError。"""
+        assert_transition(self.status, target, force=force)
+        self._data["status"] = target
+        self._data["last_error"] = None  # 清除上次错误
+        self._data["updated_at"] = _now_iso()
+
+    def fail(self, reason: str) -> None:
+        """将状态置为 FAILED 并记录原因。"""
+        self._data["status"] = EpisodeStatus.FAILED
+        self._data["last_error"] = reason
+        self._data["updated_at"] = _now_iso()
+
+    def complete_stage(self, stage: str) -> None:
+        """标记一个阶段完成（幂等）。"""
+        stages = self._data.setdefault("completed_stages", [])
+        if stage not in stages:
+            stages.append(stage)
+        self._data["updated_at"] = _now_iso()
+
+    # ── Schema 校验 ───────────────────────────────────────────────────
+
+    def validate_schema(self) -> None:
+        """对当前数据执行 JSON Schema 校验；失败时抛出 EpisodeValidationError。"""
+        try:
+            schema = _load_schema()
+            jsonschema.validate(self._data, schema)
+        except jsonschema.ValidationError as exc:
+            raise EpisodeValidationError(
+                f"episode.json Schema 校验失败: {exc.message}"
+            ) from exc
+        except FileNotFoundError as exc:
+            raise EpisodeValidationError(str(exc)) from exc
+
+    # ── 序列化 ────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict[str, Any]:
+        """返回数据的浅拷贝（防止外部直接修改内部状态）。"""
+        return dict(self._data)
+
+    def __repr__(self) -> str:
+        return f"EpisodeModel(id={self.id!r}, status={self.status!r}, mode={self.mode!r})"

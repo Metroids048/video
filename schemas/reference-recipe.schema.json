@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "reference-recipe.schema.json",
+  "title": "ReferenceRecipe",
+  "description": "参考视频结构分析结果",
+  "type": "object",
+  "required": ["episode_id", "source_asset_id", "duration", "width", "height", "fps", "shots", "generated_at"],
+  "additionalProperties": true,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "source_asset_id": {"type": "string"},
+    "duration": {"type": "number", "exclusiveMinimum": 0},
+    "width": {"type": "integer", "exclusiveMinimum": 0},
+    "height": {"type": "integer", "exclusiveMinimum": 0},
+    "fps": {"type": "number", "exclusiveMinimum": 0},
+    "shots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shot_id", "start", "end"],
+        "properties": {
+          "shot_id": {"type": "string"},
+          "start": {"type": "number", "minimum": 0},
+          "end": {"type": "number", "minimum": 0},
+          "keyframe_path": {"type": ["string", "null"]},
+          "transcript": {"type": ["string", "null"]},
+          "shot_type": {"type": ["string", "null"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "hook": {"type": ["string", "null"]},
+    "narrative_segments": {"type": "array", "items": {"type": "string"}},
+    "ending_style": {"type": ["string", "null"]},
+    "transferable_rules": {"type": "array", "items": {"type": "string"}},
+    "do_not_copy": {"type": "array", "items": {"type": "string"}},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

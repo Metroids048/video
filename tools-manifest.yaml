@@ -1,0 +1,92 @@
+# tools-manifest.yaml
+# Agent Video Studio V1 — 工具版本清单
+# 本文件是 doctor 命令的权威依据，所有版本约束均在此声明。
+# 修改此文件需同步更新 src/avs/doctor.py 中的检查逻辑（模块1实现）。
+
+version: "1"
+updated_at: "2026-07-20"
+
+# ── 必需工具（缺失时 doctor 返回非零退出码）────────────────────────────────────
+required:
+  git:
+    min_version: "2.40.0"
+    check_command: "git --version"
+    version_pattern: "git version (\\S+)"
+    purpose: "版本控制；每个模块单独提交"
+
+  python:
+    min_version: "3.11.0"
+    check_command: "python --version"
+    version_pattern: "Python (\\S+)"
+    purpose: "唯一业务 CLI 运行时；状态机、媒体处理、QA、交付"
+
+  nodejs:
+    min_version: "22.0.0"
+    check_command: "node --version"
+    version_pattern: "v(\\S+)"
+    purpose: "npm 包装命令；Skills 安装脚本；HyperFrames CLI"
+
+  ffmpeg:
+    min_version: "6.0.0"
+    check_command: "ffmpeg -version"
+    version_pattern: "ffmpeg version (\\S+)"
+    purpose: "媒体转码、粗剪、字幕嵌入、HyperFrames 合成"
+
+  ffprobe:
+    min_version: "6.0.0"
+    check_command: "ffprobe -version"
+    version_pattern: "ffprobe version (\\S+)"
+    purpose: "输入素材元数据检测；损坏文件识别"
+
+  hyperframes:
+    check_command: "npx hyperframes --version"
+    version_pattern: "(\\S+)"
+    purpose: "动效片段渲染（HookTitle / InfoCard / EndCard）"
+    note: >
+      通过 npx skills add heygen-com/hyperframes 安装。
+      doctor 调用框架自检命令，不硬编码 Chromium 路径。
+
+# ── 推荐工具（缺失时 doctor 返回 WARNING，不阻断核心流程）──────────────────────
+optional:
+  git_lfs:
+    check_command: "git lfs version"
+    version_pattern: "git-lfs/(\\S+)"
+    purpose: "大型测试 Fixture 跟踪；真实用户素材默认不启用"
+    default_enabled: false
+    note: "仅在需要提交较大 Fixture 或黄金测试基准时启用"
+
+  whisper_cpp:
+    check_command: "whisper-cpp --version"
+    purpose: "本地转写 Provider（transcription.provider=whisper_cpp）"
+    note: "通过 Provider 适配器加载；缺失时自动降级为 manual 模式"
+
+  chromium:
+    purpose: "HyperFrames 渲染依赖；由 HyperFrames/Puppeteer 管理"
+    note: >
+      doctor 通过 npx hyperframes doctor 间接检查，
+      不直接检测系统 Chromium 路径，避免版本绑定。
+
+# ── V1 明确延后（不安装，不检测）──────────────────────────────────────────────
+deferred_post_v1:
+  - name: "remotion"
+    reason: "Remotion 主渲染器不在 V1 范围"
+  - name: "heygen_digital_human"
+    reason: "数字人和声音克隆不在 V1 范围"
+  - name: "cloud_render"
+    reason: "云端分布式渲染不在 V1 范围"
+  - name: "auto_publish_sdk"
+    reason: "自动发布抖音/小红书不在 V1 范围"
+  - name: "jianying_sdk"
+    reason: "剪映草稿逆向工程不在 V1 范围"
+
+# ── 画布规格（FFmpeg 渲染基准）─────────────────────────────────────────────────
+canvas:
+  width: 1080
+  height: 1920
+  fps: 30
+  video_codec: "libx264"
+  audio_codec: "aac"
+  pixel_format: "yuv420p"
+  platforms:
+    - douyin
+    - xiaohongshu

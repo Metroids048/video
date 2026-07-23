@@ -1,0 +1,24 @@
+# config/project.yaml — 项目级全局配置
+# 修改后必须重启才能生效
+
+project:
+  name: "Agent Video Studio"
+  version: "1.0"
+  # Episode 根目录（相对项目根）
+  episodes_root: "episodes"
+  # 活跃 Episode 子目录
+  active_dir: "active"
+  completed_dir: "completed"
+  archived_dir: "archived"
+  inbox_dir: "inbox"
+
+canvas:
+  width: 1080
+  height: 1920
+  fps: 30
+  video_codec: "libx264"
+  audio_codec: "aac"
+  pixel_format: "yuv420p"
+
+# ID 合法格式：大写字母、数字、连字符，2–64字符
+episode_id_pattern: "^[A-Z0-9][A-Z0-9_-]{1,63}$"

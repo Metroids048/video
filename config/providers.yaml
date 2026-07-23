@@ -1,0 +1,27 @@
+# config/providers.yaml — AI Provider 配置（密钥通过环境变量传入，不写入此文件）
+
+providers:
+  llm:
+    default: "anthropic"
+    anthropic:
+      model: "claude-opus-4-8"
+      max_tokens: 8192
+    openai:
+      model: "gpt-4o"
+      max_tokens: 8192
+
+  transcription:
+    default: "whisper_local"
+    whisper_local:
+      model: "base"
+      device: "cpu"
+
+  tts:
+    default: "none"      # V1 默认不使用 TTS；用户提供音频
+
+  vision:
+    default: "anthropic"
+
+# 所有密钥必须通过环境变量提供：
+# ANTHROPIC_API_KEY, OPENAI_API_KEY 等
+# 详见 .env.example

@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "script.schema.json",
+  "title": "Script",
+  "description": "口播脚本",
+  "type": "object",
+  "required": ["episode_id", "segments", "generated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "total_duration_estimate": {"type": ["number", "null"]},
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["segment_id", "text", "purpose"],
+        "properties": {
+          "segment_id": {"type": "string"},
+          "text": {"type": "string"},
+          "purpose": {"type": "string"},
+          "target_duration": {"type": ["number", "null"]},
+          "visual_hint": {"type": ["string", "null"]},
+          "notes": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

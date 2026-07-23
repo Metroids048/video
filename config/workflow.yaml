@@ -1,0 +1,65 @@
+# config/workflow.yaml — 工作流配置
+
+workflow:
+  # 状态转换允许表（正式流水线）
+  transitions:
+    CREATED:
+      - INGESTED
+      - WAITING_FOR_INPUT
+      - FAILED
+    INGESTED:
+      - REFERENCE_READY
+      - CONTENT_READY      # 无参考视频时跳过
+      - WAITING_FOR_INPUT
+      - FAILED
+    REFERENCE_READY:
+      - CONTENT_READY
+      - WAITING_FOR_REVIEW
+      - FAILED
+    CONTENT_READY:
+      - ASSETS_READY
+      - WAITING_FOR_REVIEW
+      - FAILED
+    ASSETS_READY:
+      - TIMELINE_READY
+      - WAITING_FOR_INPUT
+      - FAILED
+    TIMELINE_READY:
+      - ROUGH_CUT_READY
+      - FAILED
+    ROUGH_CUT_READY:
+      - QA_PASSED
+      - WAITING_FOR_REVIEW
+      - FAILED
+    QA_PASSED:
+      - DELIVERY_READY
+      - FAILED
+    DELIVERY_READY: []       # 终态；只有 --force reset 可离开
+    WAITING_FOR_INPUT:
+      - INGESTED
+      - CREATED
+      - FAILED
+    WAITING_FOR_REVIEW:
+      - CONTENT_READY
+      - ASSETS_READY
+      - QA_PASSED
+      - FAILED
+    FAILED:
+      - CREATED              # 通过 reset --to CREATED --force 重试
+
+  # reset --force 允许强制跳到的状态白名单
+  force_reset_targets:
+    - CREATED
+    - INGESTED
+    - CONTENT_READY
+
+  # 阶段名称（用于 completed_stages 追踪）
+  stages:
+    - ingest
+    - reference
+    - content
+    - assets
+    - timeline
+    - rough_cut
+    - qa
+    - delivery

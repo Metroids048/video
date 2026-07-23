@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "timeline.schema.json",
+  "title": "Timeline",
+  "description": "渲染器共享时间线协议",
+  "type": "object",
+  "required": ["episode_id", "version", "canvas", "tracks", "generated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "version": {"type": "string", "description": "协议版本，当前 1.0"},
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height", "fps"],
+      "properties": {
+        "width": {"type": "integer"},
+        "height": {"type": "integer"},
+        "fps": {"type": "number"}
+      }
+    },
+    "total_duration": {"type": ["number", "null"]},
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["track_id", "kind", "clips"],
+        "properties": {
+          "track_id": {"type": "string"},
+          "kind": {"type": "string", "enum": ["video", "audio", "caption", "graphic"]},
+          "clips": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["clip_id", "start", "duration"],
+              "properties": {
+                "clip_id": {"type": "string"},
+                "start": {"type": "number", "minimum": 0},
+                "duration": {"type": "number", "exclusiveMinimum": 0},
+                "asset_ref": {"type": ["string", "null"]},
+                "in_point": {"type": ["number", "null"]},
+                "out_point": {"type": ["number", "null"]},
+                "transform": {"type": ["object", "null"]},
+                "text": {"type": ["string", "null"]},
+                "style": {"type": ["object", "null"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

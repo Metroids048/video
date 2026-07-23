@@ -1,0 +1,29 @@
+# config/content-pillars.yaml — 内容方向配置
+
+content_pillars:
+  # 视频制作模式
+  modes:
+    REFERENCE_CLONE:
+      description: "仅供内部学习，临摹参考视频结构"
+      publishable: false          # 强制不可发布
+      requires_reference: true
+
+    REFERENCE_ADAPT:
+      description: "参考结构节奏，替换自有内容，默认生产模式"
+      publishable: true
+      requires_reference: true
+
+    ORIGINAL:
+      description: "使用项目自有模板，不依赖参考视频"
+      publishable: true
+      requires_reference: false
+
+  default_mode: "REFERENCE_ADAPT"
+
+  # 内容类别（供 Agent 参考）
+  categories:
+    - tech_tutorial
+    - product_showcase
+    - screen_explainer
+    - knowledge_share
+    - story_vlog

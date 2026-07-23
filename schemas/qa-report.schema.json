@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "qa-report.schema.json",
+  "title": "QAReport",
+  "description": "质量验收报告",
+  "type": "object",
+  "required": ["episode_id", "passed", "checks", "generated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "passed": {"type": "boolean"},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check_id", "name", "passed"],
+        "properties": {
+          "check_id": {"type": "string"},
+          "name": {"type": "string"},
+          "passed": {"type": "boolean"},
+          "severity": {"type": "string", "enum": ["error", "warning", "info"]},
+          "message": {"type": ["string", "null"]},
+          "value": true
+        }
+      }
+    },
+    "summary": {"type": ["string", "null"]},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

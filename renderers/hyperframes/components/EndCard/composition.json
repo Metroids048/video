@@ -1,0 +1,23 @@
+{
+  "name": "EndCard",
+  "version": "1.0.0",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "duration": 3.0,
+  "description": "结尾引导关注卡",
+  "props": {
+    "emoji": {
+      "type": "string",
+      "default": "👍"
+    },
+    "message": {
+      "type": "string",
+      "default": "喜欢就点赞"
+    },
+    "action": {
+      "type": "string",
+      "default": "关注不迷路"
+    }
+  }
+}

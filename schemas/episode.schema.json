@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "episode.schema.json",
+  "title": "Episode",
+  "description": "单期视频的状态与元数据",
+  "type": "object",
+  "required": ["id", "mode", "publishable", "status", "platforms", "completed_stages", "created_at", "updated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9_-]{1,63}$",
+      "description": "Episode唯一标识，大写字母数字连字符"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["REFERENCE_CLONE", "REFERENCE_ADAPT", "ORIGINAL"],
+      "description": "制作模式"
+    },
+    "publishable": {
+      "type": "boolean",
+      "description": "是否允许生成发布包；REFERENCE_CLONE 强制为 false"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "INGESTED",
+        "REFERENCE_READY",
+        "CONTENT_READY",
+        "ASSETS_READY",
+        "TIMELINE_READY",
+        "ROUGH_CUT_READY",
+        "QA_PASSED",
+        "DELIVERY_READY",
+        "WAITING_FOR_INPUT",
+        "WAITING_FOR_REVIEW",
+        "FAILED"
+      ]
+    },
+    "platforms": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["douyin", "xiaohongshu"]},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "completed_stages": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "last_error": {
+      "type": ["string", "null"],
+      "description": "最后一次失败原因"
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "已生成产物路径表（键为产物名，值为相对路径）",
+      "additionalProperties": {"type": "string"}
+    },
+    "title": {
+      "type": ["string", "null"],
+      "description": "视频标题（内容模块填写）"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "创建时间，带时区 ISO 8601"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "最后更新时间，带时区 ISO 8601"
+    }
+  }
+}

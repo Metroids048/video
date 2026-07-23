@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "asset-manifest.schema.json",
+  "title": "AssetManifest",
+  "description": "素材清单",
+  "type": "object",
+  "required": ["episode_id", "generated_at", "assets"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "source_path", "working_path", "kind", "mime_type", "sha256", "status"],
+        "additionalProperties": true,
+        "properties": {
+          "asset_id": {"type": "string"},
+          "source_path": {"type": "string"},
+          "working_path": {"type": "string"},
+          "kind": {"type": "string", "enum": ["video", "audio", "image", "text", "link", "unknown"]},
+          "mime_type": {"type": "string"},
+          "duration": {"type": ["number", "null"]},
+          "width": {"type": ["integer", "null"]},
+          "height": {"type": ["integer", "null"]},
+          "fps": {"type": ["number", "null"]},
+          "has_audio": {"type": ["boolean", "null"]},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "status": {"type": "string", "enum": ["ok", "missing", "corrupt", "unsupported"]},
+          "notes": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+# config/visual.yaml — 视觉配置
+
+visual:
+  # 字幕安全区（比例，0~1）
+  caption_safe_zone:
+    top: 0.05
+    bottom: 0.15
+    left: 0.03
+    right: 0.03
+
+  # 标题卡默认样式
+  title_card:
+    background: "#000000"
+    text_color: "#FFFFFF"
+    font_size: 72
+    padding: 40
+    duration_seconds: 2.0
+
+  # 信息卡
+  info_card:
+    background: "#1A1A2E"
+    text_color: "#E0E0E0"
+    accent_color: "#E94560"
+    font_size: 48
+    padding: 32
+
+  # 横屏素材处理策略: contain | cover | layout
+  landscape_strategy: "contain"
+
+  # 代理视频（低码率预览）
+  proxy:
+    width: 540
+    height: 960
+    crf: 28
+    preset: "fast"

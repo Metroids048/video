@@ -1,0 +1,19 @@
+{
+  "name": "HookTitle",
+  "version": "1.0.0",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "duration": 3.0,
+  "description": "开头钩子标题动效",
+  "props": {
+    "title": {
+      "type": "string",
+      "default": "钩子标题"
+    },
+    "subtitle": {
+      "type": "string",
+      "default": "吸引用户停留"
+    }
+  }
+}

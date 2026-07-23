@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "storyboard.schema.json",
+  "title": "Storyboard",
+  "description": "分镜与素材缺口",
+  "type": "object",
+  "required": ["episode_id", "shots", "generated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "shots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shot_id", "order", "description"],
+        "properties": {
+          "shot_id": {"type": "string"},
+          "order": {"type": "integer", "minimum": 0},
+          "description": {"type": "string"},
+          "duration_estimate": {"type": ["number", "null"]},
+          "asset_ref": {"type": ["string", "null"]},
+          "gap": {"type": "boolean", "default": false},
+          "gap_note": {"type": ["string", "null"]},
+          "visual_treatment": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "asset_gaps": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "缺少素材的 shot_id 列表"
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

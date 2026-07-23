@@ -1,0 +1,55 @@
+---
+# project.mdc — Cursor 项目规则（始终应用）
+description: Agent Video Studio V1 项目规则
+alwaysApply: true
+---
+
+# Agent Video Studio — Cursor 规则
+
+## 必读文件
+
+开始任何任务前读取：
+- `AGENTS.md` — 项目总规则
+- `docs/Agent-Video-Studio-V1.md` — 规范快速参考
+
+## 业务 CLI
+
+唯一业务入口：`python -m avs <command>`
+
+```bash
+python -m avs doctor
+python -m avs episode create <ID>
+python -m avs ingest <ID>
+python -m avs timeline build <ID>
+python -m avs render rough <ID>
+python -m avs qa <ID>
+python -m avs deliver <ID>
+```
+
+npm 命令只是薄包装，业务逻辑全在 Python CLI。
+
+## 核心约束
+
+1. 原始素材不可变：`input/` 只读，绝不修改
+2. Episode 状态机不可跳过，不可手工伪造
+3. `timeline.json` 是所有渲染器共享的唯一协议
+4. HyperFrames 只负责动效片段，必须有 FFmpeg 降级路径
+5. Skills 只在 `skills-src/` 修改，运行 `npm run skills:sync` 同步
+6. 不自动发布，不存储密钥（`.env` 已被 gitignore）
+7. 未运行验证命令，不得声称完成
+8. 完成报告必须包含：命令、退出码、产物路径、已知限制
+
+## 状态机（禁止跳过）
+
+```
+CREATED → INGESTED → REFERENCE_READY → CONTENT_READY
+→ ASSETS_READY → TIMELINE_READY → ROUGH_CUT_READY
+→ QA_PASSED → DELIVERY_READY
+```
+
+## 禁止
+
+- 提前实现后续模块
+- 创建空函数/伪实现冒充完成
+- 覆盖或移动用户原始媒体
+- 把整个业务流程写进 HyperFrames HTML
