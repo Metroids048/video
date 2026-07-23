@@ -3,13 +3,18 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+import json
+import importlib.util
 
 import pytest
+from click.testing import CliRunner
 
 from avs.timeline.models import Canvas, Clip, Timeline, Track
 from avs.render.captions import build_srt, _seconds_to_srt_time, has_subtitle_overflow
-from avs.render.audio import ffmpeg_available
+from avs.cli import main
+from avs.models.episode import EpisodeModel
+from avs.paths import create_episode_skeleton
 
 
 # ── SRT 生成测试 ──────────────────────────────────────────────────────────
@@ -118,8 +123,8 @@ class TestRenderRoughCut:
         assert result["preview_with_captions"].exists()
         assert result["preview_clean"].stat().st_size > 0
 
-    def test_render_idempotent(self, tmp_path):
-        """已存在且 force=False 时直接返回，不重新渲染。"""
+    @pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"), reason="ffmpeg 不可用")
+    def test_invalid_cache_is_rebuilt(self, tmp_path):
         ep_dir = tmp_path / "ep"
         ep_dir.mkdir()
         (ep_dir / "work").mkdir()
@@ -135,8 +140,20 @@ class TestRenderRoughCut:
 
         from avs.render import render_rough_cut
         result = render_rough_cut(ep_dir, tl, force=False)
-        # 应返回已有文件（内容未变）
-        assert result["preview_clean"].read_bytes() == b"fake"
+        assert result["preview_clean"].read_bytes() != b"fake"
+
+    @pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"), reason="ffmpeg 不可用")
+    def test_valid_render_cache_is_idempotent(self, tmp_path):
+        ep_dir = tmp_path / "ep"
+        ep_dir.mkdir()
+        (ep_dir / "work").mkdir()
+        (ep_dir / "renders").mkdir()
+        tl = self._make_timeline(ep_dir)
+        from avs.render import render_rough_cut
+        first = render_rough_cut(ep_dir, tl, force=True)
+        mtime = first["preview_clean"].stat().st_mtime_ns
+        second = render_rough_cut(ep_dir, tl, force=False)
+        assert second["preview_clean"].stat().st_mtime_ns == mtime
 
     def test_render_error_no_ffmpeg(self, tmp_path):
         """ffmpeg 不可用时抛出 RenderError。"""
@@ -176,3 +193,64 @@ class TestLayouts:
         from avs.render.layouts import choose_layout
         f = choose_layout({"layout": "cover"}, 1920, 1080)
         assert "crop" in f
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"), reason="ffmpeg 不可用")
+def test_timeline_and_render_cli_state_sequence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path
+    real_root = Path(__file__).resolve().parents[1]
+    shutil.copytree(real_root / "config", root / "config")
+    (root / "AGENTS.md").write_text("# test", encoding="utf-8")
+    ep_dir = root / "episodes" / "active" / "EP-M6-CLI"
+    ep_dir.mkdir(parents=True)
+    create_episode_skeleton(ep_dir)
+    content = ep_dir / "work" / "content"
+    (content / "script.json").write_text(json.dumps({
+        "segments": [{"segment_id": "seg001", "text": "模块六真实字幕"}],
+    }), encoding="utf-8")
+    (content / "storyboard.json").write_text(json.dumps({
+        "shots": [{
+            "scene_id": "scene001", "script_segment_ids": ["seg001"],
+            "duration": 2.0, "visual_type": "placeholder", "asset_ids": [],
+            "caption": "模块六真实字幕", "motion_template": None,
+            "missing_assets": ["演示占位素材"], "notes": None,
+        }],
+    }), encoding="utf-8")
+    (ep_dir / "work" / "asset-manifest.json").write_text(
+        json.dumps({"assets": []}), encoding="utf-8",
+    )
+    model = EpisodeModel.create("EP-M6-CLI", mode="ORIGINAL")
+    for status in ("INGESTED", "CONTENT_READY", "ASSETS_READY"):
+        model.transition(status)
+    for stage in ("ingest", "content", "assets"):
+        model.complete_stage(stage)
+    model.save(ep_dir / "episode.json")
+    monkeypatch.setattr("avs.cli_timeline._find_project_root", lambda: root)
+    runner = CliRunner()
+
+    timeline = runner.invoke(main, ["timeline", "build", "EP-M6-CLI"])
+    assert timeline.exit_code == 0, timeline.output
+    assert EpisodeModel.load(ep_dir / "episode.json").status == "TIMELINE_READY"
+    subtitles = runner.invoke(main, ["subtitles", "build", "EP-M6-CLI"])
+    assert subtitles.exit_code == 0, subtitles.output
+    render = runner.invoke(main, ["render", "rough", "EP-M6-CLI"])
+    assert render.exit_code == 0, render.output
+    assert EpisodeModel.load(ep_dir / "episode.json").status == "ROUGH_CUT_READY"
+    assert (ep_dir / "renders" / "preview-clean.mp4").is_file()
+    assert (ep_dir / "renders" / "preview-with-captions.mp4").is_file()
+
+
+def test_module6_demo_requires_force_to_replace_existing_episode(tmp_path: Path) -> None:
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "create_module6_demo.py"
+    spec = importlib.util.spec_from_file_location("create_module6_demo", script_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.create_demo(tmp_path)
+    marker = tmp_path / "episodes" / "active" / "EP-M6-DEMO" / "input" / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    with pytest.raises(FileExistsError, match="--force"):
+        module.create_demo(tmp_path)
+    assert marker.read_text(encoding="utf-8") == "keep"

@@ -30,17 +30,31 @@ def _load_json(path: Path) -> dict[str, Any]:
         return json.load(fh)
 
 
-def _resolve_asset(ep_dir: Path, asset_ref: str | None, manifest: dict) -> tuple[str | None, bool]:
-    """返回 (相对工作路径, is_missing)。"""
+def _prepared_working_path(ep_dir: Path, value: object) -> str | None:
+    if not isinstance(value, str) or not value:
+        return None
+    path = Path(value)
+    if path.is_absolute() or ".." in path.parts:
+        return None
+    normalized = path.as_posix()
+    if not normalized.startswith("work/prepared/"):
+        return None
+    return normalized if (ep_dir / path).is_file() else None
+
+
+def _resolve_asset(
+    ep_dir: Path, asset_ref: str | None, manifest: dict,
+) -> tuple[str | None, bool, str]:
+    """返回 (相对工作路径, is_missing, layout)。"""
     if not asset_ref:
-        return None, True
+        return None, True, "contain"
     for a in manifest.get("assets", []):
         if a["asset_id"] == asset_ref or a["source_path"].endswith(asset_ref):
-            if a["status"] == "ok":
-                return a["working_path"], False
-            else:
-                return None, True
-    return None, True
+            working_path = _prepared_working_path(ep_dir, a.get("working_path"))
+            if a["status"] == "ok" and working_path:
+                return working_path, False, a.get("layout") or "contain"
+            return None, True, "contain"
+    return None, True, "contain"
 
 
 def build_timeline(
@@ -79,6 +93,15 @@ def build_timeline(
             manifest = _load_json(p)
             break
 
+    script: dict = {"segments": []}
+    script_path = ep_dir / "work" / "content" / "script.json"
+    if script_path.exists():
+        script = _load_json(script_path)
+    script_text = {
+        segment["segment_id"]: segment.get("text", "")
+        for segment in script.get("segments", [])
+    }
+
     # ── 构建视频轨 ────────────────────────────────────────────────────────
 
     video_clips: list[Clip] = []
@@ -86,38 +109,50 @@ def build_timeline(
     current_t = 0.0
 
     if storyboard:
-        shots = sorted(storyboard.get("shots", []), key=lambda s: s.get("order", 0))
-        for shot in shots:
-            dur = float(shot.get("duration_estimate") or _DEFAULT_SHOT_DURATION)
+        shots = storyboard.get("shots", [])
+        for index, shot in enumerate(shots):
+            scene_id = shot.get("scene_id") or shot.get("shot_id") or f"scene{index + 1:03d}"
+            dur = float(shot.get("duration") or shot.get("duration_estimate") or _DEFAULT_SHOT_DURATION)
             dur = max(dur, _MIN_PLACEHOLDER_DURATION)
 
-            asset_ref = shot.get("asset_ref")
-            working_path, is_missing = _resolve_asset(ep_dir, asset_ref, manifest)
+            asset_ids = shot.get("asset_ids") or []
+            asset_ref = asset_ids[0] if asset_ids else shot.get("asset_ref")
+            working_path, is_missing, layout = _resolve_asset(ep_dir, asset_ref, manifest)
 
             transform: dict | None = None
             if working_path:
                 # 检测横屏素材（简单启发：宽>高）→ 使用 contain
                 # 在实际 render 时 ffprobe 会做精确判断
-                transform = {"layout": "contain", "zoom_meta": None}
+                transform = {"layout": layout, "zoom_meta": None}
+
+            segment_ids = shot.get("script_segment_ids") or []
+            caption_text = " ".join(script_text.get(item, "") for item in segment_ids).strip()
+            caption_text = caption_text or shot.get("caption") or shot.get("description") or ""
+            placeholder_text = (
+                "; ".join(shot.get("missing_assets") or [])
+                or shot.get("gap_note")
+                or caption_text
+                or "[待补充视频素材]"
+            )
 
             clip = Clip(
-                clip_id=f"v-{shot['shot_id']}",
+                clip_id=f"v-{scene_id}",
                 start=current_t,
                 duration=dur,
                 asset_ref=working_path,
                 in_point=0.0,
                 out_point=dur,
                 transform=transform,
-                text=shot.get("description") if is_missing else None,
+                text=placeholder_text if is_missing else None,
                 style={"placeholder": True} if is_missing else None,
             )
             video_clips.append(clip)
 
             # 字幕草稿（来自分镜描述，无旁白时使用）
-            cap_text = shot.get("description") or shot.get("gap_note") or ""
+            cap_text = caption_text
             if cap_text:
                 caption_clips.append(Clip(
-                    clip_id=f"cap-{shot['shot_id']}",
+                    clip_id=f"cap-{scene_id}",
                     start=current_t,
                     duration=dur,
                     text=cap_text,
@@ -142,35 +177,37 @@ def build_timeline(
     voice_clips: list[Clip] = []
     music_clips: list[Clip] = []
 
-    # 旁白
-    narration_candidates = [
-        ep_dir / "work" / "prepared" / "narration.wav",
-        ep_dir / "input" / "audio" / "narration.wav",
-        ep_dir / "work" / "content" / "narration.wav",
+    # 旁白和 BGM 只从 Manifest 的工作副本选择。
+    audio_assets = [
+        asset for asset in manifest.get("assets", [])
+        if asset.get("kind") == "audio" and asset.get("status") == "ok"
+        and _prepared_working_path(ep_dir, asset.get("working_path"))
     ]
-    for nc in narration_candidates:
-        if nc.exists():
+    for asset in audio_assets:
+        source_name = Path(asset["source_path"]).name.lower()
+        if source_name.startswith(("narration", "voice")):
+            working_path = _prepared_working_path(ep_dir, asset.get("working_path"))
+            assert working_path is not None
             voice_clips.append(Clip(
                 clip_id="voice-narration",
                 start=0.0,
                 duration=current_t,
-                asset_ref=str(nc.relative_to(ep_dir)),
+                asset_ref=working_path,
                 style={"volume": 1.0, "role": "voice"},
             ))
             break
 
-    # BGM
-    bgm_candidates = list((ep_dir / "input" / "audio").glob("bgm*")) + \
-                     list((ep_dir / "input" / "audio").glob("music*"))
-    if bgm_candidates:
-        bgm = bgm_candidates[0]
-        music_clips.append(Clip(
-            clip_id="music-bgm",
-            start=0.0,
-            duration=current_t,
-            asset_ref=str(bgm.relative_to(ep_dir)),
-            style={"volume": 0.3, "ducking": True, "role": "bgm"},
-        ))
+    for asset in audio_assets:
+        source_name = Path(asset["source_path"]).name.lower()
+        if source_name.startswith(("bgm", "music")):
+            working_path = _prepared_working_path(ep_dir, asset.get("working_path"))
+            assert working_path is not None
+            music_clips.append(Clip(
+                clip_id="music-bgm", start=0.0, duration=current_t,
+                asset_ref=working_path,
+                style={"volume": 0.3, "ducking": True, "role": "bgm"},
+            ))
+            break
 
     # ── 组装 Timeline ────────────────────────────────────────────────────
 
@@ -184,17 +221,45 @@ def build_timeline(
     if caption_clips:
         tracks.append(Track(track_id="captions-main", kind="caption", clips=caption_clips))
 
+    total_duration = current_t
+    graphic_clips: list[Clip] = []
+    graphic_t = 0.0
+    for index, shot in enumerate(storyboard.get("shots", []) if storyboard else []):
+        duration = max(
+            float(shot.get("duration") or shot.get("duration_estimate") or _DEFAULT_SHOT_DURATION),
+            _MIN_PLACEHOLDER_DURATION,
+        )
+        template = shot.get("motion_template")
+        if template:
+            scene_id = shot.get("scene_id") or shot.get("shot_id") or f"scene{index + 1:03d}"
+            graphic_clips.append(Clip(
+                clip_id=f"graphic-{scene_id}", start=graphic_t, duration=duration,
+                text=shot.get("caption") or shot.get("description"),
+                style={"motion_template": template},
+            ))
+        graphic_t += duration
+    if graphic_clips:
+        tracks.append(Track(track_id="graphics-main", kind="graphic", clips=graphic_clips))
+
     timeline = Timeline(
         episode_id=episode_id,
         canvas=Canvas(width=1080, height=1920, fps=30.0),
         tracks=tracks,
     )
-    timeline.total_duration = current_t
+    timeline.total_duration = total_duration
 
     # 确保目录存在
     timeline_path.parent.mkdir(parents=True, exist_ok=True)
     timeline.save(timeline_path)
+    missing = [clip for clip in video_clips if (clip.style or {}).get("placeholder")]
+    notes_path = ep_dir / "work" / "edit-notes-draft.md"
+    notes_path.write_text(
+        "# Edit Notes Draft\n\n" + "\n".join(
+            f"- {clip.clip_id}: {clip.text or 'missing asset'}" for clip in missing
+        ) + "\n",
+        encoding="utf-8",
+    )
     logger.info("timeline.json 已生成: %s  总时长 %.1fs  %d 轨 %d clips",
-                timeline_path, current_t, len(tracks),
+                timeline_path, total_duration, len(tracks),
                 sum(len(t.clips) for t in tracks))
     return timeline

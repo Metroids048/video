@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from avs.render.filters import scale_pad_filter, scale_crop_filter
+from avs.render.filters import scale_pad_filter
 from avs.render.layouts import choose_layout
 from avs.timeline.models import Clip, Timeline
 
@@ -83,6 +83,21 @@ def _is_video(path: Path) -> bool:
     return path.suffix.lower() in _VIDEO_EXTS
 
 
+def _resolve_prepared_asset(ep_dir: Path, asset_ref: str | None) -> Path | None:
+    if not asset_ref:
+        return None
+    ref = Path(asset_ref)
+    if ref.is_absolute() or ".." in ref.parts:
+        return None
+    candidate = (ep_dir / ref).resolve()
+    prepared_root = (ep_dir / "work" / "prepared").resolve()
+    try:
+        candidate.relative_to(prepared_root)
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
+
+
 def _render_segment(
     clip: Clip,
     ep_dir: Path,
@@ -97,10 +112,7 @@ def _render_segment(
 
     # 确定素材路径
     asset_path: Path | None = None
-    if clip.asset_ref:
-        candidate = ep_dir / clip.asset_ref
-        if candidate.exists():
-            asset_path = candidate
+    asset_path = _resolve_prepared_asset(ep_dir, clip.asset_ref)
 
     dur = clip.duration
     in_pt = clip.in_point if clip.in_point is not None else 0.0
@@ -108,7 +120,6 @@ def _render_segment(
     # ── 占位卡（黑底白字）────────────────────────────────────────────────
     if asset_path is None:
         text = clip.text or "[缺失素材]"
-        vf = placeholder_drawtext_filter(text, CANVAS_W, CANVAS_H, FPS)
         cmd = [
             "ffmpeg", "-y",
             "-f", "lavfi", "-i", f"color=c=black:s={CANVAS_W}x{CANVAS_H}:r={FPS}:d={dur}",
@@ -218,7 +229,7 @@ def _mix_audio_and_mux(
         cmd = [
             "ffmpeg", "-y",
             "-i", str(video_path),
-            "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo",
+            "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
             "-shortest",
             "-c:v", "copy",
             "-c:a", "aac", "-b:a", "128k",
@@ -239,7 +250,8 @@ def _mix_audio_and_mux(
             "ffmpeg", "-y",
             *inputs,
             "-filter_complex",
-            f"[{audio_src_idx}:a]volume={vol},atrim=duration={total_duration},apad[a]",
+            f"[{audio_src_idx}:a]volume={vol},atrim=duration={total_duration},"
+            "apad,alimiter=limit=0.95[a]",
             "-map", "0:v",
             "-map", "[a]",
             "-c:v", "copy",
@@ -257,7 +269,7 @@ def _mix_audio_and_mux(
         "-filter_complex",
         f"[{voice_idx}:a]volume={voice_volume},atrim=duration={total_duration}[v];"
         f"[{bgm_idx}:a]volume={bgm_volume},atrim=duration={total_duration}[b];"
-        f"[v][b]amix=inputs=2:duration=first[a]",
+        f"[v][b]amix=inputs=2:duration=first,alimiter=limit=0.95[a]",
         "-map", "0:v",
         "-map", "[a]",
         "-c:v", "copy",
@@ -295,11 +307,31 @@ def _burn_captions(
         "-c:a", "copy",
         str(output_path),
     ]
-    try:
-        _run(cmd, "burn subtitles")
-    except RenderError as exc:
-        logger.warning("字幕烧录失败，复制无字幕版本: %s", exc)
-        shutil.copy2(str(input_video), str(output_path))
+    _run(cmd, "burn subtitles")
+
+
+def _validate_render_output(path: Path) -> None:
+    if not ffprobe_available():
+        raise RenderError("ffprobe 未安装，无法验证渲染产物")
+    probe = _run([
+        "ffprobe", "-v", "error", "-print_format", "json",
+        "-show_streams", "-show_format", str(path),
+    ], f"validate {path.name}", timeout=30)
+    data = json.loads(probe.stdout)
+    video = next((s for s in data.get("streams", []) if s.get("codec_type") == "video"), None)
+    audio = next((s for s in data.get("streams", []) if s.get("codec_type") == "audio"), None)
+    if not video or int(video.get("width", 0)) != CANVAS_W or int(video.get("height", 0)) != CANVAS_H:
+        raise RenderError(f"{path.name} 视频尺寸不是 {CANVAS_W}x{CANVAS_H}")
+    fps_text = video.get("avg_frame_rate") or video.get("r_frame_rate") or "0/1"
+    numerator, denominator = (int(value) for value in fps_text.split("/"))
+    fps = numerator / denominator if denominator else 0
+    if abs(fps - FPS) > 0.05 or video.get("codec_name") != "h264":
+        raise RenderError(f"{path.name} 视频编码或帧率不合规")
+    if not audio or audio.get("codec_name") != "aac":
+        raise RenderError(f"{path.name} 缺少 AAC 音轨")
+    _run([
+        "ffmpeg", "-v", "error", "-i", str(path), "-f", "null", "-",
+    ], f"decode {path.name}", timeout=120)
 
 
 def render_rough_cut(
@@ -323,8 +355,13 @@ def render_rough_cut(
 
     # 幂等检查
     if clean_out.exists() and captions_out.exists() and not force:
-        logger.info("粗剪产物已存在，跳过渲染（use --force 重建）")
-        return {"preview_clean": clean_out, "preview_with_captions": captions_out}
+        try:
+            _validate_render_output(clean_out)
+            _validate_render_output(captions_out)
+            logger.info("粗剪产物已验证，跳过渲染（use --force 重建）")
+            return {"preview_clean": clean_out, "preview_with_captions": captions_out}
+        except RenderError:
+            logger.warning("已有粗剪产物无效，自动重建")
 
     # ── 阶段1：逐 clip 渲染标准化段 ────────────────────────────────────
     video_track = None
@@ -358,7 +395,9 @@ def render_rough_cut(
             if t.kind == "audio" and t.clips:
                 clip = t.clips[0]
                 if clip.asset_ref:
-                    p = ep_dir / clip.asset_ref
+                    p = _resolve_prepared_asset(ep_dir, clip.asset_ref)
+                    if p is None:
+                        continue
                     style = clip.style or {}
                     role = style.get("role", "")
                     if role == "voice" or "voice" in t.track_id:
@@ -385,5 +424,8 @@ def render_rough_cut(
 
         _burn_captions(clean_out, srt_path, captions_out)
         logger.info("preview-with-captions.mp4 已生成: %s", captions_out)
+
+        _validate_render_output(clean_out)
+        _validate_render_output(captions_out)
 
     return {"preview_clean": clean_out, "preview_with_captions": captions_out}

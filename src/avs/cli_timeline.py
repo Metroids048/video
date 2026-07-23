@@ -86,7 +86,8 @@ def register_commands(main_group: click.Group) -> None:
             model.complete_stage("timeline")
             model.save(ep_json)
         except Exception as exc:
-            console.print(f"[yellow]⚠ 状态转换失败: {exc}[/yellow]")
+            console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
+            sys.exit(1)
 
         total_dur = tl.total_duration or tl.compute_duration()
         console.print(
@@ -158,7 +159,7 @@ def register_commands(main_group: click.Group) -> None:
             sys.exit(1)
 
         if srt_path.exists() and not force:
-            console.print(f"[green]✓ captions.srt 已存在（use --force 重建）[/green]")
+            console.print("[green]✓ captions.srt 已存在（use --force 重建）[/green]")
             sys.exit(0)
 
         try:
@@ -240,7 +241,8 @@ def register_commands(main_group: click.Group) -> None:
             model.complete_stage("rough_cut")
             model.save(ep_json)
         except Exception as exc:
-            console.print(f"[yellow]⚠ 状态转换失败: {exc}[/yellow]")
+            console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
+            sys.exit(1)
 
         clean = result["preview_clean"]
         cap = result["preview_with_captions"]
@@ -305,7 +307,8 @@ def register_commands(main_group: click.Group) -> None:
             model.complete_stage("qa")
             model.save(ep_json)
         except Exception as exc:
-            console.print(f"[yellow]⚠ 状态转换失败: {exc}[/yellow]")
+            console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
+            sys.exit(1)
 
         console.print(f"[green]✓ QA 通过[/green]  warning: {len(warnings)}")
         sys.exit(0)
@@ -335,7 +338,7 @@ def register_commands(main_group: click.Group) -> None:
 
         try:
             from avs.delivery import run_delivery
-            manifest = run_delivery(ep_dir, model, force=force)
+            run_delivery(ep_dir, model, force=force)
         except ImportError:
             console.print("[yellow]⚠ delivery 模块尚未实现（模块8），跳过[/yellow]")
             sys.exit(1)
@@ -349,9 +352,10 @@ def register_commands(main_group: click.Group) -> None:
             model.complete_stage("delivery")
             model.save(ep_json)
         except Exception as exc:
-            console.print(f"[yellow]⚠ 状态转换失败: {exc}[/yellow]")
+            console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
+            sys.exit(1)
 
-        console.print(f"[green]✓ 交付包生成完成[/green]")
+        console.print("[green]✓ 交付包生成完成[/green]")
         sys.exit(0)
 
     # ── run（全流程）──────────────────────────────────────────────────
@@ -362,13 +366,11 @@ def register_commands(main_group: click.Group) -> None:
         """全流程执行: timeline→subtitles→render→qa→deliver。"""
         import logging
         from avs.config import Config
-        from avs.models.episode import EpisodeModel
-        from avs.paths import episode_json_path
 
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
         root = _find_project_root()
         cfg = Config(root)
-        ep_dir = _get_ep_dir(cfg, episode_id)
+        _get_ep_dir(cfg, episode_id)
 
         steps = ["timeline build", "subtitles build", "render rough"]
         for step in steps:
@@ -380,7 +382,7 @@ def register_commands(main_group: click.Group) -> None:
             env = _os.environ.copy()
             env.setdefault("PYTHONPATH", str(root / "src"))
             ret = _sp.run(
-                ["python", "-m", "avs"] + step.split() + [episode_id] + force_args,
+                [sys.executable, "-m", "avs"] + step.split() + [episode_id] + force_args,
                 cwd=str(root),
                 env=env,
             )
@@ -388,5 +390,5 @@ def register_commands(main_group: click.Group) -> None:
                 console.print(f"[red]✗ {step} 失败（exit {ret.returncode}），中止 run[/red]")
                 sys.exit(ret.returncode)
 
-        console.print(f"\n[green]✓ 全流程完成[/green]")
+        console.print("\n[green]✓ 全流程完成[/green]")
         sys.exit(0)

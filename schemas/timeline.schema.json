@@ -12,6 +12,7 @@
     "canvas": {
       "type": "object",
       "required": ["width", "height", "fps"],
+      "additionalProperties": false,
       "properties": {
         "width": {"type": "integer"},
         "height": {"type": "integer"},
@@ -24,6 +25,7 @@
       "items": {
         "type": "object",
         "required": ["track_id", "kind", "clips"],
+        "additionalProperties": false,
         "properties": {
           "track_id": {"type": "string"},
           "kind": {"type": "string", "enum": ["video", "audio", "caption", "graphic"]},
@@ -32,6 +34,7 @@
             "items": {
               "type": "object",
               "required": ["clip_id", "start", "duration"],
+              "additionalProperties": false,
               "properties": {
                 "clip_id": {"type": "string"},
                 "start": {"type": "number", "minimum": 0},

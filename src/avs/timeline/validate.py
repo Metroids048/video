@@ -57,7 +57,9 @@ def validate_timeline(
     # ── JSON Schema 校验 ────────────────────────────────────────────────
     try:
         schema = _load_schema(schema_path)
-        jsonschema.validate(data, schema)
+        jsonschema.Draft7Validator(
+            schema, format_checker=jsonschema.FormatChecker(),
+        ).validate(data)
     except jsonschema.ValidationError as exc:
         raise TimelineValidationError(f"Schema 校验失败: {exc.message}") from exc
 
@@ -91,6 +93,22 @@ def validate_timeline(
 
             if dur <= 0:
                 issues.append(ValidationIssue("error", f"[{tid}/{cid}] duration 必须 > 0"))
+
+            asset_ref = clip.get("asset_ref")
+            if asset_ref:
+                ref = Path(asset_ref)
+                if ref.is_absolute() or ".." in ref.parts:
+                    issues.append(ValidationIssue("error", f"[{tid}/{cid}] asset_ref 非法路径"))
+                elif not ref.as_posix().startswith("work/prepared/"):
+                    issues.append(ValidationIssue(
+                        "error", f"[{tid}/{cid}] asset_ref 必须引用 work/prepared 工作副本",
+                    ))
+                else:
+                    episode_dir = timeline_path.parent.parent
+                    if not (episode_dir / ref).is_file():
+                        issues.append(ValidationIssue(
+                            "error", f"[{tid}/{cid}] asset_ref 文件不存在: {asset_ref}",
+                        ))
 
             # 字幕越界检测
             if track.get("kind") == "caption":

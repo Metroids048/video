@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import shutil
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -150,6 +149,17 @@ class TestTimelineValidate:
         warns = [i for i in issues if i.level == "warning"]
         assert any("1920" in i.message or "非标准" in i.message for i in warns)
 
+    def test_input_asset_reference_is_rejected(self, tmp_ep, schema_path):
+        tl = Timeline("EP-X", tracks=[
+            Track("video-main", "video", [
+                Clip("v1", 0.0, 3.0, asset_ref="input/images/raw.png"),
+            ]),
+        ], total_duration=3.0)
+        path = tmp_ep / "work" / "timeline.json"
+        tl.save(path)
+        issues = validate_timeline(path, schema_path=schema_path)
+        assert any("work/prepared" in item.message for item in issues if item.level == "error")
+
 
 # ── CSV 导出测试 ───────────────────────────────────────────────────────────
 
@@ -213,10 +223,61 @@ class TestTimelineBuilder:
 
     def test_build_force_rebuilds(self, tmp_ep):
         from avs.timeline.builder import build_timeline
-        tl1 = build_timeline(tmp_ep, "EP-TL-TEST")
+        build_timeline(tmp_ep, "EP-TL-TEST")
         path = tmp_ep / "work" / "timeline.json"
         mtime1 = path.stat().st_mtime
-        import time; time.sleep(0.05)
-        tl2 = build_timeline(tmp_ep, "EP-TL-TEST", force=True)
+        import time
+        time.sleep(0.05)
+        build_timeline(tmp_ep, "EP-TL-TEST", force=True)
         mtime2 = path.stat().st_mtime
         assert mtime2 >= mtime1
+
+    def test_builds_canonical_storyboard_with_traceable_captions(self, tmp_ep):
+        from avs.timeline.builder import build_timeline
+        content_dir = tmp_ep / "work" / "content"
+        prepared = tmp_ep / "work" / "prepared" / "images" / "proof.png"
+        prepared.parent.mkdir(parents=True)
+        prepared.write_bytes(b"fixture")
+        content_dir.mkdir(parents=True, exist_ok=True)
+        (content_dir / "script.json").write_text(json.dumps({
+            "segments": [{"segment_id": "seg001", "text": "真实脚本文本"}],
+        }), encoding="utf-8")
+        (content_dir / "storyboard.json").write_text(json.dumps({
+            "shots": [{
+                "scene_id": "scene001", "script_segment_ids": ["seg001"],
+                "duration": 3.0, "visual_type": "image", "asset_ids": ["asset-proof"],
+                "caption": "fallback", "motion_template": "InfoCard",
+                "missing_assets": [], "notes": "contain",
+            }],
+        }), encoding="utf-8")
+        (tmp_ep / "work" / "asset-manifest.json").write_text(json.dumps({
+            "assets": [{
+                "asset_id": "asset-proof", "source_path": "input/images/proof.png",
+                "working_path": "work/prepared/images/proof.png", "status": "ok",
+                "layout": "contain",
+            }],
+        }), encoding="utf-8")
+        timeline = build_timeline(tmp_ep, "EP-TL-TEST", force=True)
+        assert timeline.get_track("video").clips[0].asset_ref == "work/prepared/images/proof.png"
+        assert timeline.get_track("caption").clips[0].text == "真实脚本文本"
+        assert timeline.get_track("graphic").clips[0].style["motion_template"] == "InfoCard"
+
+    def test_audio_tracks_only_use_existing_prepared_working_copies(self, tmp_ep):
+        from avs.timeline.builder import build_timeline
+        prepared = tmp_ep / "work" / "prepared" / "audio" / "narration.wav"
+        prepared.parent.mkdir(parents=True)
+        prepared.write_bytes(b"audio fixture")
+        (tmp_ep / "work" / "asset-manifest.json").write_text(json.dumps({
+            "assets": [
+                {"asset_id": "voice", "kind": "audio", "status": "ok",
+                 "source_path": "input/audio/narration.wav",
+                 "working_path": "work/prepared/audio/narration.wav"},
+                {"asset_id": "unsafe", "kind": "audio", "status": "ok",
+                 "source_path": "input/audio/bgm.wav",
+                 "working_path": "input/audio/bgm.wav"},
+            ],
+        }), encoding="utf-8")
+        timeline = build_timeline(tmp_ep, "EP-TL-TEST", force=True)
+        audio_tracks = [track for track in timeline.tracks if track.kind == "audio"]
+        assert len(audio_tracks) == 1
+        assert audio_tracks[0].clips[0].asset_ref == "work/prepared/audio/narration.wav"

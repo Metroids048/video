@@ -83,7 +83,7 @@ def has_subtitle_overflow(srt_path: Path, total_duration: float) -> list[str]:
 
     content = srt_path.read_text(encoding="utf-8")
     for block in content.strip().split("\n\n"):
-        lines_b = [l.strip() for l in block.strip().splitlines()]
+        lines_b = [line.strip() for line in block.strip().splitlines()]
         if len(lines_b) < 2:
             continue
         idx = lines_b[0]
