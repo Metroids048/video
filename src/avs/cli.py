@@ -597,6 +597,13 @@ def reference_analyze(episode_id: str, transcription: str, force: bool) -> None:
         model.save(ep_json)
         sys.exit(1)
 
+    if not recipes:
+        console.print(
+            "[yellow]⚠ 未找到可分析的参考视频；保持当前状态，"
+            "可直接执行内容工作流[/yellow]"
+        )
+        sys.exit(0)
+
     # 状态转换 → REFERENCE_READY
     try:
         model.ensure_stage("reference", "REFERENCE_READY")
@@ -606,16 +613,10 @@ def reference_analyze(episode_id: str, transcription: str, force: bool) -> None:
         console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
         sys.exit(1)
 
-    if not recipes:
-        console.print(
-            "[yellow]⚠ 未找到参考视频（input/reference/ 下无 video）"
-            " — Episode 已转为 REFERENCE_READY，可继续内容模块[/yellow]"
-        )
-    else:
-        console.print(
-            f"[green]✓ 参考分析完成[/green]  共 {len(recipes)} 个参考视频  "
-            f"状态 → REFERENCE_READY"
-        )
+    console.print(
+        f"[green]✓ 参考分析完成[/green]  共 {len(recipes)} 个参考视频  "
+        f"状态 → REFERENCE_READY"
+    )
     sys.exit(0)
 
 

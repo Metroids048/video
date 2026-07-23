@@ -20,6 +20,7 @@ def extract_keyframes(
     output_dir: Path,
     *,
     timeout_per_frame: int = 20,
+    force: bool = False,
 ) -> dict[str, Path]:
     """为每个镜头在 start+0.5s 位置提取 JPEG 关键帧。
 
@@ -37,7 +38,7 @@ def extract_keyframes(
         seek_time = shot.start + min(0.5, (shot.end - shot.start) * 0.5)
         out_path = output_dir / f"{shot.shot_id}.jpg"
 
-        if out_path.exists():
+        if out_path.exists() and not force:
             result[shot.shot_id] = out_path
             continue
 

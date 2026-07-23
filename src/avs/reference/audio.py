@@ -19,6 +19,7 @@ def extract_audio(
     sample_rate: int = 16000,
     channels: int = 1,
     timeout: int = 120,
+    force: bool = False,
 ) -> Path | None:
     """提取视频音频为 WAV，返回输出路径；失败或无 FFmpeg 时返回 None。
 
@@ -29,9 +30,11 @@ def extract_audio(
         log.warning("ffmpeg 不可用，跳过音频提取: %s", video_path.name)
         return None
 
-    if output_path.exists():
+    if output_path.exists() and not force:
         log.info("音频已存在，跳过提取: %s", output_path)
         return output_path
+    if force:
+        output_path.unlink(missing_ok=True)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

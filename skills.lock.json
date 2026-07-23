@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-07-23T13:05:50.574290+00:00",
+  "locked_at": "2026-07-23T13:43:48.025087+00:00",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
   "project_skills": {
     "create-episode": {
@@ -24,7 +24,7 @@
       "status": "synced",
       "implemented_in_module": 4,
       "description": "分析参考视频，生成 reference-recipe.json 和结构报告",
-      "source_sha256": "94b59bf07af23bdf67061c9abe3f5720827122a004abe20240c86acfaea9f0b4"
+      "source_sha256": "2982828808ba7512c7e3328300ccc2d3b459e6f0e7db96aa90cd39b743e0300d"
     },
     "write-video-script": {
       "source": "skills-src/write-video-script",

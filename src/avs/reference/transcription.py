@@ -38,6 +38,7 @@ class TranscriptResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "status": "ready",
             "text": self.text,
             "segments": self.segments,
             "provider": self.provider,
@@ -93,6 +94,7 @@ def run_transcription(
     """
     if provider == "disabled":
         log.info("转写已禁用")
+        _write_status(output_path, "disabled", provider)
         return None
 
     result: TranscriptResult | None = None
@@ -105,6 +107,7 @@ def run_transcription(
 
     if result is None:
         log.info("无可用转写 Provider（provider=%s）— 跳过", provider)
+        _write_status(output_path, "unavailable", provider)
         return None
 
     # 保存 transcript.json
@@ -119,3 +122,19 @@ def run_transcription(
         tmp.unlink(missing_ok=True)
         log.warning("transcript.json 写入失败: %s", exc)
     return result
+
+
+def _write_status(output_path: Path, status: str, provider: str) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload: dict[str, Any] = {
+        "status": status,
+        "text": "",
+        "segments": [],
+        "provider": provider,
+        "language": None,
+        "generated_at": _now_iso(),
+    }
+    tmp = output_path.with_suffix(".json.tmp")
+    with tmp.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2)
+    tmp.replace(output_path)

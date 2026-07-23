@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Any
+import json
 
 from avs.ingest.manifest import load_manifest
 from avs.ingest.probe import probe_media
@@ -49,11 +50,19 @@ def run_reference_analyze(
 
     for asset in ref_assets:
         asset_id = asset["asset_id"]
-        video_path = episode_dir / asset["working_path"]
+        working_path = asset.get("working_path")
+        if not working_path:
+            log.warning("参考视频缺少工作副本，拒绝读取原始 input: %s", asset["source_path"])
+            continue
+        video_path = (episode_dir / working_path).resolve()
+        prepared_root = (episode_dir / "work" / "prepared").resolve()
+        try:
+            video_path.relative_to(prepared_root)
+        except ValueError:
+            log.warning("参考视频工作路径不在 work/prepared: %s", working_path)
+            continue
         if not video_path.exists():
-            video_path = episode_dir / asset["source_path"]
-        if not video_path.exists():
-            log.warning("参考视频文件不存在: %s", asset["source_path"])
+            log.warning("参考视频工作副本不存在: %s", working_path)
             continue
 
         log.info("分析参考视频: %s (%s)", asset_id, video_path.name)
@@ -62,7 +71,14 @@ def run_reference_analyze(
         asset_work_dir.mkdir(parents=True, exist_ok=True)
 
         # 1. FFprobe 探测（已在 ingest 阶段做过，但 recipe 需要 duration/fps）
-        probe = probe_media(video_path)
+        working_probe = probe_media(video_path)
+        probe = {
+            key: asset.get(key, working_probe.get(key))
+            for key in (
+                "duration", "width", "height", "fps", "has_audio",
+                "codec_video", "codec_audio",
+            )
+        }
         duration = probe.get("duration") or 0.0
         if duration <= 0:
             log.warning("无法获取视频时长，使用 0（可能无 ffprobe）")
@@ -70,7 +86,7 @@ def run_reference_analyze(
 
         # 2. 提取音频
         audio_out = asset_work_dir / "audio.wav"
-        audio_path = extract_audio(video_path, audio_out) if (not audio_out.exists() or force) else audio_out
+        audio_path = extract_audio(video_path, audio_out, force=force)
 
         # 3. 镜头检测
         shots = detect_shots(video_path, duration)
@@ -78,10 +94,10 @@ def run_reference_analyze(
 
         # 4. 关键帧提取
         kf_dir = asset_work_dir / "keyframes"
-        keyframe_paths = extract_keyframes(video_path, shots, kf_dir)
+        keyframe_paths = extract_keyframes(video_path, shots, kf_dir, force=force)
 
         # 5. 联系表
-        contact_out = asset_work_dir / "contact_sheet.jpg"
+        contact_out = asset_work_dir / "contact-sheet.jpg"
         if not contact_out.exists() or force:
             make_contact_sheet(keyframe_paths, contact_out)
 
@@ -106,8 +122,19 @@ def run_reference_analyze(
             transcript_text=transcript_text,
         )
 
-        out_path = save_recipe(episode_dir, recipe)
+        shots_path = asset_work_dir / "shots.json"
+        shots_path.write_text(
+            json.dumps([shot.to_dict() for shot in shots], ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        out_path = save_recipe(
+            episode_dir,
+            recipe,
+            output_path=asset_work_dir / "reference-recipe.json",
+        )
         log.info("Recipe 保存: %s", out_path)
         recipes.append(recipe)
 
+    if recipes:
+        save_recipe(episode_dir, recipes[0])
     return recipes

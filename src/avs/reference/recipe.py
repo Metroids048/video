@@ -48,11 +48,11 @@ def build_recipe(
             dur = probe["duration"]
             ratio_start = shot.start / dur
             ratio_end = shot.end / dur
-            words = transcript_text.split()
-            n = len(words)
+            tokens = transcript_text.split()
+            n = len(tokens)
             si = int(n * ratio_start)
             ei = int(n * ratio_end)
-            chunk = " ".join(words[si:ei]).strip()
+            chunk = " ".join(tokens[si:ei]).strip()
             shot_text = chunk if chunk else None
 
         shots_list.append({
@@ -78,6 +78,23 @@ def build_recipe(
     if probe.get("has_audio") is False:
         transferable.append("无音轨（纯字幕或静音）")
 
+    missing_analysis: list[str] = []
+    if not transcript_text:
+        missing_analysis.append("transcript")
+    if not keyframe_paths:
+        missing_analysis.append("keyframes")
+    if all(item["shot_type"] is None for item in shots_list):
+        missing_analysis.append("shot_type_classification")
+
+    word_count = len(transcript_text.split()) if transcript_text else 0
+    shots_per_second = round(n_shots / dur, 3) if dur else 0.0
+    words_per_second = round(word_count / dur, 3) if dur and word_count else None
+    confidence_values = [item["confidence"] for item in shots_list]
+    overall_confidence = (
+        round(sum(confidence_values) / len(confidence_values), 3)
+        if confidence_values else 0.0
+    )
+
     # 禁止复制的内容（根据模式设置）
     do_not_copy = [
         "原视频文案、台词、观点",
@@ -92,27 +109,47 @@ def build_recipe(
         "width": int(probe.get("width") or 1),
         "height": int(probe.get("height") or 1),
         "fps": round(float(probe.get("fps") or 30), 3),
+        "has_audio": probe.get("has_audio"),
         "shots": shots_list,
         "hook": shots_list[0].get("transcript") if shots_list else None,
         "narrative_segments": [s["shot_id"] for s in shots_list],
         "ending_style": shots_list[-1].get("transcript") if len(shots_list) > 1 else None,
         "transferable_rules": transferable,
         "do_not_copy": do_not_copy,
+        "structure": {
+            "opening": shots_list[0]["shot_id"] if shots_list else None,
+            "body": [item["shot_id"] for item in shots_list[1:-1]],
+            "ending": shots_list[-1]["shot_id"] if len(shots_list) > 1 else None,
+        },
+        "information_density": {
+            "shots_per_second": shots_per_second,
+            "words_per_second": words_per_second,
+        },
+        "missing_analysis": missing_analysis,
+        "overall_confidence": overall_confidence,
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),
     }
     return recipe
 
 
-def save_recipe(episode_dir: Path, recipe: dict[str, Any]) -> Path:
+def save_recipe(
+    episode_dir: Path,
+    recipe: dict[str, Any],
+    *,
+    output_path: Path | None = None,
+) -> Path:
     """校验并保存 reference-recipe.json，返回路径。"""
     # Schema 校验
     try:
         schema = _load_schema()
-        jsonschema.validate(recipe, schema)
+        jsonschema.Draft7Validator(
+            schema,
+            format_checker=jsonschema.FormatChecker(),
+        ).validate(recipe)
     except jsonschema.ValidationError as exc:
         raise ValueError(f"reference-recipe Schema 校验失败: {exc.message}") from exc
 
-    out = recipe_path(episode_dir)
+    out = output_path or recipe_path(episode_dir)
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_suffix(".json.tmp")
     try:

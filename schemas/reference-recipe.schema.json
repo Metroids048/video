@@ -4,8 +4,8 @@
   "title": "ReferenceRecipe",
   "description": "参考视频结构分析结果",
   "type": "object",
-  "required": ["episode_id", "source_asset_id", "duration", "width", "height", "fps", "shots", "generated_at"],
-  "additionalProperties": true,
+  "required": ["episode_id", "source_asset_id", "duration", "width", "height", "fps", "has_audio", "shots", "structure", "information_density", "missing_analysis", "overall_confidence", "generated_at"],
+  "additionalProperties": false,
   "properties": {
     "episode_id": {"type": "string"},
     "source_asset_id": {"type": "string"},
@@ -13,11 +13,13 @@
     "width": {"type": "integer", "exclusiveMinimum": 0},
     "height": {"type": "integer", "exclusiveMinimum": 0},
     "fps": {"type": "number", "exclusiveMinimum": 0},
+    "has_audio": {"type": ["boolean", "null"]},
     "shots": {
       "type": "array",
       "items": {
         "type": "object",
         "required": ["shot_id", "start", "end"],
+        "additionalProperties": false,
         "properties": {
           "shot_id": {"type": "string"},
           "start": {"type": "number", "minimum": 0},
@@ -34,6 +36,27 @@
     "ending_style": {"type": ["string", "null"]},
     "transferable_rules": {"type": "array", "items": {"type": "string"}},
     "do_not_copy": {"type": "array", "items": {"type": "string"}},
+    "structure": {
+      "type": "object",
+      "required": ["opening", "body", "ending"],
+      "additionalProperties": false,
+      "properties": {
+        "opening": {"type": ["string", "null"]},
+        "body": {"type": "array", "items": {"type": "string"}},
+        "ending": {"type": ["string", "null"]}
+      }
+    },
+    "information_density": {
+      "type": "object",
+      "required": ["shots_per_second", "words_per_second"],
+      "additionalProperties": false,
+      "properties": {
+        "shots_per_second": {"type": "number", "minimum": 0},
+        "words_per_second": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "missing_analysis": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "overall_confidence": {"type": "number", "minimum": 0, "maximum": 1},
     "generated_at": {"type": "string", "format": "date-time"}
   }
 }

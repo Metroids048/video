@@ -68,7 +68,7 @@ def _make_with_pillow(
     for i, p in enumerate(paths):
         try:
             img = Image.open(p).convert("RGB")
-            img.thumbnail((thumb_w, thumb_h), Image.LANCZOS)
+            img.thumbnail((thumb_w, thumb_h), Image.Resampling.LANCZOS)
             # 居中粘贴（contain）
             x_off = (thumb_w - img.width) // 2
             y_off = (thumb_h - img.height) // 2
@@ -98,7 +98,8 @@ def _make_with_ffmpeg(
         return None
 
     # 用 concat demuxer + tile filter
-    import tempfile, os
+    import os
+    import tempfile
     n = len(paths)
     rows = math.ceil(n / cols)
 

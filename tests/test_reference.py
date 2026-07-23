@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import sys
+import json
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -13,6 +17,10 @@ from avs.reference.audio import extract_audio
 from avs.reference.keyframes import extract_keyframes
 from avs.reference.recipe import load_recipe, recipe_path
 from avs.reference.shots import Shot, detect_shots
+from avs.ingest import run_ingest
+from avs.paths import create_episode_skeleton
+from avs.cli import main
+from avs.models.episode import EpisodeModel
 
 
 class TestShots:
@@ -75,3 +83,92 @@ class TestRunReferenceAnalyze:
         save_manifest(ep_dir, "EP-TEST-REF", [])
         recipes = run_reference_analyze(ep_dir, "EP-TEST-REF")
         assert recipes == []
+
+    def test_real_reference_outputs_and_schema(self, tmp_path: Path) -> None:
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            pytest.skip("ffmpeg/ffprobe required")
+        ep_dir = tmp_path / "EP-TEST-REF"
+        ep_dir.mkdir()
+        create_episode_skeleton(ep_dir)
+        video = ep_dir / "input" / "reference" / "参考.mp4"
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=blue:s=320x180:d=1",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+            "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", str(video),
+        ], check=True, capture_output=True)
+        run_ingest(ep_dir, "EP-TEST-REF")
+
+        recipes = run_reference_analyze(
+            ep_dir, "EP-TEST-REF", transcription_provider="disabled",
+        )
+        assert len(recipes) == 1
+        recipe = load_recipe(ep_dir)
+        assert recipe["width"] == 320
+        assert recipe["height"] == 180
+        assert recipe["has_audio"] is True
+        assert recipe["shots"]
+        assert 0 <= recipe["overall_confidence"] <= 1
+
+        asset_id = recipe["source_asset_id"]
+        output = ep_dir / "work" / "reference" / asset_id
+        assert (output / "shots.json").is_file()
+        assert (output / "contact-sheet.jpg").is_file()
+        assert list((output / "keyframes").glob("*.jpg"))
+        transcript = json.loads((output / "transcript.json").read_text(encoding="utf-8"))
+        assert transcript["status"] == "disabled"
+
+    def test_multiple_references_keep_per_asset_recipes(self, tmp_path: Path) -> None:
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            pytest.skip("ffmpeg/ffprobe required")
+        ep_dir = tmp_path / "EP-MULTI-REF"
+        ep_dir.mkdir()
+        create_episode_skeleton(ep_dir)
+        for index, color in enumerate(("red", "green"), start=1):
+            video = ep_dir / "input" / "reference" / f"ref-{index}.mp4"
+            subprocess.run([
+                "ffmpeg", "-y", "-f", "lavfi", "-i",
+                f"color=c={color}:s=160x284:d=0.3", "-an", "-c:v", "libx264",
+                "-pix_fmt", "yuv420p", str(video),
+            ], check=True, capture_output=True)
+        run_ingest(ep_dir, "EP-MULTI-REF")
+        recipes = run_reference_analyze(
+            ep_dir, "EP-MULTI-REF", transcription_provider="disabled",
+        )
+        assert len(recipes) == 2
+        for recipe in recipes:
+            path = (
+                ep_dir / "work" / "reference" / recipe["source_asset_id"]
+                / "reference-recipe.json"
+            )
+            assert path.is_file()
+
+    def test_reference_cli_updates_episode_state(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            pytest.skip("ffmpeg/ffprobe required")
+        root = tmp_path
+        real_root = Path(__file__).resolve().parents[1]
+        shutil.copytree(real_root / "config", root / "config")
+        (root / "AGENTS.md").write_text("# test", encoding="utf-8")
+        ep_dir = root / "episodes" / "active" / "EP-CLI-REF"
+        ep_dir.mkdir(parents=True)
+        create_episode_skeleton(ep_dir)
+        video = ep_dir / "input" / "reference" / "ref.mp4"
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=blue:s=160x284:d=0.3",
+            "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(video),
+        ], check=True, capture_output=True)
+        run_ingest(ep_dir, "EP-CLI-REF")
+        model = EpisodeModel.create("EP-CLI-REF")
+        model.transition("INGESTED")
+        model.complete_stage("ingest")
+        model.save(ep_dir / "episode.json")
+        monkeypatch.setattr("avs.cli._find_project_root", lambda: root)
+
+        result = CliRunner().invoke(
+            main, ["reference", "analyze", "EP-CLI-REF", "--transcription", "disabled"],
+        )
+        assert result.exit_code == 0, result.output
+        assert EpisodeModel.load(ep_dir / "episode.json").status == "REFERENCE_READY"

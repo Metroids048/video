@@ -8,12 +8,13 @@ read_only:
   - "schemas/reference-recipe.schema.json"
   - "episodes/active/<ID>/input/reference/（只读）"
 outputs:
-  - "episodes/active/<ID>/work/reference/transcript.json（可选，取决于 Provider）"
-  - "episodes/active/<ID>/work/reference/shots.json"
-  - "episodes/active/<ID>/work/reference/keyframes/"
-  - "episodes/active/<ID>/work/reference/contact-sheet.jpg"
+  - "episodes/active/<ID>/work/reference/<asset_id>/transcript.json（始终生成并标注 ready/disabled/unavailable）"
+  - "episodes/active/<ID>/work/reference/<asset_id>/shots.json"
+  - "episodes/active/<ID>/work/reference/<asset_id>/keyframes/"
+  - "episodes/active/<ID>/work/reference/<asset_id>/contact-sheet.jpg"
   - "episodes/active/<ID>/work/reference/reference-report.md"
-  - "episodes/active/<ID>/work/reference/reference-recipe.json"
+  - "episodes/active/<ID>/work/reference/reference-recipe.json（第一个参考视频的主 Recipe）"
+  - "episodes/active/<ID>/work/reference/<asset_id>/reference-recipe.json（逐素材 Recipe）"
 run: |
   python -m avs reference analyze <ID>
 verify: |
@@ -51,7 +52,7 @@ report_format: |
 
 读取确定性输出后，Agent 执行风格解释：
 
-- 阅读联系表、关键帧、shots.json 和 transcript.json（如有）
+- 先读取主 Recipe 的 `source_asset_id`，再阅读对应子目录下的联系表、关键帧、shots.json 和 transcript.json
 - 分析开头钩子、叙事段落、结尾方式
 - 标注可迁移的结构规则
 - 标注不应复制的原始内容
@@ -62,7 +63,7 @@ report_format: |
 - 字幕位置、转场意图、音乐节拍必须使用 `confidence`，不得假装确定
 - 不自动下载第三方平台视频
 - 转写 Provider 缺失时降级为 `manual` 模式
-- 无音轨视频正常处理（跳过转写步骤）
+- 无音轨视频正常处理，`transcript.json` 必须标注 `unavailable`
 - REFERENCE_CLONE 必须设 publishable=false，禁止生成发布包
 
 ## Agent 输出要求（reference-report.md）
