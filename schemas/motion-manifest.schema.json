@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "motion-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["episode_id", "generated_at", "clips", "composite_output"],
+  "properties": {
+    "episode_id": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "clips": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["clip_id", "template", "start", "duration", "status", "output", "warning"],
+        "properties": {
+          "clip_id": {"type": "string"},
+          "template": {"type": "string"},
+          "start": {"type": "number", "minimum": 0},
+          "duration": {"type": "number", "exclusiveMinimum": 0},
+          "status": {"enum": ["rendered", "fallback", "skipped"]},
+          "output": {"type": ["string", "null"]},
+          "warning": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "composite_output": {"type": ["string", "null"]}
+  }
+}

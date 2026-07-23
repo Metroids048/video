@@ -1,75 +1,51 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=1080, height=1920">
-  <title>InfoCard</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      width: 1080px;
-      height: 1920px;
-      background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-      overflow: hidden;
-    }
-    .card {
-      background: white;
-      border-radius: 32px;
-      padding: 80px 60px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-      max-width: 900px;
-      animation: slideInRight 0.7s ease-out;
-    }
-    .icon {
-      font-size: 120px;
-      margin-bottom: 40px;
-      animation: bounce 1s ease-out 0.3s;
-    }
-    .heading {
-      font-size: 56px;
-      font-weight: 800;
-      color: #212529;
-      margin-bottom: 30px;
-      animation: fadeIn 0.8s ease-out 0.4s both;
-    }
-    .content {
-      font-size: 38px;
-      color: #495057;
-      line-height: 1.6;
-      animation: fadeIn 0.8s ease-out 0.6s both;
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(100px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-20px); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon" id="icon">💡</div>
-    <div class="heading" id="heading">关键信息</div>
-    <div class="content" id="content">这里展示重要的数据或观点</div>
-  </div>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const icon = params.get('icon') || window.HYPERFRAMES_DATA?.icon || '💡';
-    const heading = params.get('heading') || window.HYPERFRAMES_DATA?.heading || '关键信息';
-    const content = params.get('content') || window.HYPERFRAMES_DATA?.content || '这里展示重要的数据或观点';
-    document.getElementById('icon').textContent = icon;
-    document.getElementById('heading').textContent = heading;
-    document.getElementById('content').textContent = content;
-  </script>
-</body>
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait" data-composition-variables='[
+  {"id":"label","type":"string","label":"Label","default":"核心要点"},
+  {"id":"heading","type":"string","label":"Heading","default":"把复杂流程拆成可验证的步骤"},
+  {"id":"content","type":"string","label":"Content","default":"每一步都留下可编辑产物，出错时保留基础粗剪。"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>InfoCard</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); }
+      * { box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; margin: 0; overflow: hidden; }
+      body { background: #ecf5f2; color: #13252b; font-family: "Microsoft YaHei", sans-serif; }
+      #info-card { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+      .grid { position: absolute; inset: 0; background-image: linear-gradient(#c5ddd6 1px, transparent 1px), linear-gradient(90deg, #c5ddd6 1px, transparent 1px); background-size: 72px 72px; opacity: .45; }
+      .card { position: absolute; top: 470px; left: 90px; width: 900px; min-height: 860px; padding: 76px 68px; background: #ffffff; border: 1px solid #c8dcd7; box-shadow: 0 22px 0 #bddbd2; }
+      #label { display: inline-block; margin: 0 0 46px; padding: 12px 22px; color: #075e54; background: #d8f1e9; font-size: 30px; font-weight: 700; }
+      #heading { margin: 0; color: #102a31; font-size: 60px; line-height: 1.3; font-weight: 800; overflow-wrap: anywhere; }
+      #content { margin: 46px 0 0; color: #39565a; font-size: 40px; line-height: 1.65; overflow-wrap: anywhere; }
+      .index { position: absolute; right: 68px; bottom: 66px; color: #0f766e; font-size: 36px; font-weight: 800; }
+    </style>
+  </head>
+  <body>
+    <div id="info-card" data-composition-id="info-card" data-start="0" data-duration="4" data-width="1080" data-height="1920">
+      <div class="grid" data-layout-ignore></div>
+      <article id="info-panel" class="card clip" data-start="0" data-duration="4" data-track-index="1">
+        <p id="label">核心要点</p>
+        <h1 id="heading">把复杂流程拆成可验证的步骤</h1>
+        <p id="content">每一步都留下可编辑产物，出错时保留基础粗剪。</p>
+        <span class="index">01</span>
+      </article>
+    </div>
+    <script>
+      const vars = window.__hyperframes && window.__hyperframes.getVariables ? window.__hyperframes.getVariables() : {};
+      document.getElementById("label").textContent = vars.label || "核心要点";
+      document.getElementById("heading").textContent = vars.heading || "把复杂流程拆成可验证的步骤";
+      document.getElementById("content").textContent = vars.content || "每一步都留下可编辑产物，出错时保留基础粗剪。";
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(".card", { opacity: 0, y: 100, rotation: 2 }, { opacity: 1, y: 0, rotation: 0, duration: 0.7, ease: "power3.out" }, 0);
+      tl.fromTo("#label", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35 }, 0.4);
+      tl.fromTo("#heading", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.6);
+      tl.fromTo("#content", { opacity: 0 }, { opacity: 1, duration: 0.45 }, 1.05);
+      tl.to(".grid", { x: 72, duration: 3.4, ease: "none" }, 0.3);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["info-card"] = tl;
+    </script>
+  </body>
 </html>

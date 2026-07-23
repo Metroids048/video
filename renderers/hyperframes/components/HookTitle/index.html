@@ -1,65 +1,54 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=1080, height=1920">
-  <title>HookTitle</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      width: 1080px;
-      height: 1920px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-      overflow: hidden;
-    }
-    .container {
-      text-align: center;
-      padding: 80px;
-      animation: fadeInUp 0.8s ease-out;
-    }
-    .title {
-      font-size: 72px;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      margin-bottom: 40px;
-      animation: scaleIn 0.6s ease-out 0.2s both;
-    }
-    .subtitle {
-      font-size: 42px;
-      color: rgba(255,255,255,0.9);
-      animation: fadeIn 0.8s ease-out 0.5s both;
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(60px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="title" id="title">钩子标题</div>
-    <div class="subtitle" id="subtitle">吸引用户停留</div>
-  </div>
-  <script>
-    // 从 URL params 或全局变量读取文案
-    const params = new URLSearchParams(window.location.search);
-    const titleText = params.get('title') || window.HYPERFRAMES_DATA?.title || '钩子标题';
-    const subtitleText = params.get('subtitle') || window.HYPERFRAMES_DATA?.subtitle || '吸引用户停留';
-    document.getElementById('title').textContent = titleText;
-    document.getElementById('subtitle').textContent = subtitleText;
-  </script>
-</body>
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait" data-composition-variables='[
+  {"id":"title","type":"string","label":"Title","default":"3 个步骤做出短视频粗剪"},
+  {"id":"subtitle","type":"string","label":"Subtitle","default":"先搭流程，再开始创作"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>HookTitle</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); }
+      * { box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; margin: 0; overflow: hidden; }
+      body { background: #101820; color: #f8fbff; font-family: "Microsoft YaHei", sans-serif; }
+      #hook-title { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+      .accent { position: absolute; width: 96px; height: 96px; border: 18px solid #34d399; border-radius: 50%; }
+      .accent-a { top: 188px; right: 126px; }
+      .accent-b { bottom: 210px; left: 112px; width: 54px; height: 54px; border-width: 10px; border-color: #fb7185; }
+      .panel { position: absolute; top: 540px; left: 90px; width: 900px; padding: 72px 64px; border-left: 14px solid #34d399; background: #17232d; }
+      .eyebrow { margin: 0 0 26px; color: #7dd3fc; font-size: 28px; font-weight: 700; letter-spacing: 0; }
+      #title { margin: 0; font-size: 74px; line-height: 1.28; font-weight: 800; overflow-wrap: anywhere; }
+      #subtitle { margin: 32px 0 0; color: #c9d6e2; font-size: 38px; line-height: 1.5; overflow-wrap: anywhere; }
+      .progress { position: absolute; bottom: 260px; left: 90px; width: 900px; height: 8px; background: #31414f; overflow: hidden; }
+      #progress-fill { width: 100%; height: 100%; background: #34d399; transform-origin: left center; }
+    </style>
+  </head>
+  <body>
+    <div id="hook-title" data-composition-id="hook-title" data-start="0" data-duration="3" data-width="1080" data-height="1920">
+      <div class="accent accent-a" data-layout-ignore></div>
+      <div class="accent accent-b" data-layout-ignore></div>
+      <section id="hook-panel" class="panel clip" data-start="0" data-duration="3" data-track-index="1">
+        <p class="eyebrow" id="eyebrow">AGENT VIDEO STUDIO</p>
+        <h1 id="title">3 个步骤做出短视频粗剪</h1>
+        <p id="subtitle">先搭流程，再开始创作</p>
+      </section>
+      <div class="progress" data-layout-ignore><div id="progress-fill"></div></div>
+    </div>
+    <script>
+      const vars = window.__hyperframes && window.__hyperframes.getVariables ? window.__hyperframes.getVariables() : {};
+      document.getElementById("title").textContent = vars.title || "3 个步骤做出短视频粗剪";
+      document.getElementById("subtitle").textContent = vars.subtitle || "先搭流程，再开始创作";
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(".panel", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.55, ease: "power2.out" }, 0);
+      tl.fromTo("#title", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 0.25);
+      tl.fromTo("#subtitle", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.7);
+      tl.fromTo("#progress-fill", { scaleX: 0 }, { scaleX: 1, duration: 2.5, ease: "none" }, 0.25);
+      tl.to(".accent-a", { rotation: 180, duration: 2.5, ease: "none" }, 0.25);
+      tl.to(".accent-b", { y: -32, duration: 1.2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0.5);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["hook-title"] = tl;
+    </script>
+  </body>
 </html>

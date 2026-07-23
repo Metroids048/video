@@ -1,0 +1,9 @@
+{
+  "duration": 3,
+  "assertions": [
+    {"kind": "appearsBy", "selector": ".panel", "bySec": 0.8},
+    {"kind": "appearsBy", "selector": "#subtitle", "bySec": 1.2},
+    {"kind": "staysInFrame", "selector": ".panel"},
+    {"kind": "keepsMoving", "withinSelector": "#hook-title", "maxStaticSec": 2}
+  ]
+}

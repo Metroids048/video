@@ -22,6 +22,7 @@
     "skills:check": "node scripts/run-python.mjs scripts/sync_skills.py --check"
   },
   "devDependencies": {
+    "gsap": "^3.14.2",
     "hyperframes": "0.7.68"
   }
 }

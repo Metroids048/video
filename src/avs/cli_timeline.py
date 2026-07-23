@@ -253,6 +253,50 @@ def register_commands(main_group: click.Group) -> None:
         )
         sys.exit(0)
 
+    # ── motion graphics ────────────────────────────────────────────────
+    @main_group.group()
+    def motion() -> None:
+        """HyperFrames 动效渲染与 FFmpeg 降级合成。"""
+
+    @motion.command("render")
+    @click.argument("episode_id")
+    @click.option("--force", is_flag=True, help="强制重新渲染动效和合成视频")
+    def motion_render(episode_id: str, force: bool) -> None:
+        """从 timeline graphic 轨渲染动效；不修改 Episode 状态。"""
+        from avs.config import Config
+        from avs.hyperframes import render_motion_graphics
+        from avs.models.episode import EpisodeModel
+        from avs.paths import episode_json_path
+        from avs.timeline.models import Timeline
+
+        root = _find_project_root()
+        cfg = Config(root)
+        ep_dir = _get_ep_dir(cfg, episode_id)
+        try:
+            model = EpisodeModel.load(episode_json_path(ep_dir))
+            if model.status not in {"ROUGH_CUT_READY", "QA_PASSED", "DELIVERY_READY"}:
+                raise ValueError(
+                    f"当前状态 {model.status}，请先完成 FFmpeg 基础粗剪",
+                )
+            timeline_data = Timeline.load(ep_dir / "work" / "timeline.json")
+            result = render_motion_graphics(
+                root, ep_dir, timeline_data, force=force,
+            )
+        except Exception as exc:
+            console.print(f"[red]✗ motion render 失败: {exc}[/red]")
+            sys.exit(1)
+
+        for warning in result.warnings:
+            console.print(f"[yellow]⚠ {warning}[/yellow]")
+        console.print(
+            "[green]✓ 动效处理完成[/green]\n"
+            f"  HyperFrames: {len(result.rendered)}  "
+            f"FFmpeg 降级: {len(result.fallbacks)}\n"
+            f"  合成视频: {result.output_path or '无 graphic clip'}\n"
+            f"  Manifest: {result.manifest_path}"
+        )
+        sys.exit(0)
+
     # ── qa ────────────────────────────────────────────────────────────
     @main_group.command("qa")
     @click.argument("episode_id")
@@ -372,7 +416,7 @@ def register_commands(main_group: click.Group) -> None:
         cfg = Config(root)
         _get_ep_dir(cfg, episode_id)
 
-        steps = ["timeline build", "subtitles build", "render rough"]
+        steps = ["timeline build", "subtitles build", "render rough", "motion render"]
         for step in steps:
             console.print(f"\n[bold cyan]── {step} ──[/bold cyan]")
             force_args = ["--force"] if force else []

@@ -11,9 +11,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-def create_demo(root: Path, *, force: bool = False) -> Path:
+def create_demo(
+    root: Path, *, force: bool = False, episode_id: str = "EP-M6-DEMO",
+) -> Path:
     """创建 EP-M6-DEMO，返回 episode 目录。"""
-    ep_dir = root / "episodes" / "active" / "EP-M6-DEMO"
+    ep_dir = root / "episodes" / "active" / episode_id
     if ep_dir.exists():
         if not force:
             raise FileExistsError(
@@ -28,7 +30,7 @@ def create_demo(root: Path, *, force: bool = False) -> Path:
 
     # episode.json
     from avs.models.episode import EpisodeModel
-    model = EpisodeModel.create("EP-M6-DEMO", mode="ORIGINAL", platforms=["douyin"])
+    model = EpisodeModel.create(episode_id, mode="ORIGINAL", platforms=["douyin"])
     model.transition("INGESTED")
     model.complete_stage("ingest")
     model.transition("CONTENT_READY")
@@ -43,7 +45,7 @@ def create_demo(root: Path, *, force: bool = False) -> Path:
     )
     # script.json（最小但可追溯）
     script = {
-        "episode_id": "EP-M6-DEMO",
+        "episode_id": episode_id,
         "total_duration_estimate": 9.0,
         "segments": [
             {
@@ -72,7 +74,7 @@ def create_demo(root: Path, *, force: bool = False) -> Path:
     )
     # storyboard.json（canonical）
     storyboard = {
-        "episode_id": "EP-M6-DEMO",
+        "episode_id": episode_id,
         "shots": [
             {
                 "scene_id": "scene001", "script_segment_ids": ["seg001"],
@@ -103,7 +105,7 @@ def create_demo(root: Path, *, force: bool = False) -> Path:
 
     # asset-manifest.json（空）
     manifest = {
-        "episode_id": "EP-M6-DEMO",
+        "episode_id": episode_id,
         "assets": [],
         "generated_at": generated_at,
     }
@@ -112,12 +114,12 @@ def create_demo(root: Path, *, force: bool = False) -> Path:
         encoding="utf-8",
     )
 
-    print(f"✓ EP-M6-DEMO 已创建: {ep_dir}")
+    print(f"✓ {episode_id} 已创建: {ep_dir}")
     print("  可运行:")
-    print("    python -m avs timeline build EP-M6-DEMO")
-    print("    python -m avs timeline validate EP-M6-DEMO")
-    print("    python -m avs subtitles build EP-M6-DEMO")
-    print("    python -m avs render rough EP-M6-DEMO")
+    print(f"    python -m avs timeline build {episode_id}")
+    print(f"    python -m avs timeline validate {episode_id}")
+    print(f"    python -m avs subtitles build {episode_id}")
+    print(f"    python -m avs render rough {episode_id}")
     return ep_dir
 
 

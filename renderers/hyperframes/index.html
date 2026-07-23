@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>AVS Motion Components Demo</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #demo-root { width: 1080px; height: 1920px; margin: 0; overflow: hidden; background: #101820; }
+      #demo-scenes { position: absolute; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="demo-root" data-composition-id="demo-root" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div id="demo-scenes" class="clip" data-composition-id="demo-scenes" data-composition-src="compositions/demo/index.html" data-start="0" data-duration="10" data-track-index="1"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.to({}, { duration: 10 });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["demo-root"] = tl;
+    </script>
+  </body>
+</html>

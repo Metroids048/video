@@ -58,6 +58,8 @@ for (const component of ["HookTitle", "InfoCard", "EndCard"]) {
   check(`HyperFrames lint ${component}`, () =>
     run(process.execPath, [hyperframes, "lint", `renderers/hyperframes/components/${component}`]));
 }
+check("HyperFrames demo lint", () =>
+  run(process.execPath, [hyperframes, "lint", "renderers/hyperframes"]));
 
 console.log(`\n${checks - errors.length}/${checks} 项通过`);
 if (errors.length) {
