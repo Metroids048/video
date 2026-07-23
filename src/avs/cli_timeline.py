@@ -380,6 +380,10 @@ def register_commands(main_group: click.Group) -> None:
             console.print(f"[red]✗ 加载 episode.json 失败: {exc}[/red]")
             sys.exit(1)
 
+        if model.status not in {"QA_PASSED", "DELIVERY_READY"}:
+            console.print(f"[red]✗ 当前状态 {model.status}，请先运行 avs qa 并通过[/red]")
+            sys.exit(1)
+
         try:
             from avs.delivery import run_delivery
             run_delivery(ep_dir, model, force=force)

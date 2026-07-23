@@ -17,13 +17,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "path", "required"],
+        "required": ["name", "path", "required", "size_bytes", "sha256"],
+        "additionalProperties": false,
         "properties": {
           "name": {"type": "string"},
-          "path": {"type": "string"},
+          "path": {"type": "string", "pattern": "^delivery/"},
           "required": {"type": "boolean"},
-          "size_bytes": {"type": ["integer", "null"]},
-          "sha256": {"type": ["string", "null"]}
+          "size_bytes": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
         }
       }
     },
