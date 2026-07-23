@@ -27,5 +27,7 @@ referencing==0.37.0
 rich==15.0.0
 rpds-py==2026.6.3
 ruff==0.15.21
+types-jsonschema==4.26.0.20260518
+types-pyyaml==6.0.12.20260518
 typing-extensions==4.16.0
 typing-inspection==0.4.2

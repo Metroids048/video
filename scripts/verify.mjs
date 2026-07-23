@@ -51,8 +51,8 @@ check("Python compile", () => run(python, ["-m", "compileall", "-q", "src", "tes
 check("AVS CLI", () => run(python, ["-m", "avs", "--help"]));
 check("AVS doctor", () => run(python, ["-m", "avs", "doctor"]));
 check("Skills sync", () => run(python, ["scripts/sync_skills.py", "--check"]));
-check("Ruff", () => run("ruff", ["check", "src", "tests", "scripts"]));
-check("Mypy", () => run("mypy", ["src"]));
+check("Ruff", () => run(python, ["-m", "ruff", "check", "src", "tests", "scripts"]));
+check("Mypy", () => run(python, ["-m", "mypy", "src"]));
 check("Pytest", () => run(python, ["-m", "pytest", "-q"]));
 for (const component of ["HookTitle", "InfoCard", "EndCard"]) {
   check(`HyperFrames lint ${component}`, () =>

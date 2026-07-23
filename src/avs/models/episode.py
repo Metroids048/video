@@ -5,17 +5,30 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import jsonschema
 
-from avs.state import EpisodeStatus, TransitionError, assert_transition
+from avs.state import EpisodeStatus, assert_transition
 
 # Schema 路径（相对于此文件向上三级到项目根）
 _SCHEMA_REL = Path(__file__).resolve().parents[3] / "schemas" / "episode.schema.json"
+_PIPELINE_ORDER = {
+    status.value: index
+    for index, status in enumerate((
+        EpisodeStatus.CREATED,
+        EpisodeStatus.INGESTED,
+        EpisodeStatus.REFERENCE_READY,
+        EpisodeStatus.CONTENT_READY,
+        EpisodeStatus.ASSETS_READY,
+        EpisodeStatus.TIMELINE_READY,
+        EpisodeStatus.ROUGH_CUT_READY,
+        EpisodeStatus.QA_PASSED,
+        EpisodeStatus.DELIVERY_READY,
+    ))
+}
 
 
 def _now_iso() -> str:
@@ -121,6 +134,7 @@ class EpisodeModel:
     def save(self, path: Path) -> None:
         """将当前状态写入 episode.json（原子写：先写临时文件再重命名）。"""
         self._data["updated_at"] = _now_iso()
+        self.validate_schema()
         tmp = path.with_suffix(".json.tmp")
         try:
             with tmp.open("w", encoding="utf-8") as fh:
@@ -139,9 +153,27 @@ class EpisodeModel:
         self._data["last_error"] = None  # 清除上次错误
         self._data["updated_at"] = _now_iso()
 
+    def ensure_stage(self, stage: str, target: str) -> bool:
+        """推进到阶段目标；已完成且处于后续状态时幂等返回。"""
+        if self.status == target:
+            return False
+        current_rank = _PIPELINE_ORDER.get(self.status)
+        target_rank = _PIPELINE_ORDER.get(target)
+        if (
+            stage in self.completed_stages
+            and current_rank is not None
+            and target_rank is not None
+            and current_rank > target_rank
+        ):
+            return False
+        self.transition(target)
+        return True
+
     def fail(self, reason: str) -> None:
         """将状态置为 FAILED 并记录原因。"""
-        self._data["status"] = EpisodeStatus.FAILED
+        if self.status != EpisodeStatus.FAILED:
+            assert_transition(self.status, EpisodeStatus.FAILED)
+            self._data["status"] = EpisodeStatus.FAILED
         self._data["last_error"] = reason
         self._data["updated_at"] = _now_iso()
 
@@ -158,7 +190,17 @@ class EpisodeModel:
         """对当前数据执行 JSON Schema 校验；失败时抛出 EpisodeValidationError。"""
         try:
             schema = _load_schema()
-            jsonschema.validate(self._data, schema)
+            jsonschema.Draft7Validator(
+                schema,
+                format_checker=jsonschema.FormatChecker(),
+            ).validate(self._data)
+            if self.mode in self._UNPUBLISHABLE_MODES and self.publishable:
+                raise EpisodeValidationError(
+                    "REFERENCE_CLONE 必须设置 publishable=false"
+                )
+            for name, artifact in self.artifacts.items():
+                if Path(artifact).is_absolute() or ".." in Path(artifact).parts:
+                    raise EpisodeValidationError(f"产物路径必须为 Episode 相对路径: {name}")
         except jsonschema.ValidationError as exc:
             raise EpisodeValidationError(
                 f"episode.json Schema 校验失败: {exc.message}"

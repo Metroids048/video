@@ -12,6 +12,8 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from avs.cli_timeline import register_commands as _reg_timeline
+
 console = Console()
 
 
@@ -110,7 +112,13 @@ def episode_create(episode_id: str, mode: str, platforms: str) -> None:
     """创建新 Episode，生成规范目录和 episode.json。"""
     from avs.config import Config
     from avs.models.episode import EpisodeModel
-    from avs.paths import PathError, create_episode_skeleton, episode_dir, episode_json_path
+    from avs.paths import (
+        PathError,
+        create_episode_skeleton,
+        episode_dir,
+        episode_json_path,
+        find_episode_dir,
+    )
 
     root = _find_project_root()
     cfg = Config(root)
@@ -125,7 +133,11 @@ def episode_create(episode_id: str, mode: str, platforms: str) -> None:
         console.print(f"[red]✗ {exc}[/red]")
         sys.exit(1)
 
-    # 重复创建检测
+    # 重复创建检测（跨全部 lifecycle 分区）
+    existing = find_episode_dir(cfg.episodes_root, episode_id)
+    if existing is not None:
+        console.print(f"[red]✗ Episode {episode_id!r} 已存在: {existing}[/red]")
+        sys.exit(1)
     ep_json = episode_json_path(ep_dir)
     if ep_dir.exists() or ep_json.exists():
         console.print(
@@ -369,11 +381,9 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
         model.save(ep_json)
         sys.exit(1)
 
-    # 状态转换 → INGESTED（幂等：已处于 INGESTED 或更后状态时跳过）
-    from avs.state import can_transition
+    # 状态转换 → INGESTED；不允许静默跳过非法状态
     try:
-        if model.status != "INGESTED" and can_transition(model.status, "INGESTED"):
-            model.transition("INGESTED")
+        model.ensure_stage("ingest", "INGESTED")
         model.complete_stage("ingest")
         model.save(ep_json)
     except Exception as exc:
@@ -530,7 +540,6 @@ def reference_analyze(episode_id: str, transcription: str, force: bool) -> None:
     from avs.models.episode import EpisodeModel
     from avs.paths import PathError, find_episode_dir, episode_json_path
     from avs.reference import run_reference_analyze
-    from avs.state import can_transition
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
@@ -567,8 +576,7 @@ def reference_analyze(episode_id: str, transcription: str, force: bool) -> None:
 
     # 状态转换 → REFERENCE_READY
     try:
-        if can_transition(model.status, "REFERENCE_READY"):
-            model.transition("REFERENCE_READY")
+        model.ensure_stage("reference", "REFERENCE_READY")
         model.complete_stage("reference")
         model.save(ep_json)
     except Exception as exc:
@@ -738,7 +746,6 @@ def content_approve(episode_id: str) -> None:
     from avs.models.episode import EpisodeModel
     from avs.paths import PathError, find_episode_dir, episode_json_path
     from avs.content.schema import load_script, load_storyboard
-    from avs.state import can_transition
 
     root = _find_project_root()
     cfg = Config(root)
@@ -764,11 +771,10 @@ def content_approve(episode_id: str) -> None:
     ep_json = episode_json_path(ep_dir)
     try:
         model = EpisodeModel.load(ep_json)
-        if can_transition(model.status, "CONTENT_READY"):
-            model.transition("CONTENT_READY")
+        model.ensure_stage("content", "CONTENT_READY")
         model.complete_stage("content")
         model.save(ep_json)
-        console.print(f"[green]✓ 内容已审核通过，状态 → CONTENT_READY[/green]")
+        console.print("[green]✓ 内容已审核通过，状态 → CONTENT_READY[/green]")
         sys.exit(0)
     except Exception as exc:
         console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
@@ -776,7 +782,6 @@ def content_approve(episode_id: str) -> None:
 
 
 # ── 注册 timeline / subtitles / render / qa / deliver / run 命令 ──
-from avs.cli_timeline import register_commands as _reg_timeline
 _reg_timeline(main)
 
 

@@ -46,7 +46,10 @@
     },
     "completed_stages": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "enum": ["ingest", "reference", "content", "assets", "timeline", "rough_cut", "qa", "delivery"]
+      },
       "uniqueItems": true
     },
     "last_error": {

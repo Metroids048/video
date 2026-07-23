@@ -7,8 +7,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from avs.state import EpisodeStatus
-
 # Episode ID 合法格式（与 config/project.yaml 保持一致）
 _ID_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9_-]{1,63}$")
 

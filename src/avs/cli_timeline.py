@@ -53,7 +53,6 @@ def register_commands(main_group: click.Group) -> None:
         from avs.paths import episode_json_path
         from avs.timeline import build_timeline
         from avs.timeline.csv_export import export_csv
-        from avs.state import can_transition
 
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
         root = _find_project_root()
@@ -83,8 +82,7 @@ def register_commands(main_group: click.Group) -> None:
 
         # 状态转换
         try:
-            if can_transition(model.status, "TIMELINE_READY"):
-                model.transition("TIMELINE_READY")
+            model.ensure_stage("timeline", "TIMELINE_READY")
             model.complete_stage("timeline")
             model.save(ep_json)
         except Exception as exc:
@@ -199,7 +197,6 @@ def register_commands(main_group: click.Group) -> None:
         from avs.timeline.models import Timeline
         from avs.render import render_rough_cut
         from avs.render.ffmpeg import RenderError
-        from avs.state import can_transition
 
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
         root = _find_project_root()
@@ -239,9 +236,8 @@ def register_commands(main_group: click.Group) -> None:
 
         # 状态转换 → ROUGH_CUT_READY
         try:
-            if can_transition(model.status, "ROUGH_CUT_READY"):
-                model.transition("ROUGH_CUT_READY")
-            model.complete_stage("render")
+            model.ensure_stage("rough_cut", "ROUGH_CUT_READY")
+            model.complete_stage("rough_cut")
             model.save(ep_json)
         except Exception as exc:
             console.print(f"[yellow]⚠ 状态转换失败: {exc}[/yellow]")
@@ -265,7 +261,6 @@ def register_commands(main_group: click.Group) -> None:
         from avs.config import Config
         from avs.models.episode import EpisodeModel
         from avs.paths import episode_json_path
-        from avs.state import can_transition
 
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
         root = _find_project_root()
@@ -306,8 +301,7 @@ def register_commands(main_group: click.Group) -> None:
 
         # 状态转换 → QA_PASSED
         try:
-            if can_transition(model.status, "QA_PASSED"):
-                model.transition("QA_PASSED")
+            model.ensure_stage("qa", "QA_PASSED")
             model.complete_stage("qa")
             model.save(ep_json)
         except Exception as exc:
@@ -326,7 +320,6 @@ def register_commands(main_group: click.Group) -> None:
         from avs.config import Config
         from avs.models.episode import EpisodeModel
         from avs.paths import episode_json_path
-        from avs.state import can_transition
 
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
         root = _find_project_root()
@@ -352,8 +345,7 @@ def register_commands(main_group: click.Group) -> None:
 
         # 状态转换 → DELIVERY_READY
         try:
-            if can_transition(model.status, "DELIVERY_READY"):
-                model.transition("DELIVERY_READY")
+            model.ensure_stage("delivery", "DELIVERY_READY")
             model.complete_stage("delivery")
             model.save(ep_json)
         except Exception as exc:

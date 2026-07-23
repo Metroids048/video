@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from avs.models.episode import EpisodeModel, EpisodeValidationError
-from avs.paths import PathError, create_episode_skeleton, episode_dir, episode_json_path, find_episode_dir, validate_episode_id
+from avs.paths import PathError, create_episode_skeleton, episode_dir, episode_json_path, validate_episode_id
 from avs.state import EpisodeStatus, TransitionError
 
 
@@ -169,6 +169,38 @@ class TestEpisodeModel:
         assert m.status == EpisodeStatus.FAILED
         assert m.last_error == "测试原因"
 
+    def test_fail_rejects_terminal_state(self):
+        m = EpisodeModel.create("EP-0001")
+        for status in (
+            EpisodeStatus.INGESTED,
+            EpisodeStatus.CONTENT_READY,
+            EpisodeStatus.ASSETS_READY,
+            EpisodeStatus.TIMELINE_READY,
+            EpisodeStatus.ROUGH_CUT_READY,
+            EpisodeStatus.QA_PASSED,
+            EpisodeStatus.DELIVERY_READY,
+        ):
+            m.transition(status)
+        with pytest.raises(TransitionError):
+            m.fail("终态不可回退")
+
+    def test_save_rejects_invalid_platform(self, tmp_path: Path):
+        m = EpisodeModel.create("EP-0001", platforms=["unknown"])
+        with pytest.raises(EpisodeValidationError):
+            m.save(tmp_path / "episode.json")
+
+    def test_ensure_stage_rejects_illegal_jump(self):
+        m = EpisodeModel.create("EP-0001")
+        with pytest.raises(TransitionError):
+            m.ensure_stage("content", EpisodeStatus.CONTENT_READY)
+
+    def test_ensure_stage_is_idempotent_after_progress(self):
+        m = EpisodeModel.create("EP-0001")
+        m.transition(EpisodeStatus.INGESTED)
+        m.complete_stage("ingest")
+        m.transition(EpisodeStatus.CONTENT_READY)
+        assert m.ensure_stage("ingest", EpisodeStatus.INGESTED) is False
+
 
 # ── REFERENCE_CLONE publishable 规则 ─────────────────────────────────
 
@@ -200,7 +232,8 @@ class TestDuplicateCreate:
 
         # 模拟 CLI 逻辑：目录已存在时应返回非零
         ep_json = episode_json_path(ep)
-        assert ep_dir_exists := ep.exists()
+        ep_dir_exists = ep.exists()
+        assert ep_dir_exists
         assert ep_json.exists()
 
 
@@ -245,6 +278,31 @@ class TestCLICreate:
         assert ep_json.exists()
         data = json.loads(ep_json.read_text(encoding="utf-8"))
         assert data["id"] == "TEST-0001"
+
+    def test_duplicate_across_lifecycle_nonzero(self, project_root: Path):
+        completed = project_root / "episodes" / "completed" / "TEST-0001"
+        completed.mkdir(parents=True)
+        EpisodeModel.create("TEST-0001").save(completed / "episode.json")
+        result = self._run("episode", "create", "TEST-0001", cwd=project_root)
+        assert result.returncode != 0
+        assert not (project_root / "episodes" / "active" / "TEST-0001").exists()
+
+    def test_invalid_platform_nonzero_and_no_partial_dir(self, project_root: Path):
+        result = self._run(
+            "episode", "create", "TEST-0002", "--platforms", "unknown", cwd=project_root
+        )
+        assert result.returncode != 0
+        assert not (project_root / "episodes" / "active" / "TEST-0002").exists()
+
+    def test_illegal_reset_nonzero_and_state_unchanged(self, project_root: Path):
+        self._run("episode", "create", "TEST-0003", cwd=project_root)
+        result = self._run(
+            "episode", "reset", "TEST-0003", "--to", "DELIVERY_READY", "--force",
+            cwd=project_root,
+        )
+        assert result.returncode != 0
+        ep_json = project_root / "episodes" / "active" / "TEST-0003" / "episode.json"
+        assert json.loads(ep_json.read_text(encoding="utf-8"))["status"] == "CREATED"
 
     def test_illegal_id_nonzero(self, project_root: Path):
         """验收（辅助）：非法 ID 返回非零，不留半成品。"""
