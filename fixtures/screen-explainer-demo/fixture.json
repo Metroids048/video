@@ -1,0 +1,72 @@
+{
+  "episode_id": "EP-DEMO-SCREEN",
+  "mode": "ORIGINAL",
+  "platforms": ["douyin"],
+  "transcription": "disabled",
+  "script": {
+    "total_duration_estimate": 8.0,
+    "segments": [
+      {
+        "segment_id": "seg-hook",
+        "text": "录屏讲解先把关键步骤说清楚",
+        "purpose": "hook",
+        "target_duration": 2.0,
+        "visual_hint": "录屏开场标题",
+        "source_refs": ["input/idea.md"]
+      },
+      {
+        "segment_id": "seg-body",
+        "text": "横屏录屏使用 contain 保持比例，字幕留在竖屏安全区",
+        "purpose": "body",
+        "target_duration": 4.0,
+        "visual_hint": "完整展示操作区域",
+        "source_refs": ["input/idea.md"]
+      },
+      {
+        "segment_id": "seg-end",
+        "text": "结尾素材缺失时保留占位卡，不用无关画面硬凑",
+        "purpose": "cta",
+        "target_duration": 2.0,
+        "visual_hint": "占位卡等待人工替换",
+        "source_refs": ["input/idea.md"]
+      }
+    ]
+  },
+  "storyboard": {
+    "shots": [
+      {
+        "scene_id": "scene-hook",
+        "script_segment_ids": ["seg-hook"],
+        "duration": 2.0,
+        "visual_type": "image",
+        "asset_sources": ["input/images/cover.png"],
+        "caption": "录屏讲解的三个检查点",
+        "motion_template": "HookTitle",
+        "missing_assets": [],
+        "notes": "自有标题图"
+      },
+      {
+        "scene_id": "scene-body",
+        "script_segment_ids": ["seg-body"],
+        "duration": 4.0,
+        "visual_type": "screen_recording",
+        "asset_sources": ["input/screen/tutorial.mp4"],
+        "caption": "保持比例，字幕留在安全区",
+        "motion_template": "InfoCard",
+        "missing_assets": [],
+        "notes": "横屏 contain"
+      },
+      {
+        "scene_id": "scene-end",
+        "script_segment_ids": ["seg-end"],
+        "duration": 2.0,
+        "visual_type": "placeholder",
+        "asset_sources": [],
+        "caption": "等待补充真实结尾素材",
+        "motion_template": "EndCard",
+        "missing_assets": ["需要一张真实完成页截图"],
+        "notes": "验证缺失素材降级"
+      }
+    ]
+  }
+}

@@ -19,7 +19,6 @@
 """
 from __future__ import annotations
 
-import json
 import shutil
 import struct
 import sys
@@ -30,12 +29,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from avs.config import Config
-from avs.ingest import run_ingest
-from avs.ingest.hashing import sha256_file
-from avs.ingest.manifest import load_manifest, manifest_path
-from avs.models.episode import EpisodeModel
-from avs.paths import create_episode_skeleton, episode_dir, episode_json_path, find_episode_dir
+from avs.config import Config  # noqa: E402
+from avs.ingest import run_ingest  # noqa: E402
+from avs.ingest.hashing import sha256_file  # noqa: E402
+from avs.ingest.manifest import load_manifest  # noqa: E402
+from avs.models.episode import EpisodeModel  # noqa: E402
+from avs.paths import create_episode_skeleton, episode_dir, episode_json_path, find_episode_dir  # noqa: E402
 
 _PASS = "[PASS]"
 _FAIL = "[FAIL]"
@@ -107,8 +106,6 @@ if ep_path:
 
 # ── 验收 1：episode create ────────────────────────────────────────────
 print("\n── 验收 1: episode create ──")
-from avs.paths import PathError
-
 ep_target = episode_dir(cfg.episodes_root, EPISODE_ID, lifecycle="active")
 try:
     model = EpisodeModel.create(EPISODE_ID, mode="REFERENCE_ADAPT")

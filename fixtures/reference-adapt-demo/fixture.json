@@ -1,0 +1,72 @@
+{
+  "episode_id": "EP-DEMO-REFERENCE",
+  "mode": "REFERENCE_ADAPT",
+  "platforms": ["douyin", "xiaohongshu"],
+  "transcription": "disabled",
+  "script": {
+    "total_duration_estimate": 8.0,
+    "segments": [
+      {
+        "segment_id": "seg-hook",
+        "text": "三步把零散素材整理成可编辑短视频粗稿",
+        "purpose": "hook",
+        "target_duration": 2.0,
+        "visual_hint": "标题卡叠加产品录屏",
+        "source_refs": ["input/idea.md"]
+      },
+      {
+        "segment_id": "seg-body",
+        "text": "先清点素材，再生成分镜和时间线，最后统一检查画面、字幕和音频",
+        "purpose": "body",
+        "target_duration": 4.0,
+        "visual_hint": "录屏配信息卡",
+        "source_refs": ["input/idea.md"]
+      },
+      {
+        "segment_id": "seg-end",
+        "text": "粗稿保留完整编辑包，发布前由人最终确认",
+        "purpose": "cta",
+        "target_duration": 2.0,
+        "visual_hint": "结尾卡与封面图",
+        "source_refs": ["input/idea.md"]
+      }
+    ]
+  },
+  "storyboard": {
+    "shots": [
+      {
+        "scene_id": "scene-hook",
+        "script_segment_ids": ["seg-hook"],
+        "duration": 2.0,
+        "visual_type": "image",
+        "asset_sources": ["input/images/cover.png"],
+        "caption": "三步生成可编辑短视频粗稿",
+        "motion_template": "HookTitle",
+        "missing_assets": [],
+        "notes": "使用自有封面素材，不复用参考视频画面"
+      },
+      {
+        "scene_id": "scene-body",
+        "script_segment_ids": ["seg-body"],
+        "duration": 4.0,
+        "visual_type": "screen_recording",
+        "asset_sources": ["input/screen/workflow.mp4"],
+        "caption": "清点素材 -> 分镜 -> 时间线 -> QA",
+        "motion_template": "InfoCard",
+        "missing_assets": [],
+        "notes": "横屏录屏明确使用 contain"
+      },
+      {
+        "scene_id": "scene-end",
+        "script_segment_ids": ["seg-end"],
+        "duration": 2.0,
+        "visual_type": "image",
+        "asset_sources": ["input/images/cover.png"],
+        "caption": "人工确认后再发布",
+        "motion_template": "EndCard",
+        "missing_assets": [],
+        "notes": "保留编辑交付包"
+      }
+    ]
+  }
+}

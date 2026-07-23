@@ -1,0 +1,6 @@
+{
+  "template": "screen-explainer",
+  "landscape_strategy": "contain",
+  "caption_safe_zone": {"top": 0.05, "bottom": 0.15, "left": 0.03, "right": 0.03},
+  "audio_strategy": "silent_aac_when_missing"
+}

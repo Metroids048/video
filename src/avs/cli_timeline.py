@@ -12,6 +12,15 @@ from rich.console import Console
 
 console = Console()
 
+RUN_STEPS = (
+    "timeline build",
+    "subtitles build",
+    "render rough",
+    "motion render",
+    "qa",
+    "deliver",
+)
+
 
 def _find_project_root() -> Path:
     cwd = Path.cwd()
@@ -420,8 +429,7 @@ def register_commands(main_group: click.Group) -> None:
         cfg = Config(root)
         _get_ep_dir(cfg, episode_id)
 
-        steps = ["timeline build", "subtitles build", "render rough", "motion render"]
-        for step in steps:
+        for step in RUN_STEPS:
             console.print(f"\n[bold cyan]── {step} ──[/bold cyan]")
             force_args = ["--force"] if force else []
             # 用 subprocess 调用自身，保证 Click 命令上下文隔离

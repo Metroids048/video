@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from avs.cli_timeline import RUN_STEPS
+
 from avs.timeline.models import Canvas, Clip, Timeline, Track
 from avs.timeline.validate import validate_timeline, TimelineValidationError
 from avs.timeline.csv_export import export_csv
@@ -281,3 +283,8 @@ class TestTimelineBuilder:
         audio_tracks = [track for track in timeline.tracks if track.kind == "audio"]
         assert len(audio_tracks) == 1
         assert audio_tracks[0].clips[0].asset_ref == "work/prepared/audio/narration.wav"
+def test_full_run_includes_motion_qa_and_delivery() -> None:
+    assert RUN_STEPS == (
+        "timeline build", "subtitles build", "render rough",
+        "motion render", "qa", "deliver",
+    )
