@@ -1,10 +1,11 @@
 """tests/test_reference.py — 模块4验收测试。"""
 from __future__ import annotations
 
-import sys
 import json
+import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,25 @@ from avs.ingest import run_ingest
 from avs.paths import create_episode_skeleton
 from avs.cli import main
 from avs.models.episode import EpisodeModel
+
+
+def test_douyin_research_ledger_has_eighteen_verified_long_links() -> None:
+    root = Path(__file__).resolve().parents[1]
+    ledger = (
+        root / "docs" / "reference-research" / "douyin-codex-short-video-study.md"
+    ).read_text(encoding="utf-8")
+    entries = [
+        line
+        for line in ledger.splitlines()
+        if re.match(r"^\|\s*\d+\s*\|", line)
+    ]
+
+    assert len(entries) == 18
+    assert all(re.search(r"www\.douyin\.com/(?:video|note)/\d+", line) for line in entries)
+    assert all(re.search(r"\|\s*A\s*\|\s*$", line) for line in entries)
+    assert "| C |" not in ledger
+    assert "待补证" not in ledger
+    assert "其余 17 条" not in ledger
 
 
 class TestShots:

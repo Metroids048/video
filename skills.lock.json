@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-07-30T22:51:21.743562+00:00",
+  "locked_at": "2026-07-30T23:29:01.4873529Z",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
   "project_skills": {
     "create-episode": {
@@ -139,6 +139,21 @@
         "~/.cursor/skills/hyperframes-cli"
       ],
       "source_sha256": "73f79c7a5409cc1d2a2022d6e26fe132578e6ba704fc3641bef6c81fddae2c6f"
+    },
+    "video-shotcraft": {
+      "source_repository": "https://github.com/Vincentwei1021/video-shotcraft",
+      "commit": "d4915443232e89527fdc9d7e79f132ba411fc440",
+      "license": "Apache-2.0",
+      "status": "installed",
+      "installed_at": "2026-07-30T23:19:16.2076748Z",
+      "install_method": "Codex official Skill Installer",
+      "destinations": [
+        "~/.codex/skills/video-shotcraft"
+      ],
+      "installed_file_count": 660,
+      "usage": "reference_only",
+      "remotion_primary_renderer": false,
+      "note": "仅复用镜头语法、节奏和声音设计知识；AVS 主链仍为 timeline.json + FFmpeg + HyperFrames。"
     }
   }
 }

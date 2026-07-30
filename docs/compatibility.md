@@ -6,6 +6,7 @@
 | Node.js | 22+ |
 | 媒体工具 | FFmpeg / FFprobe；`avs doctor` 会检查 |
 | 动效 | 锁定 HyperFrames `0.7.68`；失败时保留 FFmpeg 粗剪 |
+| 镜头知识库 | 全局安装 `video-shotcraft` commit `d491544`（Apache-2.0），仅作镜头语法/节奏/声音设计参考；其 Remotion 实现不进入 AVS 主渲染链 |
 | 输出 | 1080×1920、30fps、H.264、AAC；两份 MP4 和 SRT |
 | 平台 | 抖音、小红书竖屏交付，实际发布均由人完成 |
 | 编辑器 | 交付 MP4、SRT、时间线 JSON/CSV 和素材副本，可导入或手工重建；不生成剪映工程草稿 |

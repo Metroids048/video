@@ -46,8 +46,13 @@ checkpoint.
 
 Reference URLs remain provenance input in `input/links.txt`.  The application does
 not fetch or download third-party platform video.  A browser-reviewed reference
-registry records evidence level and transferable, non-copyrightable workflow ideas;
-unreviewed links are explicitly marked as pending rather than summarized as fact.
+registry records the resolved page, evidence level, and transferable,
+non-copyrightable workflow ideas for all 18 supplied references.
+
+The audited Apache-2.0 `video-shotcraft` Skill is pinned and installed globally as
+a reference library.  AVS may reuse its shot vocabulary, pacing, and sound-design
+guidance, but does not adopt its Remotion renderer.  `timeline.json`, FFmpeg, and
+HyperFrames remain the canonical V1 rendering path.
 
 ## Consequences
 
@@ -60,6 +65,8 @@ unreviewed links are explicitly marked as pending rather than summarized as fact
   explicit approval commands.
 - Delivery remains an editable package (`MP4`, `SRT`, `timeline.json`, assets,
   QA report, editing notes), not a Jianying draft and not a publishing action.
+- Third-party Skills with no auditable source or incompatible required dependencies
+  are not installed merely because a social post names them.
 
 ## Implementation Plan
 

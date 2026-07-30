@@ -56,6 +56,23 @@ check("Roadmap reflects implemented modules", () => {
   if (roadmap.includes("状态：待开发")) throw new Error("implementation-roadmap.md 仍包含待开发模块");
   if (!roadmap.includes("模块 10")) throw new Error("implementation-roadmap.md 缺少模块 10");
 });
+check("Douyin research ledger is fully verified", () => {
+  const ledger = readFileSync(
+    join(ROOT, "docs/reference-research/douyin-codex-short-video-study.md"),
+    "utf8",
+  );
+  const entries = ledger.split(/\r?\n/).filter((line) => /^\|\s*\d+\s*\|/.test(line));
+  if (entries.length !== 18) throw new Error(`参考条目应为 18 条，实际 ${entries.length} 条`);
+  if (entries.some((line) => !/www\.douyin\.com\/(?:video|note)\/\d+/.test(line))) {
+    throw new Error("存在未解析为抖音长链的参考条目");
+  }
+  if (entries.some((line) => !/\|\s*A\s*\|\s*$/.test(line))) {
+    throw new Error("存在未达到 A 级页面核验的参考条目");
+  }
+  if (ledger.includes("| C |") || ledger.includes("待补证") || ledger.includes("其余 17 条")) {
+    throw new Error("研究台账仍包含旧的未完成标记");
+  }
+});
 check("Python compile", () => run(python, ["-m", "compileall", "-q", "src", "tests", "scripts"]));
 check("AVS CLI", () => run(python, ["-m", "avs", "--help"]));
 check("AVS workflow CLI", () => run(python, ["-m", "avs", "workflow", "--help"]));
