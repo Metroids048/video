@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from avs.cli_timeline import register_commands as _reg_timeline
+from avs.cli_workflow import register_commands as _reg_workflow
 
 console = Console()
 
@@ -849,6 +850,7 @@ def content_approve(episode_id: str) -> None:
 
 # ── 注册 timeline / subtitles / render / qa / deliver / run 命令 ──
 _reg_timeline(main)
+_reg_workflow(main)
 
 
 if __name__ == "__main__":

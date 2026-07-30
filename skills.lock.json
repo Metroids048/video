@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-07-23T13:54:41.009043+00:00",
+  "locked_at": "2026-07-30T22:51:21.743562+00:00",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
   "project_skills": {
     "create-episode": {
@@ -102,6 +102,17 @@
       "implemented_in_module": 8,
       "description": "生成抖音和小红书发布文案；REFERENCE_CLONE 不生成可发布标记",
       "source_sha256": "87d2d488565512ed0d0cb5591172b7bc87626a0f0858f5069f0839fafc0b6d69"
+    },
+    "orchestrate-video-production": {
+      "source": "skills-src/orchestrate-video-production",
+      "targets": [
+        ".claude/skills/orchestrate-video-production",
+        ".agents/skills/orchestrate-video-production"
+      ],
+      "status": "synced",
+      "implemented_in_module": 10,
+      "description": "从 Episode 输入安全续跑确定性短视频步骤，并在 Agent 或人工关口停止",
+      "source_sha256": "6f6c70a622ef700c01a7637e31829b26e8800a30ad574db860fd3784c6d8954d"
     }
   },
   "third_party_skills": {

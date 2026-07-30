@@ -49,7 +49,11 @@ def check_prerequisites(episode_dir: Path) -> dict[str, bool]:
     return {
         "has_asset_manifest": manifest_path(episode_dir).exists(),
         "has_reference_recipe": recipe_path(episode_dir).exists(),
-        "has_input_text": any((episode_dir / "input").glob("**/*.txt")),
+        "has_input_text": any(
+            path.is_file()
+            for pattern in ("**/*.txt", "**/*.md")
+            for path in (episode_dir / "input").glob(pattern)
+        ),
         "has_input_links": (episode_dir / "input" / "links.txt").exists(),
     }
 

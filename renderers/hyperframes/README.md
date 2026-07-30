@@ -24,7 +24,7 @@
 ```bash
 npm ci
 npx hyperframes doctor
-npx hyperframes check renderers/hyperframes --snapshots
+npx hyperframes check renderers/hyperframes --samples 8
 npx hyperframes render renderers/hyperframes --quality standard \
   --output output/hyperframes-demo.mp4
 ```

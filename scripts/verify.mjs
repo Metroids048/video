@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import process from "node:process";
@@ -43,12 +43,22 @@ for (const file of [
   "requirements.lock.txt", ".gitignore", ".claude/settings.json",
   ".claude/agents/content-worker.md", ".claude/agents/media-worker.md",
   ".claude/agents/reviewer.md", "pyproject.toml", "package.json",
+  "README.md", "docs/getting-started.md", "docs/input-guide.md",
+  "docs/editing-guide.md", "docs/troubleshooting.md", "docs/compatibility.md",
+  "docs/decisions/0005-workflow-orchestration.md",
+  "docs/reference-research/douyin-codex-short-video-study.md",
 ]) {
   check(file, () => requireFile(file));
 }
 
+check("Roadmap reflects implemented modules", () => {
+  const roadmap = readFileSync(join(ROOT, "docs/implementation-roadmap.md"), "utf8");
+  if (roadmap.includes("状态：待开发")) throw new Error("implementation-roadmap.md 仍包含待开发模块");
+  if (!roadmap.includes("模块 10")) throw new Error("implementation-roadmap.md 缺少模块 10");
+});
 check("Python compile", () => run(python, ["-m", "compileall", "-q", "src", "tests", "scripts"]));
 check("AVS CLI", () => run(python, ["-m", "avs", "--help"]));
+check("AVS workflow CLI", () => run(python, ["-m", "avs", "workflow", "--help"]));
 check("AVS doctor", () => run(python, ["-m", "avs", "doctor"]));
 check("Skills sync", () => run(python, ["scripts/sync_skills.py", "--check"]));
 check("Ruff", () => run(python, ["-m", "ruff", "check", "src", "tests", "scripts"]));

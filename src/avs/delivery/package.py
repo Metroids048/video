@@ -69,8 +69,11 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
     optional_copies = (
         (ep_dir / "renders" / "preview-with-motion.mp4", Path("preview-with-motion.mp4")),
         (ep_dir / "work" / "motion-manifest.json", Path("motion-manifest.json")),
+        (ep_dir / "work" / "reference" / "reference-recipe.json", Path("reference/reference-recipe.json")),
+        (ep_dir / "work" / "content" / "brief.md", Path("content/brief.md")),
         (ep_dir / "work" / "content" / "script.json", Path("content/script.json")),
         (ep_dir / "work" / "content" / "storyboard.json", Path("content/storyboard.json")),
+        (ep_dir / "work" / "content" / "missing-assets.md", Path("content/missing-assets.md")),
     )
     for source, relative in optional_copies:
         if source.is_file():

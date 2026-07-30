@@ -8,6 +8,7 @@ import pytest
 from click.testing import CliRunner
 
 from avs.cli import main
+from avs.content import check_prerequisites
 from avs.content.schema import ContentValidationError, validate_content_bundle, validate_script
 from avs.ingest.manifest import save_manifest
 from avs.models.episode import EpisodeModel
@@ -153,3 +154,9 @@ def test_cli_approve_then_assets_ready(
     assets = runner.invoke(main, ["assets", "approve", "EP-CONTENT"])
     assert assets.exit_code == 0, assets.output
     assert EpisodeModel.load(content_episode / "episode.json").status == "ASSETS_READY"
+
+
+def test_content_prerequisites_recognize_markdown_input(content_episode: Path) -> None:
+    prerequisites = check_prerequisites(content_episode)
+
+    assert prerequisites["has_input_text"] is True

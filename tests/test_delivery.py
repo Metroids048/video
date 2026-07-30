@@ -65,6 +65,21 @@ def test_delivery_copies_outputs_and_assets_into_delivery(tmp_path: Path) -> Non
     validate_manifest(episode, manifest)
 
 
+def test_delivery_preserves_content_and_reference_traceability(tmp_path: Path) -> None:
+    episode = _episode(tmp_path)
+    (episode / "work" / "content" / "brief.md").write_text("brief", encoding="utf-8")
+    (episode / "work" / "content" / "missing-assets.md").write_text("gaps", encoding="utf-8")
+    reference = episode / "work" / "reference" / "reference-recipe.json"
+    reference.parent.mkdir(parents=True)
+    reference.write_text("{}", encoding="utf-8")
+
+    run_delivery(episode, _model())
+
+    assert (episode / "delivery" / "content" / "brief.md").read_text(encoding="utf-8") == "brief"
+    assert (episode / "delivery" / "content" / "missing-assets.md").read_text(encoding="utf-8") == "gaps"
+    assert (episode / "delivery" / "reference" / "reference-recipe.json").read_text(encoding="utf-8") == "{}"
+
+
 def test_delivery_refuses_changed_target_without_force(tmp_path: Path) -> None:
     episode = _episode(tmp_path)
     (episode / "delivery" / "preview-clean.mp4").write_bytes(b"different")

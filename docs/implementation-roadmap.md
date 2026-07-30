@@ -1,7 +1,7 @@
 # Agent Video Studio V1 — 实施路线图
 
-> 版本：1.0 | 日期：2026-07-20 | 状态：已冻结（模块 0）  
-> 每个模块必须通过独立验收后才能进入下一模块。
+> 版本：1.1 | 日期：2026-07-31 | 状态：模块 0–10 已实现，待持续运行验证
+> 每个模块均有可执行验证；本路线图记录实际仓库状态，不替代验收日志。
 
 ---
 
@@ -27,13 +27,15 @@
 模块 8（QA / 交付包 / 发布文案）
     ↓
 模块 9（双 Demo / 端到端测试 / 最终审计）
+    ↓
+模块 10（Codex 全链路编排 / 证据台账 / 运行手册）
 ```
 
 ---
 
 ## 模块 0：设计冻结与仓库审计
 
-**状态：已完成**  
+**状态：已完成**
 **提交：** `docs: freeze Agent Video Studio V1 architecture`
 
 ### 交付
@@ -68,8 +70,8 @@
 
 ## 模块 1：Bootstrap、Doctor 与跨 Agent 基础
 
-**状态：待开发**  
-**前置：** 模块 0 通过  
+**状态：已完成**
+**前置：** 模块 0 通过
 **提交：** `build: add bootstrap doctor and agent compatibility`
 
 ### 交付
@@ -100,8 +102,8 @@
 
 ## 模块 2：Episode、状态机、Schema 与统一 CLI
 
-**状态：待开发**  
-**前置：** 模块 1 通过  
+**状态：已完成**
+**前置：** 模块 1 通过
 **提交：** `feat: add episode domain state machine and schemas`
 
 ### 交付
@@ -123,8 +125,8 @@
 
 ## 模块 3：输入接收与素材标准化
 
-**状态：待开发**  
-**前置：** 模块 2 通过  
+**状态：已完成**
+**前置：** 模块 2 通过
 **提交：** `feat: add safe media ingestion and asset manifest`
 
 ### 交付
@@ -147,8 +149,8 @@
 
 ## 模块 4：参考视频分析
 
-**状态：待开发**  
-**前置：** 模块 3 通过  
+**状态：已完成**
+**前置：** 模块 3 通过
 **提交：** `feat: add reference video analysis pipeline`
 
 ### 交付
@@ -170,8 +172,8 @@
 
 ## 模块 5：内容简报、脚本与分镜
 
-**状态：待开发**  
-**前置：** 模块 4 通过（或明确无参考视频）  
+**状态：已完成**
+**前置：** 模块 4 通过（或明确无参考视频）
 **提交：** `feat: add agent-driven brief script and storyboard workflow`
 
 ### 交付
@@ -193,8 +195,8 @@
 
 ## 模块 6：时间线与 FFmpeg 粗剪
 
-**状态：待开发**  
-**前置：** 模块 5 通过  
+**状态：已完成**
+**前置：** 模块 5 通过
 **提交：** `feat: add timeline engine and ffmpeg rough cut`
 
 ### 交付
@@ -218,8 +220,8 @@
 
 ## 模块 7：HyperFrames 动效集成
 
-**状态：待开发**  
-**前置：** 模块 6 通过  
+**状态：已完成**
+**前置：** 模块 6 通过
 **提交：** `feat: integrate hyperframes motion graphics`
 
 ### 交付
@@ -242,8 +244,8 @@
 
 ## 模块 8：QA、交付包与发布文案
 
-**状态：待开发**  
-**前置：** 模块 7 通过（或已验证 HyperFrames 降级）  
+**状态：已完成**
+**前置：** 模块 7 通过（或已验证 HyperFrames 降级）
 **提交：** `feat: add deterministic qa and editable delivery package`
 
 ### 交付
@@ -267,8 +269,8 @@
 
 ## 模块 9：双 Demo、端到端测试与最终审计
 
-**状态：待开发**  
-**前置：** 模块 1–8 均独立通过  
+**状态：已完成**
+**前置：** 模块 1–8 均独立通过
 **提交：** `test: add end to end demos and harden v1 pipeline`
 
 ### 交付
@@ -288,6 +290,29 @@
 - `npm run verify` 返回 0
 - 重复执行幂等
 - 无 TODO / TBD / 空实现 / 跳过测试
+
+---
+
+## 模块 10：Codex 全链路编排、证据台账与运行手册
+
+**状态：已完成**
+**ADR：** `docs/decisions/0005-workflow-orchestration.md`
+
+### 交付
+
+- `python -m avs workflow status/next/resume`：只续跑确定性命令，返回机器可读下一步；
+- `src/avs/workflow.py`：从 `episode.json` 和既有工作区推导状态，不创建第二套状态；
+- `skills-src/orchestrate-video-production/SKILL.md`：将 Codex 的内容、素材和渲染协作固定为项目 Skill；
+- `docs/reference-research/douyin-codex-short-video-study.md`：对 18 条用户提供参考的证据分级台账；
+- `README.md`、输入、编辑、排障、兼容性文档；
+- 验证门禁：检查运行手册、工作流 CLI、Skill 同步和路线图状态。
+
+### 验收门槛
+
+- `workflow resume` 只执行 ingest/reference/content init/既有 run，遇 Agent 或人工关口安全停止；
+- 不自动下载第三方链接，不自动审批内容/素材，不自动发布；
+- 完整 `npm run verify`、HyperFrames doctor/lint/render 与两套真实 Demo 均通过；
+- 参考台账不能把未打开页面伪装成已观看分析。
 
 ---
 
