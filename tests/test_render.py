@@ -184,9 +184,17 @@ class TestLayouts:
         f = cover_filter(1920, 1080)
         assert "crop" in f
 
-    def test_choose_layout_default_contain(self):
+    def test_choose_layout_default_screen_focus_for_landscape(self):
+        """Test landscape defaults to screen_focus (not contain)."""
         from avs.render.layouts import choose_layout
-        f = choose_layout(None, 1920, 1080)
+        f = choose_layout(None, 1920, 1080)  # 横屏
+        assert "split[main][bg]" in f  # screen_focus 使用 split
+        assert "boxblur" in f  # screen_focus 使用模糊背景
+
+    def test_choose_layout_default_contain_for_portrait(self):
+        """Test portrait defaults to contain."""
+        from avs.render.layouts import choose_layout
+        f = choose_layout(None, 1080, 1920)  # 竖屏
         assert "pad" in f  # contain 使用 pad
 
     def test_choose_layout_cover(self):
