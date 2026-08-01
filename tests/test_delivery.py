@@ -12,8 +12,10 @@ from avs.delivery.package import run_delivery
 from avs.models.episode import EpisodeModel
 
 
-def _model(mode: str = "ORIGINAL", *, qa_passed: bool = True) -> EpisodeModel:
+def _model(mode: str = "ORIGINAL", *, qa_passed: bool = True, publishable: bool = False) -> EpisodeModel:
     model = EpisodeModel.create("EP-DELIVERY-TEST", mode=mode, platforms=["douyin"])
+    if publishable:
+        model._data["publishable"] = True
     if not qa_passed:
         return model
     for status in ("INGESTED", "CONTENT_READY", "ASSETS_READY", "TIMELINE_READY", "ROUGH_CUT_READY", "QA_PASSED"):
@@ -25,8 +27,15 @@ def _episode(tmp_path: Path) -> Path:
     project = tmp_path / "project"
     episode = project / "episodes" / "active" / "EP-DELIVERY-TEST"
     (project / "schemas").mkdir(parents=True)
+
+    # Copy delivery manifest schema
     schema = Path(__file__).parents[1] / "schemas" / "delivery-manifest.schema.json"
     shutil.copy2(schema, project / "schemas" / schema.name)
+
+    # Copy visual-approval schema for approval validation
+    approval_schema = Path(__file__).parents[1] / "schemas" / "visual-approval.schema.json"
+    shutil.copy2(approval_schema, project / "schemas" / approval_schema.name)
+
     for relative in ("renders", "work/content", "work/prepared", "delivery/motion-graphics"):
         (episode / relative).mkdir(parents=True, exist_ok=True)
     (episode / "renders" / "preview-clean.mp4").write_bytes(b"clean")
@@ -41,10 +50,51 @@ def _episode(tmp_path: Path) -> Path:
     (episode / "work" / "timeline.json").write_text(json.dumps(timeline), encoding="utf-8")
     (episode / "work" / "content" / "script.json").write_text("{}", encoding="utf-8")
     (episode / "delivery" / "motion-graphics" / "hook.mp4").write_bytes(b"hook")
-    (episode / "delivery" / "qa-report.json").write_text(json.dumps({"passed": True}), encoding="utf-8")
+    (episode / "delivery" / "qa-report.json").write_text(json.dumps({
+        "passed": True,
+        "technical_passed": True,
+        "publishability_passed": True,
+        "human_approved": True,
+        "blocking_reasons": [],
+        "input_fingerprint": "test-fingerprint",
+        "checks": [],
+        "generated_at": "2025-01-01T00:00:00Z"
+    }), encoding="utf-8")
     (episode / "delivery" / "qa-report.md").write_text("qa", encoding="utf-8")
     (episode / "delivery" / "visual-review.md").write_text("visual", encoding="utf-8")
     (episode / "delivery" / "qa-contact-sheet.jpg").write_bytes(b"jpg")
+
+    # Add visual-approval.json for publishable episodes
+    # Must compute hash from actual video file
+    import hashlib
+    final_video = episode / "renders" / "preview-with-motion.mp4"
+    if not final_video.is_file():
+        final_video = episode / "renders" / "preview-with-captions.mp4"
+    if not final_video.is_file():
+        final_video = episode / "renders" / "preview-clean.mp4"
+
+    video_hash = hashlib.sha256(final_video.read_bytes()).hexdigest()
+    video_relative = final_video.relative_to(episode).as_posix()
+
+    approval = {
+        "episode_id": "EP-DELIVERY-TEST",
+        "approved": True,
+        "reviewer": "Test Reviewer",
+        "video_path": video_relative,
+        "video_sha256": video_hash,
+        "reviewed_at": "2025-01-01T00:00:00Z",
+        "checklist": {
+            "hook_clear_within_3s": True,
+            "captions_readable": True,
+            "composition_acceptable": True,
+            "audio_acceptable": True,
+            "no_placeholders": True,
+            "facts_and_rights_checked": True
+        },
+        "notes": None
+    }
+    (episode / "delivery" / "visual-approval.json").write_text(json.dumps(approval), encoding="utf-8")
+
     return episode
 
 
