@@ -2,9 +2,9 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "storyboard.schema.json",
   "title": "Storyboard",
-  "description": "分镜与素材缺口",
+  "description": "分镜与素材缺口（必须追溯到 script 和 creative-profile）",
   "type": "object",
-  "required": ["episode_id", "shots", "generated_at"],
+  "required": ["episode_id", "shots", "generated_at", "traceability"],
   "additionalProperties": false,
   "properties": {
     "episode_id": {"type": "string"},
@@ -32,6 +32,22 @@
       "type": "array",
       "items": {"type": "string"},
       "description": "缺少素材的 shot_id 列表"
+    },
+    "traceability": {
+      "type": "object",
+      "required": ["script_sha256", "creative_profile_sha256"],
+      "properties": {
+        "script_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "script.json 的 SHA-256 哈希"
+        },
+        "creative_profile_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "creative-profile.json 的 SHA-256 哈希"
+        }
+      }
     },
     "generated_at": {"type": "string", "format": "date-time"}
   }

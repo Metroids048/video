@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "creative-profile.schema.json",
+  "title": "CreativeProfile",
+  "description": "创意档案：风格、色调、节奏和构图约束",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "visual_style",
+    "color_palette",
+    "pacing",
+    "composition_rules",
+    "audio_rules",
+    "caption_style",
+    "constraints",
+    "generated_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visual_style": {
+      "type": "object",
+      "required": ["primary_style", "reference_sources"],
+      "properties": {
+        "primary_style": {
+          "type": "string",
+          "enum": [
+            "flat_minimal",
+            "tech_demo",
+            "editorial",
+            "screen_recording",
+            "talking_head",
+            "motion_graphics",
+            "documentary",
+            "vlog"
+          ]
+        },
+        "reference_sources": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "参考来源 IDs，如 REF-001"
+        },
+        "mood": {
+          "type": "string",
+          "enum": ["professional", "casual", "energetic", "calm", "dramatic"]
+        }
+      }
+    },
+    "color_palette": {
+      "type": "object",
+      "required": ["primary_colors", "accent_colors", "background"],
+      "properties": {
+        "primary_colors": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "accent_colors": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 2
+        },
+        "background": {
+          "type": "string",
+          "enum": ["light", "dark", "gradient", "image"]
+        }
+      }
+    },
+    "pacing": {
+      "type": "object",
+      "required": ["target_duration", "hook_seconds", "segment_rhythm"],
+      "properties": {
+        "target_duration": {
+          "type": "number",
+          "minimum": 5,
+          "maximum": 300
+        },
+        "hook_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "前 N 秒必须明确 Hook"
+        },
+        "segment_rhythm": {
+          "type": "string",
+          "enum": ["fast", "moderate", "slow"]
+        },
+        "max_static_clip_seconds": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 10
+        }
+      }
+    },
+    "composition_rules": {
+      "type": "object",
+      "required": ["canvas", "landscape_strategy"],
+      "properties": {
+        "canvas": {
+          "type": "string",
+          "enum": ["1080x1920", "1920x1080"],
+          "description": "画布尺寸"
+        },
+        "landscape_strategy": {
+          "type": "string",
+          "enum": ["screen_focus", "screen_stack", "cover", "contain"],
+          "description": "横屏素材处理策略"
+        },
+        "safe_zones": {
+          "type": "object",
+          "properties": {
+            "caption_bottom_margin_px": {"type": "number"},
+            "title_top_margin_px": {"type": "number"}
+          }
+        }
+      }
+    },
+    "audio_rules": {
+      "type": "object",
+      "required": ["has_voiceover", "bgm_mood"],
+      "properties": {
+        "has_voiceover": {
+          "type": "boolean"
+        },
+        "bgm_mood": {
+          "type": "string",
+          "enum": ["none", "upbeat", "calm", "dramatic", "tech"]
+        },
+        "sfx_allowed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "caption_style": {
+      "type": "object",
+      "required": ["position", "max_lines"],
+      "properties": {
+        "position": {
+          "type": "string",
+          "enum": ["bottom", "top", "middle"]
+        },
+        "max_lines": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "font_size": {
+          "type": "number",
+          "minimum": 32,
+          "maximum": 72
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["must_include", "must_avoid"],
+      "properties": {
+        "must_include": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "必须包含的元素"
+        },
+        "must_avoid": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "必须避免的元素"
+        },
+        "brand_guidelines": {
+          "type": ["string", "null"],
+          "description": "品牌规范说明"
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": ["string", "null"]
+    }
+  }
+}

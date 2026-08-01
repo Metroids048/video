@@ -40,6 +40,58 @@ def content_episode(tmp_path: Path) -> Path:
     }])
     content = ep_dir / "work" / "content"
     content.mkdir(parents=True, exist_ok=True)
+
+    # Create creative-profile for traceability
+    creative_profile = {
+        "episode_id": "EP-CONTENT",
+        "visual_style": {
+            "primary_style": "flat_minimal",
+            "reference_sources": [],
+            "mood": "professional"
+        },
+        "color_palette": {
+            "primary_colors": ["#000000"],
+            "accent_colors": ["#FF0000"],
+            "background": "light"
+        },
+        "pacing": {
+            "target_duration": 10.0,
+            "hook_seconds": 3.0,
+            "segment_rhythm": "moderate",
+            "max_static_clip_seconds": 5.0
+        },
+        "composition_rules": {
+            "canvas": "1080x1920",
+            "landscape_strategy": "screen_focus",
+            "safe_zones": {
+                "caption_bottom_margin_px": 260,
+                "title_top_margin_px": 100
+            }
+        },
+        "audio_rules": {
+            "has_voiceover": True,
+            "bgm_mood": "none",
+            "sfx_allowed": False
+        },
+        "caption_style": {
+            "position": "bottom",
+            "max_lines": 2,
+            "font_size": 48
+        },
+        "constraints": {
+            "must_include": [],
+            "must_avoid": []
+        },
+        "generated_at": _now()
+    }
+    (content / "creative-profile.json").write_text(json.dumps(creative_profile), encoding="utf-8")
+
+    # Compute hashes for traceability
+    import hashlib
+    brief_content = "# Brief\n"
+    brief_hash = hashlib.sha256(brief_content.encode("utf-8")).hexdigest()
+    profile_hash = hashlib.sha256(json.dumps(creative_profile, sort_keys=True).encode("utf-8")).hexdigest()
+
     script = {
         "episode_id": "EP-CONTENT",
         "total_duration_estimate": 5.0,
@@ -53,8 +105,16 @@ def content_episode(tmp_path: Path) -> Path:
             "status": "draft",
             "notes": None,
         }],
+        "traceability": {
+            "brief_sha256": brief_hash,
+            "creative_profile_sha256": profile_hash,
+            "reference_ids": []
+        },
         "generated_at": _now(),
     }
+
+    script_hash = hashlib.sha256(json.dumps(script, sort_keys=True).encode("utf-8")).hexdigest()
+
     storyboard = {
         "episode_id": "EP-CONTENT",
         "shots": [{
@@ -69,6 +129,10 @@ def content_episode(tmp_path: Path) -> Path:
             "notes": "contain",
         }],
         "asset_gaps": [],
+        "traceability": {
+            "script_sha256": script_hash,
+            "creative_profile_sha256": profile_hash
+        },
         "generated_at": _now(),
     }
     (content / "script.json").write_text(json.dumps(script), encoding="utf-8")

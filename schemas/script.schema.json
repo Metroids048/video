@@ -2,9 +2,9 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "script.schema.json",
   "title": "Script",
-  "description": "口播脚本",
+  "description": "口播脚本（必须追溯到 brief 和 creative-profile）",
   "type": "object",
-  "required": ["episode_id", "segments", "generated_at"],
+  "required": ["episode_id", "segments", "generated_at", "traceability"],
   "additionalProperties": false,
   "properties": {
     "episode_id": {"type": "string"},
@@ -32,6 +32,27 @@
         }
       },
       "minItems": 1
+    },
+    "traceability": {
+      "type": "object",
+      "required": ["brief_sha256", "creative_profile_sha256"],
+      "properties": {
+        "brief_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "brief.json 的 SHA-256 哈希"
+        },
+        "creative_profile_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "creative-profile.json 的 SHA-256 哈希"
+        },
+        "reference_ids": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "参考资料 IDs，如 REF-001"
+        }
+      }
     },
     "generated_at": {"type": "string", "format": "date-time"}
   }
