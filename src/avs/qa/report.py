@@ -1,6 +1,7 @@
 """Deterministic media QA and human visual-review artifacts."""
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from typing import Any, Callable
 
 import jsonschema
 
+from avs.qa.approval import load_approval, verify_approval_current
 from avs.qa.audio_levels import detect_max_volume
 from avs.qa.black_frames import detect_black_intervals
 from avs.qa.contact_sheet import create_final_contact_sheet
@@ -37,6 +39,62 @@ class QACheck:
             "message": self.message,
             "value": self.value,
         }
+
+
+def _safe_call(function: Callable[[Path], Any], path: Path) -> tuple[Any, str | None]:
+    try:
+        return function(path), None
+    except Exception as exc:
+        return None, str(exc)
+
+
+def _sha256_file(path: Path) -> str:
+    """Compute SHA-256 hash of a file."""
+    if not path.is_file():
+        return ""
+    hasher = hashlib.sha256()
+    with path.open("rb") as f:
+        while chunk := f.read(65536):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _load_quality_config(ep_dir: Path) -> dict[str, Any]:
+    """Load quality.yaml config from project root."""
+    for candidate in (ep_dir, *ep_dir.parents):
+        config_path = candidate / "config" / "quality.yaml"
+        if config_path.is_file():
+            import yaml
+            return yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    return {}
+
+
+def _compute_input_fingerprint(
+    ep_dir: Path,
+    final_video: Path,
+    publishable: bool,
+) -> str:
+    """Compute fingerprint of all QA inputs to detect staleness."""
+    parts = [
+        _sha256_file(final_video),
+        _sha256_file(ep_dir / "work" / "timeline.json"),
+        _sha256_file(ep_dir / "work" / "captions.srt"),
+        _sha256_file(ep_dir / "work" / "content" / "creative-profile.json"),
+        _sha256_file(ep_dir / "delivery" / "visual-approval.json"),
+    ]
+
+    # Include quality config hash
+    for candidate in (ep_dir, *ep_dir.parents):
+        config_path = candidate / "config" / "quality.yaml"
+        if config_path.is_file():
+            parts.append(_sha256_file(config_path))
+            break
+
+    # Include publishable flag
+    parts.append("publishable=true" if publishable else "publishable=false")
+
+    combined = "|".join(parts)
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
 
 def _safe_call(function: Callable[[Path], Any], path: Path) -> tuple[Any, str | None]:
@@ -100,19 +158,45 @@ def _media_checks(path: Path, label: str, prefix: str, expected_duration: float)
     return checks, metadata
 
 
-def run_qa(ep_dir: Path, episode_id: str, *, force: bool = False) -> dict[str, Any]:
-    """Run deterministic QA and write JSON, Markdown and visual-review artifacts."""
+def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False) -> dict[str, Any]:
+    """Run deterministic QA with three-layer gate logic and fingerprint checking.
+
+    Args:
+        ep_dir: Episode directory
+        episode_id: Episode ID
+        publishable: Whether this is for public release
+        force: Force re-run even if report exists
+
+    Returns:
+        QA report dict with technical_passed, publishability_passed, human_approved, passed
+    """
     delivery_dir = ep_dir / "delivery"
     report_path = delivery_dir / "qa-report.json"
+
+    # Determine final video path
+    final_video = ep_dir / "renders" / "preview-with-motion.mp4"
+    if not final_video.is_file():
+        final_video = ep_dir / "renders" / "preview-with-captions.mp4"
+
+    # Compute input fingerprint
+    current_fingerprint = _compute_input_fingerprint(ep_dir, final_video, publishable)
+
+    # Check if existing report is still valid
     if report_path.exists() and not force:
         existing_report = json.loads(report_path.read_text(encoding="utf-8"))
-        _validate_report(ep_dir, existing_report)
-        return existing_report
+        existing_fingerprint = existing_report.get("input_fingerprint", "")
+        if existing_fingerprint == current_fingerprint:
+            _validate_report(ep_dir, existing_report)
+            return existing_report
+        # Fingerprint mismatch, need to re-run
 
     delivery_dir.mkdir(parents=True, exist_ok=True)
     timeline = inspect_timeline(ep_dir / "work" / "timeline.json")
     total_duration = float(timeline.get("total_duration") or 0)
+    quality_config = _load_quality_config(ep_dir)
+
     checks: list[QACheck] = []
+    blocking_reasons: list[str] = []
 
     timeline_errors = list(timeline.get("errors", []))
     timeline_warnings = list(timeline.get("warnings", []))
@@ -151,10 +235,34 @@ def run_qa(ep_dir: Path, episode_id: str, *, force: bool = False) -> dict[str, A
     ))
 
     placeholder_count = int(timeline.get("placeholder_count") or 0)
+
+    # Publishability check: placeholders
+    if publishable:
+        placeholder_severity = "error"
+        placeholder_passed = placeholder_count == 0
+        placeholder_message = (
+            f"{placeholder_count} 个占位卡，publishable=true 时不允许"
+            if placeholder_count > 0
+            else None
+        )
+        if not placeholder_passed:
+            blocking_reasons.append(f"存在 {placeholder_count} 个占位卡")
+    else:
+        placeholder_severity = "warning"
+        placeholder_passed = placeholder_count == 0
+        placeholder_message = (
+            f"{placeholder_count} 个占位卡需人工补充素材"
+            if placeholder_count > 0
+            else None
+        )
+
     checks.append(QACheck(
-        "placeholder_assets", "无待补素材占位卡", placeholder_count == 0, "warning",
-        message=f"{placeholder_count} 个占位卡需人工补充素材" if placeholder_count else None,
-        value=placeholder_count,
+        "placeholder_assets",
+        "无待补素材占位卡" if publishable else "占位卡记录",
+        placeholder_passed,
+        placeholder_severity,
+        placeholder_message,
+        placeholder_count,
     ))
 
     final_video = ep_dir / "renders" / "preview-with-motion.mp4"
@@ -220,9 +328,64 @@ def run_qa(ep_dir: Path, episode_id: str, *, force: bool = False) -> dict[str, A
 
     errors = [check for check in checks if not check.passed and check.severity == "error"]
     warnings = [check for check in checks if not check.passed and check.severity == "warning"]
+
+    # Three-layer gate logic
+    technical_passed = not errors
+    publishability_passed = True
+
+    # Publishability checks: only enforce for publishable episodes
+    if publishable:
+        # Check placeholders
+        if placeholder_count > 0:
+            publishability_passed = False
+
+        # Check audio (planned_audio and no long silence)
+        planned_audio = bool(timeline.get("planned_audio"))
+        if planned_audio and quality_config.get("quality", {}).get("publishable", {}).get("require_non_silent_audio", True):
+            # Check for silence - this is already in checks, find it
+            silence_check = next((c for c in checks if c.check_id == "planned_audio_silence"), None)
+            if silence_check and not silence_check.passed:
+                publishability_passed = False
+                if "静音" not in "".join(blocking_reasons):
+                    blocking_reasons.append("音频静音或异常长静音")
+
+    # Human approval check
+    human_approved = False
+    approval_message = None
+    if publishable and quality_config.get("quality", {}).get("publishable", {}).get("require_human_visual_approval", True):
+        is_valid, error = verify_approval_current(ep_dir, final_video)
+        human_approved = is_valid
+        if not is_valid:
+            approval_message = error
+            blocking_reasons.append(f"人工批准: {error}")
+    elif not publishable:
+        # Non-publishable episodes don't require approval
+        human_approved = True  # Not blocking for non-publishable
+        approval_message = "publishable=false，无需人工批准"
+
+    checks.append(QACheck(
+        "human_visual_approval",
+        "人工视觉批准有效" if publishable else "人工批准（非必需）",
+        human_approved,
+        "error" if publishable else "info",
+        approval_message,
+        None,
+    ))
+
+    # Final passed determination
+    if publishable:
+        passed = technical_passed and publishability_passed and human_approved
+    else:
+        passed = technical_passed
+
     report: dict[str, Any] = {
         "episode_id": episode_id,
-        "passed": not errors,
+        "passed": passed,
+        "technical_passed": technical_passed,
+        "publishability_passed": publishability_passed,
+        "human_approved": human_approved,
+        "blocking_reasons": blocking_reasons,
+        "input_fingerprint": current_fingerprint,
         "checks": [check.to_dict() for check in checks],
         "summary": f"{len(checks)} 项检查，{len(errors)} error，{len(warnings)} warning",
         "generated_at": datetime.now(timezone.utc).isoformat(),

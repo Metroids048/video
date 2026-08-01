@@ -2,13 +2,47 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "qa-report.schema.json",
   "title": "QAReport",
-  "description": "质量验收报告",
+  "description": "质量验收报告（技术、发布质量、人工批准三层）",
   "type": "object",
-  "required": ["episode_id", "passed", "checks", "generated_at"],
+  "required": [
+    "episode_id",
+    "passed",
+    "technical_passed",
+    "publishability_passed",
+    "human_approved",
+    "blocking_reasons",
+    "input_fingerprint",
+    "checks",
+    "generated_at"
+  ],
   "additionalProperties": false,
   "properties": {
     "episode_id": {"type": "string"},
-    "passed": {"type": "boolean"},
+    "passed": {
+      "type": "boolean",
+      "description": "总体是否通过：publishable=true 时要求三层全部通过；publishable=false 时至少要求 technical 通过"
+    },
+    "technical_passed": {
+      "type": "boolean",
+      "description": "技术检查：编码、解码、尺寸、帧率、时长、Schema、黑帧等确定性检查"
+    },
+    "publishability_passed": {
+      "type": "boolean",
+      "description": "发布质量检查：声音、占位、字幕、横屏布局、节奏和动效降级等最低可看性检查"
+    },
+    "human_approved": {
+      "type": "boolean",
+      "description": "人工视觉批准：人工完整播放并批准当前视频，且批准文件中的视频 SHA-256 与当前最终视频完全一致"
+    },
+    "blocking_reasons": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "阻止通过的原因列表"
+    },
+    "input_fingerprint": {
+      "type": "string",
+      "description": "输入指纹（视频、timeline、字幕、creative-profile、批准文件、quality.yaml、publishable 值的组合哈希）"
+    },
     "checks": {
       "type": "array",
       "items": {

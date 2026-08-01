@@ -42,7 +42,9 @@ def _qa_report(ep_dir: Path) -> dict[str, Any]:
         raise FileNotFoundError("缺少 delivery/qa-report.json，请先运行 avs qa")
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("passed") is not True:
-        raise ValueError("QA 报告未通过，不能生成交付包")
+        blocking = payload.get("blocking_reasons", [])
+        reasons_text = "; ".join(blocking) if blocking else "未知原因"
+        raise ValueError(f"QA 报告未通过，不能生成交付包。原因: {reasons_text}")
     return payload
 
 
@@ -50,7 +52,35 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
     """Copy all editable outputs into delivery/ and write a validated manifest."""
     if model.status not in {"QA_PASSED", "DELIVERY_READY"}:
         raise ValueError(f"当前状态 {model.status}，必须先达到 QA_PASSED")
-    _qa_report(ep_dir)
+
+    qa_report = _qa_report(ep_dir)
+
+    # Verify QA report matches current state
+    if model.publishable:
+        if not qa_report.get("human_approved"):
+            raise ValueError("publishable=true 需要人工视觉批准，但 QA 报告中 human_approved=false")
+
+        # Verify final video hash matches approval
+        from avs.qa.approval import load_approval, sha256_file
+
+        approval = load_approval(ep_dir)
+        if approval is None:
+            raise ValueError("publishable=true 需要人工视觉批准，但缺少 visual-approval.json")
+
+        final_video = ep_dir / "renders" / "preview-with-motion.mp4"
+        if not final_video.is_file():
+            final_video = ep_dir / "renders" / "preview-with-captions.mp4"
+
+        if not final_video.is_file():
+            raise FileNotFoundError("最终视频不存在")
+
+        current_hash = sha256_file(final_video)
+        approval_hash = approval.get("video_sha256", "")
+        if current_hash != approval_hash:
+            raise ValueError(
+                f"视频已变更，批准失效。批准哈希: {approval_hash[:16]}...，"
+                f"当前哈希: {current_hash[:16]}..."
+            )
 
     delivery_dir = ep_dir / "delivery"
     delivery_dir.mkdir(parents=True, exist_ok=True)

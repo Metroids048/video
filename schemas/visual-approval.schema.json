@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "visual-approval.schema.json",
+  "title": "VisualApproval",
+  "description": "人工视觉批准记录，与视频内容哈希绑定",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "approved",
+    "reviewer",
+    "video_path",
+    "video_sha256",
+    "reviewed_at",
+    "checklist"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approved": {
+      "type": "boolean"
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "审查人员姓名，不可为空"
+    },
+    "video_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "相对于 Episode 根目录的视频路径"
+    },
+    "video_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "视频文件的 SHA-256 哈希值"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "批准时间，ISO 8601 格式带时区"
+    },
+    "checklist": {
+      "type": "object",
+      "required": [
+        "hook_clear_within_3s",
+        "captions_readable",
+        "composition_acceptable",
+        "audio_acceptable",
+        "no_placeholders",
+        "facts_and_rights_checked"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "hook_clear_within_3s": {
+          "type": "boolean",
+          "description": "前三秒 Hook 是否清晰"
+        },
+        "captions_readable": {
+          "type": "boolean",
+          "description": "字幕是否可读"
+        },
+        "composition_acceptable": {
+          "type": "boolean",
+          "description": "画面构图是否可接受"
+        },
+        "audio_acceptable": {
+          "type": "boolean",
+          "description": "音频是否可接受"
+        },
+        "no_placeholders": {
+          "type": "boolean",
+          "description": "是否无占位卡"
+        },
+        "facts_and_rights_checked": {
+          "type": "boolean",
+          "description": "事实和版权是否已检查"
+        }
+      }
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "description": "可选的审查备注"
+    }
+  }
+}

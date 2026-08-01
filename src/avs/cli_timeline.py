@@ -331,7 +331,7 @@ def register_commands(main_group: click.Group) -> None:
 
         try:
             from avs.qa import run_qa
-            report = run_qa(ep_dir, model.id, force=force)
+            report = run_qa(ep_dir, model.id, publishable=model.publishable, force=force)
         except ImportError:
             console.print("[yellow]⚠ qa 模块尚未实现（模块8），跳过[/yellow]")
             sys.exit(1)
@@ -353,6 +353,30 @@ def register_commands(main_group: click.Group) -> None:
         if errors:
             console.print(f"\n[red]✗ QA 未通过（{len(errors)} error，{len(warnings)} warning）[/red]")
             sys.exit(1)
+
+        # Check three-layer gate status
+        technical_passed = report.get("technical_passed", False)
+        publishability_passed = report.get("publishability_passed", True)
+        human_approved = report.get("human_approved", False)
+        blocking_reasons = report.get("blocking_reasons", [])
+
+        if not technical_passed:
+            console.print(f"\n[red]✗ 技术检查失败[/red]")
+            sys.exit(1)
+
+        if model.publishable and (not publishability_passed or not human_approved):
+            console.print(f"\n[yellow]⚠ 技术检查通过，但尚未满足发布条件：[/yellow]")
+            for reason in blocking_reasons:
+                console.print(f"  [yellow]- {reason}[/yellow]")
+
+            if not human_approved:
+                console.print(f"\n[yellow]状态将转为 WAITING_FOR_REVIEW，等待人工视觉批准[/yellow]")
+                model.transition("WAITING_FOR_REVIEW")
+                model.save(ep_json)
+                sys.exit(2)  # Exit code 2: waiting for human approval
+            else:
+                console.print(f"\n[red]✗ 发布质量检查未通过[/red]")
+                sys.exit(1)
 
         # 状态转换 → QA_PASSED
         try:
