@@ -1,0 +1,311 @@
+# knowledge/references/catalog.yaml
+# 参考资料目录 - 18条已核验参考
+# 研究时间：2026-07-31
+# 单一事实来源：所有参考链接、验证要点和迁移决策
+
+version: "1.0"
+
+catalog:
+  - source_id: REF-001
+    author: 阿柴ChayAI
+    type: video
+    duration_seconds: 403
+    url: https://www.douyin.com/video/7663735393996508452
+    page_verified_points:
+      - 选题 → 文案 → 音频 → 视觉/动画 → 可编辑交付的完整流程
+      - 先用音频确定时间线，再设计分镜
+      - 输出可继续编辑的剪辑结果，不逆向生成剪映草稿
+      - 流程仍是粗稿，需要针对内容自定义
+    can_migrate:
+      - workflow resume 串联确定性步骤
+      - 音频时长作为时间线基准
+      - 交付 timeline/SRT/素材/编辑说明
+      - 人工审核关口
+    must_not_copy:
+      - 原视频文案
+      - 原视频配音
+      - 原视频素材
+      - 具体案例和数据
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-002
+    author: Mysteryboxed
+    type: video
+    url: https://www.douyin.com/video/7663689770068921609
+    page_verified_points:
+      - AI 被动收入的五种内容模式：KDP、联盟博客、YouTube、长期答疑、记录工作
+    can_migrate:
+      - 内容选题样例参考
+    must_not_copy:
+      - 收益数据
+      - 案例细节
+      - 具体平台和产品
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-003
+    author: 比高
+    type: video
+    url: https://www.douyin.com/video/7654162614997552434
+    page_verified_points:
+      - AI Agent 的价值要转化为传统行业的业务结果
+      - 重点是场景包装、话术和投放
+    can_migrate:
+      - 内容简报必须写清目标用户、业务场景和可验证结果
+    must_not_copy:
+      - 转化数据
+      - 具体案例
+      - 投放策略
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-004
+    author: 阿金成长记
+    type: image_post
+    url: https://www.douyin.com/note/7662595050442522292
+    page_verified_points:
+      - 将对标文案蒸馏为 Skill，再用商业方法论优化 hook
+      - 工具不能代替解决用户问题和数据迭代
+    can_migrate:
+      - analyze-reference 只提炼结构
+      - 脚本必须原创
+      - 发布后的数据复盘留给人工流程
+    must_not_copy:
+      - 对标文案原文
+      - 具体优化案例
+      - 数据分析结论
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-005
+    author: 宗雷AI
+    type: video
+    url: https://www.douyin.com/video/7661621223671575141
+    page_verified_points:
+      - 展示六类能力：HyperFrames、Video Use、Promotion、Generative Media、Video Cut、AI Video Workflow
+    can_migrate:
+      - HyperFrames 已作为受控动效层
+      - 核心 CLI 不依赖插件
+    must_not_copy:
+      - 具体插件配置
+      - 私有 Skill 实现
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: 提到的部分能力名称无可审计来源时不盲装
+
+  - source_id: REF-006
+    author: 班斑
+    type: video
+    url: https://www.douyin.com/video/7661912972772028138
+    page_verified_points:
+      - 创业流程分为想法、MVP、发布、规模化
+      - 标准文档让团队和 AI 可重复协作
+    can_migrate:
+      - 项目用 ADR、Schema、Skill 和 Episode 状态固定流程
+      - V1 停在人工发布前
+    must_not_copy:
+      - 具体创业案例
+      - 商业模式细节
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-007
+    author: 小屿AI实战笔记
+    type: video
+    url: https://www.douyin.com/video/7666709034884044499
+    page_verified_points:
+      - coordinator、researcher、writer、editor、builder 五角色
+      - 配合三层质量防护和信息路由
+    can_migrate:
+      - AVS 用内容、素材、审查 Skill 分工
+      - 共享 episode.json，不创建第二套 Agent 状态
+    must_not_copy:
+      - 具体 Agent 实现
+      - 协作脚本
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-008
+    author: 小澈的赛博茶水间
+    type: image_post
+    url: https://www.douyin.com/note/7665652596241075519
+    page_verified_points:
+      - 推荐 video-shotcraft 的镜头卡、动态样片和产品宣传片能力
+    can_migrate:
+      - 已审计并固定安装该 Skill
+      - 仅复用镜头语法、节奏和声音设计
+    must_not_copy:
+      - Remotion 模板
+      - 具体动画实现
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: 不采用其 Remotion 主链
+
+  - source_id: REF-009
+    author: 子昂从零出发
+    type: video
+    url: https://www.douyin.com/video/7665966861477088555
+    page_verified_points:
+      - 展示作者自有的一键智能剪辑与封面 Skill
+      - 页面仅指向主页领取
+    can_migrate: []
+    must_not_copy:
+      - 作者私有 Skill
+      - 剪辑逻辑
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: 无公开、可审计仓库和许可，不写入项目依赖
+
+  - source_id: REF-010
+    author: Tam
+    type: image_post
+    url: https://www.douyin.com/note/7666821695352868714
+    page_verified_points:
+      - 介绍 video-shotcraft 的镜头卡、样片、Remotion 模板和声音设计资产
+    can_migrate:
+      - 与 REF-008、REF-013 交叉验证同一开源项目
+      - 安装固定 commit，并显式隔离 Remotion
+    must_not_copy:
+      - Remotion 模板
+      - 具体素材
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-011
+    author: AI科技视野
+    type: video
+    url: https://www.douyin.com/video/7662716941353749775
+    page_verified_points:
+      - Seedance 创意拆解、Gen 素材、Hyper 渲染、Video Use 精修、Remotion 包装
+    can_migrate:
+      - 只吸收"拆解→素材→包装→精修"顺序
+      - 主渲染仍为 FFmpeg + HyperFrames
+    must_not_copy:
+      - 外部生成素材
+      - 具体工具配置
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: 外部生成素材需授权
+
+  - source_id: REF-012
+    author: 子昂从零出发
+    type: video
+    url: https://www.douyin.com/video/7666770325815823642
+    page_verified_points:
+      - 再次展示作者自有智能剪辑 Skill 的一键剪辑和封面能力
+    can_migrate: []
+    must_not_copy:
+      - 作者私有 Skill
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: 页面没有可审计 GitHub 来源，因此不安装
+
+  - source_id: REF-013
+    author: Vincent
+    type: video
+    url: https://www.douyin.com/video/7664602646754581482
+    page_verified_points:
+      - video-shotcraft 正式开源，包含大量镜头卡、动态样片和产品宣传片模板
+      - Apache-2.0 许可
+    can_migrate:
+      - 已核对作者仓库、Apache-2.0 许可并固定 commit d4915443232e89527fdc9d7e79f132ba411fc440
+      - 只作参考库
+    must_not_copy:
+      - Remotion 主链实现
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-014
+    author: 墨白Neo
+    type: video
+    url: https://www.douyin.com/video/7666310910251916667
+    page_verified_points:
+      - VOX 风格三步：风格板、分镜、Omni 生成视频
+    can_migrate:
+      - 将风格约束写入 brief/分镜
+      - 缺失素材必须标记
+    must_not_copy:
+      - VOX 原视频素材
+      - 生成视频
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: 生成式视频不是 V1 必需依赖
+
+  - source_id: REF-015
+    author: 见舟AI
+    type: video
+    url: https://www.douyin.com/video/7647556381230591592
+    page_verified_points:
+      - 视频/文稿、转写校对、章节、画面设计、QA、渲染
+      - 先把剪辑标准沉淀为 Skill
+    can_migrate:
+      - 与 AVS 的 ingest→content→timeline→QA→delivery 一致
+      - 转写不可用时保留人工降级
+    must_not_copy:
+      - 具体 Skill 实现
+      - 视频素材
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-016
+    author: 郑茜茜（xi）
+    type: video
+    url: https://www.douyin.com/video/7664444532058033449
+    page_verified_points:
+      - Codex + Obsidian 自生长知识库、定时任务、Skill 蒸馏和数据复盘
+    can_migrate:
+      - 可借鉴知识沉淀方式
+      - 项目文档仍是单一规则来源
+    must_not_copy:
+      - 独立知识库实现
+      - 定时发布脚本
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+    notes: AVS 不引入独立知识库或定时发布
+
+  - source_id: REF-017
+    author: AskCc
+    type: video
+    duration_seconds: 19
+    url: https://www.douyin.com/video/7666820677693396075
+    page_verified_points:
+      - 虚构面试情境用短冲突、快速反转和明确结尾完成叙事
+    can_migrate:
+      - 只作为短剧情节奏参考
+    must_not_copy:
+      - 虚构经历包装成真实案例
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"
+
+  - source_id: REF-018
+    author: 普通人的AI
+    type: video
+    url: https://www.douyin.com/video/7666766502665686315
+    page_verified_points:
+      - 十类 Skill：安装检查、对标雷达、爆款拆解、人话口播、分镜、录屏清单、封面标题、字幕剪辑、素材归档、数据复盘
+    can_migrate:
+      - AVS 已覆盖安装/参考/脚本/分镜/素材/字幕/归档/QA
+      - 发布和数据复盘保持人工
+    must_not_copy:
+      - 具体 Skill 实现
+    evidence_level: A
+    has_local_authorized_video: false
+    research_date: "2026-07-31"

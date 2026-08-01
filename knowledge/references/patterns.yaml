@@ -1,0 +1,220 @@
+# knowledge/references/patterns.yaml
+# 可复用模式库 - 从18条参考中提炼的抽象规则
+# 只保存抽象、可复用规则，不复制原文案、观点、封面和素材
+
+version: "1.0"
+
+patterns:
+  - pattern_id: PAT-001
+    category: workflow
+    rule: 先音频、后时间线。音频时长确定后，再设计分镜和视觉时间线
+    when_to_use: 有配音或口播的视频
+    when_not_to_use: 纯静音或纯音乐背景的视频
+    source_ids: [REF-001, REF-015]
+    confidence: high
+    machine_constraints:
+      requires_audio: true
+      timeline_audio_first: true
+      storyboard_after_audio_duration: true
+
+  - pattern_id: PAT-002
+    category: workflow
+    rule: 可编辑交付优于草稿逆向。输出 timeline.json、SRT、素材包和编辑说明，不逆向生成专有格式草稿
+    when_to_use: 所有需要后期编辑的场景
+    when_not_to_use: 完全自动化无需编辑的场景
+    source_ids: [REF-001, REF-006]
+    confidence: high
+    machine_constraints:
+      delivery_includes: [timeline.json, captions.srt, assets, edit-notes.md]
+      no_proprietary_draft: true
+
+  - pattern_id: PAT-003
+    category: workflow
+    rule: 人工关口不可跳过。确定性命令可续跑，事实判断、素材批准和发布必须停在人工关口
+    when_to_use: 所有涉及主观判断和发布的流程
+    when_not_to_use: 纯技术验证阶段
+    source_ids: [REF-001, REF-004, REF-007]
+    confidence: high
+    machine_constraints:
+      human_gates: [content_review, assets_approval, visual_approval, publish]
+      auto_resume_allowed: [ingest, timeline, render, technical_qa]
+
+  - pattern_id: PAT-004
+    category: structure
+    rule: 前三秒明确收益或冲突。Hook 必须在前 3 秒内展示具体收益、冲突或价值主张
+    when_to_use: 公开发布的短视频
+    when_not_to_use: 内部培训或长视频
+    source_ids: [REF-004, REF-017]
+    confidence: high
+    machine_constraints:
+      hook_within_seconds: 3.0
+      hook_types: [benefit, conflict, question, result]
+      first_visual_change_within_seconds: 2.5
+
+  - pattern_id: PAT-005
+    category: structure
+    rule: 内容必须落到用户问题和业务结果。避免纯技术展示，必须关联目标用户的具体痛点和可验证结果
+    when_to_use: B端、教育、知识类内容
+    when_not_to_use: 纯娱乐或艺术表达
+    source_ids: [REF-003, REF-004]
+    confidence: high
+    machine_constraints:
+      brief_requires: [target_audience, pain_point, promised_benefit]
+      avoid: [pure_tech_demo, vague_promise]
+
+  - pattern_id: PAT-006
+    category: structure
+    rule: 对标内容蒸馏为结构规则，而不是照抄。提炼节奏、镜头语法和动效逻辑，替换文案、配音、素材、案例、数据、观点
+    when_to_use: REFERENCE_ADAPT 模式
+    when_not_to_use: REFERENCE_CLONE（仅内部学习）或 ORIGINAL 模式
+    source_ids: [REF-004, REF-008, REF-010, REF-013]
+    confidence: high
+    machine_constraints:
+      analyze_reference_output: [structure, pacing, shot_grammar, motion_logic]
+      must_replace: [script_text, voiceover, assets, cases, data, opinions, title, cover]
+
+  - pattern_id: PAT-007
+    category: agent_orchestration
+    rule: 多角色协作但共享单一 Episode 状态。可以分角色执行，但所有角色必须读写同一个 episode.json
+    when_to_use: 复杂的多步骤内容生产
+    when_not_to_use: 简单单步任务
+    source_ids: [REF-007]
+    confidence: high
+    machine_constraints:
+      shared_state: episode.json
+      no_duplicate_state_systems: true
+      agent_roles: [content, media, reviewer]
+
+  - pattern_id: PAT-008
+    category: pacing
+    rule: 短冲突、快速反转、明确结尾。避免长铺垫，快速进入冲突和反转，明确告知下一步行动
+    when_to_use: 竖屏短视频（<60秒）
+    when_not_to_use: 长视频或深度教程
+    source_ids: [REF-017]
+    confidence: medium
+    machine_constraints:
+      max_intro_seconds: 3.0
+      conflict_within_seconds: 5.0
+      resolution_before_end: true
+      cta_explicit: true
+
+  - pattern_id: PAT-009
+    category: pacing
+    rule: 镜头变化频率控制节奏。静态 clip 不超过 5 秒，每 10 秒至少 2 次视觉变化
+    when_to_use: 需要保持观众注意力的内容
+    when_not_to_use: 冥想、ASMR 等需要缓慢节奏的内容
+    source_ids: [REF-008, REF-013]
+    confidence: medium
+    machine_constraints:
+      max_static_clip_seconds: 5.0
+      min_visual_changes_per_10_seconds: 2
+      screen_recording_max_static_seconds: 4.0
+
+  - pattern_id: PAT-010
+    category: composition
+    rule: 横屏录屏使用 screen_focus 或 screen_stack，拒绝纯黑边 contain
+    when_to_use: 横屏素材需要在竖屏中展示
+    when_not_to_use: 素材本身就是竖屏
+    source_ids: [REF-008, REF-011]
+    confidence: high
+    machine_constraints:
+      landscape_publishable_layouts: [screen_focus, screen_stack, cover]
+      reject_landscape_contain: true
+      min_active_frame_ratio: 0.55
+
+  - pattern_id: PAT-011
+    category: captions
+    rule: 字幕语义分句控制阅读速度。每 cue 最多 24 个中文字符，每行最多 14 个中文字符，最多 2 行，阅读速度不超过 12 字/秒
+    when_to_use: 有口播或旁白的视频
+    when_not_to_use: 纯视觉无字幕视频
+    source_ids: [REF-015, REF-018]
+    confidence: high
+    machine_constraints:
+      max_lines: 2
+      max_chars_per_line_cjk: 14
+      max_chars_per_cue_cjk: 24
+      min_cue_seconds: 0.8
+      max_cue_seconds: 3.5
+      max_cjk_chars_per_second: 12.0
+      bottom_margin_px: 260
+
+  - pattern_id: PAT-012
+    category: audio
+    rule: 声音角色显式标记。音频角色应明确为 voice/bgm/sfx/intentional_silence，不只靠文件名前缀推断
+    when_to_use: 所有使用音频的场景
+    when_not_to_use: 完全静音视频
+    source_ids: [REF-001, REF-008]
+    confidence: high
+    machine_constraints:
+      audio_roles: [voice, bgm, sfx, intentional_silence]
+      filename_prefix_as_fallback_only: true
+      require_explicit_role_mapping: true
+
+  - pattern_id: PAT-013
+    category: quality
+    rule: 章节化制作与 QA。按章节或 segment 组织内容，每个阶段独立 QA
+    when_to_use: 复杂的多段落内容
+    when_not_to_use: 单一主题短视频
+    source_ids: [REF-015]
+    confidence: medium
+    machine_constraints:
+      segment_based_organization: true
+      qa_per_segment: true
+      allow_partial_resume: true
+
+  - pattern_id: PAT-014
+    category: skills
+    rule: 完整 Skill 链覆盖全流程。安装检查、脚本、分镜、录屏、字幕、归档、复盘的完整 Skill 链
+    when_to_use: 标准短视频生产流程
+    when_not_to_use: 快速原型或实验性内容
+    source_ids: [REF-015, REF-018]
+    confidence: high
+    machine_constraints:
+      required_skills: [
+        create-episode,
+        analyze-reference,
+        write-video-script,
+        create-storyboard,
+        prepare-assets,
+        create-rough-cut,
+        quality-review,
+        create-publish-pack,
+        orchestrate-video-production
+      ]
+
+  - pattern_id: PAT-015
+    category: workflow
+    rule: 风格板 → 分镜 → 素材/动画。先定义视觉风格约束，再转为分镜，最后准备或生成素材
+    when_to_use: 有明确视觉风格要求的内容
+    when_not_to_use: 纯录屏或纯文本内容
+    source_ids: [REF-014]
+    confidence: medium
+    machine_constraints:
+      workflow_order: [creative_profile, storyboard, assets]
+      creative_profile_before_storyboard: true
+      assets_after_storyboard_approval: true
+
+  - pattern_id: PAT-016
+    category: quality
+    rule: 三层质量防护。技术检查（编码/解码）、发布质量检查（声音/字幕/构图）、人工视觉批准
+    when_to_use: publishable=true 的内容
+    when_not_to_use: 内部测试或 REFERENCE_CLONE
+    source_ids: [REF-007]
+    confidence: high
+    machine_constraints:
+      qa_layers: [technical, publishability, human_visual]
+      technical_always_required: true
+      publishability_required_when_publishable: true
+      human_approval_required_when_publishable: true
+
+  - pattern_id: PAT-017
+    category: skills
+    rule: Skill 来源必须可审计。只安装来源、许可、版本和依赖可审计的 Skill，社交页面"主页领取"不作为项目依赖
+    when_to_use: 选择第三方 Skill
+    when_not_to_use: 项目自有 Skill
+    source_ids: [REF-005, REF-009, REF-012, REF-013]
+    confidence: high
+    machine_constraints:
+      skill_requirements: [public_repository, license, version, dependencies]
+      reject: [social_media_only, no_source, no_license]
+      approved_sources: [npm_official, github_with_license]

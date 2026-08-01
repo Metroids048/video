@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "reference-library.schema.json",
+  "title": "ReferenceLibrary",
+  "description": "参考知识库：目录和模式的合并 Schema",
+  "type": "object",
+  "required": ["version", "catalog", "patterns"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "知识库版本"
+    },
+    "catalog": {
+      "type": "array",
+      "description": "参考资料目录",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_id",
+          "author",
+          "type",
+          "url",
+          "page_verified_points",
+          "can_migrate",
+          "must_not_copy",
+          "evidence_level",
+          "has_local_authorized_video",
+          "research_date"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "pattern": "^REF-\\d{3}$",
+            "description": "唯一参考ID，如 REF-001"
+          },
+          "author": {
+            "type": "string",
+            "minLength": 1,
+            "description": "作者名称"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["video", "image_post", "text_post"],
+            "description": "内容类型"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "原始长链接"
+          },
+          "duration_seconds": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "description": "视频时长（秒），仅视频类型有值"
+          },
+          "page_verified_points": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+            "description": "页面可验证要点列表"
+          },
+          "can_migrate": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "可迁移到 AVS 的内容"
+          },
+          "must_not_copy": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "禁止复制的内容"
+          },
+          "evidence_level": {
+            "type": "string",
+            "enum": ["A", "B", "C"],
+            "description": "证据等级：A=页面已解析且可验证，B=页面可访问但未完整验证，C=仅二手引用"
+          },
+          "has_local_authorized_video": {
+            "type": "boolean",
+            "description": "是否有本地授权视频"
+          },
+          "research_date": {
+            "type": "string",
+            "format": "date",
+            "description": "研究日期 YYYY-MM-DD"
+          },
+          "notes": {
+            "type": ["string", "null"],
+            "description": "可选备注"
+          }
+        }
+      }
+    },
+    "patterns": {
+      "type": "array",
+      "description": "可复用模式库",
+      "items": {
+        "type": "object",
+        "required": [
+          "pattern_id",
+          "category",
+          "rule",
+          "when_to_use",
+          "when_not_to_use",
+          "source_ids",
+          "confidence",
+          "machine_constraints"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "pattern_id": {
+            "type": "string",
+            "pattern": "^PAT-\\d{3}$",
+            "description": "唯一模式ID，如 PAT-001"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "workflow",
+              "structure",
+              "pacing",
+              "composition",
+              "audio",
+              "captions",
+              "agent_orchestration",
+              "skills",
+              "quality"
+            ],
+            "description": "模式分类"
+          },
+          "rule": {
+            "type": "string",
+            "minLength": 10,
+            "description": "模式规则描述"
+          },
+          "when_to_use": {
+            "type": "string",
+            "minLength": 5,
+            "description": "何时使用此模式"
+          },
+          "when_not_to_use": {
+            "type": "string",
+            "minLength": 5,
+            "description": "何时不使用此模式"
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^REF-\\d{3}$"
+            },
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "支持此模式的参考资料ID列表"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "模式置信度"
+          },
+          "machine_constraints": {
+            "type": "object",
+            "description": "机器可执行的约束",
+            "additionalProperties": true
+          },
+          "examples": {
+            "type": ["array", "null"],
+            "items": {"type": "string"},
+            "description": "可选示例"
+          }
+        }
+      }
+    }
+  }
+}
