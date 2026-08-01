@@ -29,6 +29,11 @@
         "properties": {
           "track_id": {"type": "string"},
           "kind": {"type": "string", "enum": ["video", "audio", "caption", "graphic"]},
+          "audio_role": {
+            "type": ["string", "null"],
+            "enum": ["voice", "bgm", "sfx", "intentional_silence", null],
+            "description": "音频轨道角色（仅 kind=audio 时应显式指定）"
+          },
           "clips": {
             "type": "array",
             "items": {

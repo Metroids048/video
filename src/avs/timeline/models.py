@@ -60,11 +60,13 @@ class Track:
     track_id: str
     kind: str          # "video" | "audio" | "caption" | "graphic"
     clips: list[Clip] = field(default_factory=list)
+    audio_role: str | None = None  # "voice" | "bgm" | "sfx" | "intentional_silence" (仅 audio track)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "track_id": self.track_id,
             "kind": self.kind,
+            "audio_role": self.audio_role,
             "clips": [c.to_dict() for c in self.clips],
         }
 
