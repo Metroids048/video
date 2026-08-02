@@ -117,7 +117,7 @@
   },
   "third_party_skills": {
     "hyperframes": {
-      "package": "heygen-com/hyperframes",
+      "package": "hyperframes",
       "install_command": "npx --yes hyperframes skills",
       "targets": [
         "Codex global skills",
@@ -125,10 +125,10 @@
         "Cursor global skills"
       ],
       "status": "installed_offline_bundle",
-      "installed_at": "2026-07-23T13:25:32.441Z",
+      "installed_at": "2026-08-02T11:50:05.633Z",
       "version": "0.7.68",
       "implemented_in_module": 1,
-      "note": "使用 --copy 模式避免 Windows 符号链接权限问题",
+      "note": "Copy from installed npm package; do not clone monorepo.",
       "source": "node_modules/hyperframes/dist/skills",
       "destinations": [
         "~/.codex/skills/hyperframes",
@@ -138,7 +138,15 @@
         "~/.claude/skills/hyperframes-cli",
         "~/.cursor/skills/hyperframes-cli"
       ],
-      "source_sha256": "73f79c7a5409cc1d2a2022d6e26fe132578e6ba704fc3641bef6c81fddae2c6f"
+      "source_sha256": "73f79c7a5409cc1d2a2022d6e26fe132578e6ba704fc3641bef6c81fddae2c6f",
+      "source_repository": "https://github.com/heygen-com/hyperframes",
+      "license": "MIT",
+      "usage": "production_allowed",
+      "install_method": "npm_bundle_copy",
+      "skill_hashes": {
+        "hyperframes": "c44ac74d8cc637eac3bc21d6565801faaebf50a5fed030129f709ece44171f7a",
+        "hyperframes-cli": "2b6d5d853aed51a48ac5839f92f6d5129397fe1d9ab63baeac9cc54a446259ce"
+      }
     },
     "video-shotcraft": {
       "source_repository": "https://github.com/Vincentwei1021/video-shotcraft",
@@ -154,6 +162,134 @@
       "usage": "reference_only",
       "remotion_primary_renderer": false,
       "note": "仅复用镜头语法、节奏和声音设计知识；AVS 主链仍为 timeline.json + FFmpeg + HyperFrames。"
+    },
+    "remotion": {
+      "source_repository": "https://github.com/remotion-dev/skills",
+      "commit": "954abf64096dc18d1599cde9c8026c9ab71579a4",
+      "license": "MIT",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/remotion",
+      "destinations": [
+        "third_party_skills/remotion"
+      ],
+      "source_sha256": "9f6c6fb61cfb8b69ee4934d37cf8326d5832364e5ecdc5639fbce1a56f6c6449",
+      "remotion_primary_renderer": true,
+      "note": "Official Remotion agent skills; framework via npm separately.",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "video-use": {
+      "source_repository": "https://github.com/browser-use/video-use",
+      "commit": "92c2b34e44c205cbc2acae7f6ca7c1c219d5dd66",
+      "license": "MIT",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/video-use",
+      "destinations": [
+        "third_party_skills/video-use"
+      ],
+      "source_sha256": "f5c17e7a28e9d34dfa70f19eabc3dae2132bf07a53dbe265364e78a4d40f382a",
+      "remotion_primary_renderer": false,
+      "note": "",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "seedance": {
+      "source_repository": "https://github.com/automatorsplus/seedance-skill",
+      "commit": "3c1c022d9e52cdbc737eb034a73461a47075f826",
+      "license": "unknown",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/seedance",
+      "destinations": [
+        "third_party_skills/seedance"
+      ],
+      "source_sha256": "115bc5fe144d8e576f7042e1a22f6d36350307b796092fba87f449c9a6bdfeb0",
+      "remotion_primary_renderer": false,
+      "note": "",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "chatcut": {
+      "source_repository": "https://github.com/ChatCut-Inc/agent-plugin",
+      "commit": "e1867a8b48fae0153ef3542efb0ca8fa4e80ad3a",
+      "license": "unknown",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/chatcut",
+      "destinations": [
+        "third_party_skills/chatcut"
+      ],
+      "source_sha256": "51fd9b983bd8eb33ef28bfa1a6e30c7970bb6006c60e8b5d43eaa4d67e717d09",
+      "remotion_primary_renderer": false,
+      "note": "MCP login required on host; skills only vendored here.",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "capcut-david": {
+      "source_repository": "https://github.com/Davidb-2107/capcut-cli-david",
+      "commit": "d9be57ee46ec42d8119e9fcfbb603250a8cd5fb3",
+      "license": "unknown",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/capcut-david",
+      "destinations": [
+        "third_party_skills/capcut-david"
+      ],
+      "source_sha256": "e636d272f869f75c71121e020e40e6d461eb54e27545fa7173e98f803d2f2b69",
+      "remotion_primary_renderer": false,
+      "note": "Supersedes legacy cut-motion / cut-draft skills.",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "cut-skill": {
+      "source_repository": "https://github.com/ygtec/cut.skill",
+      "commit": "a2408b82ce0b898d469eca4dd141870dbe056c49",
+      "license": "unknown",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/cut-skill",
+      "destinations": [
+        "third_party_skills/cut-skill"
+      ],
+      "source_sha256": "e65343961b55944aa7fa9554351a0a0709a71a39d9af9cb9fc5fc4a0410a3eb0",
+      "remotion_primary_renderer": false,
+      "note": "",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "ip-strategist": {
+      "source_repository": "https://github.com/erduo1998-cell/ip-strategist",
+      "commit": "45e88feccc3841d4a981bea42fc656d723ded276",
+      "license": "unknown",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/ip-strategist",
+      "destinations": [
+        "third_party_skills/ip-strategist"
+      ],
+      "source_sha256": "178973f78f7b2cf33ab7a56d0efd1fc2afdf8f9bc0c0310160d6b04ab6e5ba96",
+      "remotion_primary_renderer": false,
+      "note": "",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
+    },
+    "openmontage": {
+      "source_repository": "https://github.com/calesthio/OpenMontage",
+      "commit": "c36e41223e819441748817105635ac4036d41b10",
+      "license": "AGPL-3.0",
+      "usage": "production_allowed",
+      "status": "vendored",
+      "install_method": "git_sparse_or_shallow",
+      "repo_path": "vendor/repos/openmontage",
+      "destinations": [
+        "third_party_skills/openmontage"
+      ],
+      "source_sha256": "b4788cdf4f571fd9ce3ce53d0bc064db983408c2cc5a5d8ac7ab1df3c207b5ec",
+      "remotion_primary_renderer": false,
+      "note": "Sparse clone only; curated entry skill points at vendor/repos/openmontage.",
+      "installed_at": "2026-08-02T11:50:04.061116+00:00"
     }
   }
 }

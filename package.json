@@ -19,7 +19,12 @@
     "lock:python": "node scripts/run-python.mjs scripts/lock_python_deps.py",
     "skills:install": "node scripts/install_skills.mjs",
     "skills:sync": "node scripts/run-python.mjs scripts/sync_skills.py",
-    "skills:check": "node scripts/run-python.mjs scripts/sync_skills.py --check"
+    "skills:check": "node scripts/run-python.mjs scripts/sync_skills.py --check",
+    "skills:vendor": "node scripts/run-python.mjs scripts/vendor_video_skills.py",
+    "skills:vendor:check": "node scripts/run-python.mjs scripts/vendor_video_skills.py --check",
+    "skills:ensure": "node scripts/run-python.mjs scripts/ensure_video_plugins.py",
+    "skills:diagnose": "node scripts/run-python.mjs scripts/diagnose_video_plugins.py",
+    "skills:overlays": "node scripts/run-python.mjs scripts/apply_free_provider_overlays.py"
   },
   "devDependencies": {
     "gsap": "^3.14.2",

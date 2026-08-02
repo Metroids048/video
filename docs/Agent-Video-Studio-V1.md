@@ -29,15 +29,17 @@
 
 ---
 
-## V1 边界（不得扩展到以下功能）
+## V1 边界
+
+仍不得自行扩展到：
 
 - 自动发布（抖音/小红书）
-- 自动登录、评论、私信、多账号矩阵
+- 自动登录、评论、私信、多账号矩阵（ChatCut MCP 登录除外，凭证不入库）
 - 数字人和声音克隆
-- 剪映草稿逆向工程
-- Remotion 主渲染
 - 云端分布式渲染
 - 自动下载第三方平台视频
+
+已放宽（ADR-0006）：Remotion、CapCut/剪映草稿工具、ChatCut、video-use、Seedance、OpenMontage、IP Strategist 可进入正式链路，**必须**按 [video-plugin-routing.md](video-plugin-routing.md) 路由调用。
 
 ---
 
@@ -56,12 +58,13 @@
 
 1. 唯一业务 CLI：`python -m avs`（见 ADR-0001）
 2. `timeline.json` 是渲染器共享协议（见 ADR-0002）
-3. HyperFrames 仅负责动效片段（见 ADR-0003）
-4. Skills 单一编辑源：`skills-src/`（见 ADR-0004）
+3. HyperFrames 仅负责动效片段（见 ADR-0003）；其它渲染器见 ADR-0006
+4. Skills 单一编辑源：自有 `skills-src/`（ADR-0004）；第三方 `third_party_skills/` + `npm run skills:vendor`
 5. 原始素材不可变：`input/` 目录只读
 6. 任何阶段失败保留已完成产物
 7. 不自动发布，不存储密钥/Cookie
 8. 未运行验证命令，不得声称完成
+9. 视频任务强制路由：`docs/video-plugin-routing.md`
 
 ---
 

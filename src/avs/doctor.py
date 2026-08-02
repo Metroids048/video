@@ -275,6 +275,81 @@ def check_skills(project_root: Path) -> CheckResult:
     return CheckResult("Skills", required=False, passed=True, version=f"{len(dirs)} skills")
 
 
+def check_third_party_video_skills(project_root: Path) -> CheckResult:
+    """检查第三方视频 Skills 是否已 vendor 到 third_party_skills/。"""
+    required = [
+        "hyperframes",
+        "remotion-best-practices",
+        "video-use",
+        "seedance",
+        "chatcut",
+        "capcut-david",
+        "cut-skill",
+        "ip-strategist",
+        "openmontage",
+    ]
+    root = project_root / "third_party_skills"
+    if not root.is_dir():
+        return CheckResult(
+            "Third-party video skills",
+            required=False,
+            passed=False,
+            message="third_party_skills/ 不存在；运行 npm run skills:ensure",
+        )
+    missing: list[str] = []
+    for name in required:
+        path = root / name
+        if name == "chatcut":
+            ok = path.is_dir() and any(path.rglob("SKILL.md"))
+        elif name == "video-use":
+            ok = (path / "SKILL.md").is_file() and (path / "helpers").is_dir()
+        else:
+            ok = (path / "SKILL.md").is_file() or any(path.rglob("SKILL.md"))
+        if not ok:
+            missing.append(name)
+    if missing:
+        return CheckResult(
+            "Third-party video skills",
+            required=False,
+            passed=False,
+            message=f"缺失：{', '.join(missing)}；运行 npm run skills:ensure",
+        )
+    routing = project_root / "docs" / "video-plugin-routing.md"
+    if not routing.is_file():
+        return CheckResult(
+            "Third-party video skills",
+            required=False,
+            passed=False,
+            message="缺少 docs/video-plugin-routing.md",
+        )
+    return CheckResult(
+        "Third-party video skills",
+        required=False,
+        passed=True,
+        version=f"{len(required)} packages",
+    )
+
+
+def check_capcut_david_cli() -> CheckResult:
+    """检查 capcut-david CLI（可选）。"""
+    binary = shutil.which("capcut-david") or shutil.which("capcut-david.cmd")
+    if not binary:
+        return CheckResult(
+            "capcut-david",
+            required=False,
+            passed=False,
+            message="未安装；运行 npm run skills:ensure 或 npm i -g capcut-cli-david",
+        )
+    code, out = _run([binary, "--help"])
+    return CheckResult(
+        "capcut-david",
+        required=False,
+        passed=code == 0,
+        version=binary,
+        message="" if code == 0 else out[:200],
+    )
+
+
 def check_skill_sync(project_root: Path) -> CheckResult:
     """检查 skills-src 与 Codex/Claude 项目目标是否逐文件一致。"""
     source_root = project_root / "skills-src"
@@ -333,6 +408,8 @@ def run_doctor(project_root: Path) -> DoctorReport:
     report.add(check_git_lfs())
     report.add(check_project_dirs(project_root))
     report.add(check_skills(project_root))
+    report.add(check_third_party_video_skills(project_root))
+    report.add(check_capcut_david_cli())
     report.add(check_skill_sync(project_root))
     report.add(check_disk_space(project_root))
     return report

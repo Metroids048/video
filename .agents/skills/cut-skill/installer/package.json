@@ -1,0 +1,46 @@
+{
+  "name": "cut-skill-installer",
+  "version": "1.2.0",
+  "description": "Installer CLI for cut.skill - unified video editing control skill (JianYing + Premiere) for AI agents. Run via: npx github:ygtec/cut.skill/installer",
+  "type": "module",
+  "bin": {
+    "cut-skill": "./cli.mjs"
+  },
+  "files": [
+    "cli.mjs",
+    "src/"
+  ],
+  "scripts": {
+    "start": "node cli.mjs",
+    "test": "node --test"
+  },
+  "keywords": [
+    "skill",
+    "ai-agent",
+    "video-editing",
+    "jianying",
+    "capcut",
+    "premiere",
+    "mcp",
+    "installer",
+    "codex",
+    "claude",
+    "opencode",
+    "kimi",
+    "qwen",
+    "glm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ygtec/cut.skill.git",
+    "directory": "installer"
+  },
+  "homepage": "https://github.com/ygtec/cut.skill#readme",
+  "bugs": {
+    "url": "https://github.com/ygtec/cut.skill/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

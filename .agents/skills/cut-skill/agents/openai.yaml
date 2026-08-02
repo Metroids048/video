@@ -1,0 +1,7 @@
+display_name: Cut
+short_description: Control JianYing/CapCut and Premiere for professional video editing workflows.
+default_prompt: >-
+  Use the cut skill when the user asks for video editing, JianYing/CapCut,
+  Premiere Pro, subtitles, transitions, audio mixing, export, or one-line
+  short-form/long-form edit planning. Start by detecting the environment and
+  reading project state before editing, then export and run quality checks.

@@ -24,12 +24,16 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 不得自行扩展到：
 
 - 自动发布；
-- 自动登录、评论或私信；
+- 自动登录、评论或私信（ChatCut MCP 登录除外，且不得把凭证写入仓库）；
 - 数字人和声音克隆；
-- 剪映草稿逆向；
-- Remotion 主渲染；
 - 云渲染；
 - 多账号矩阵。
+
+允许进入正式链路（须按路由表调用，产物回挂 Episode，见 ADR-0006）：
+
+- Remotion 代码驱动渲染；
+- CapCut/剪映草稿工具（`capcut-david` / `cut-skill`，原 cut-motion 继任）；
+- ChatCut、video-use、Seedance、OpenMontage、IP Strategist。
 
 ## 3. 制作模式
 
@@ -66,10 +70,16 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 - 数据合同：`schemas/`
 - Episode 状态：`episode.json`
 - 项目自有 Skills：`skills-src/`
+- 第三方视频 Skills：`third_party_skills/`（`npm run skills:vendor`）
+- 视频插件强制路由：`docs/video-plugin-routing.md`
 - 业务 CLI：`python -m avs`
 - 时间线：`timeline.json`
 
 禁止创建第二套互相独立的状态、配置或 CLI。
+
+## 5.1 视频任务强制 Skills
+
+**任何视频相关任务开始前，必须先读 `docs/video-plugin-routing.md`，并按场景加载对应第三方 Skill。** 不得跳过路由表。旁路渲染器不得伪造状态机完成态。
 
 ## 6. 标准流程
 
@@ -140,13 +150,14 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 - 字幕必须位于安全区。
 - 不同机器的视频输出不要求逐像素相等；测试元数据、解码和容差。
 
-## 10. HyperFrames 规则
+## 10. HyperFrames 与其它渲染器
 
-- 安装并使用官方 HyperFrames Skills。
+- 安装并使用官方 HyperFrames Skills（项目内：`third_party_skills/hyperframes`）。
 - 实际运行 doctor、lint 和 render。
 - V1 最少实现 HookTitle、InfoCard、EndCard。
 - HyperFrames 失败时必须保留 FFmpeg 基础粗剪。
 - 不得把整个业务流程写进 HyperFrames HTML。
+- Remotion / ChatCut / CapCut / video-use / OpenMontage 按 `docs/video-plugin-routing.md` 启用；失败不得静默冒充成功（见 ADR-0006）。
 
 ## 11. 完成报告
 

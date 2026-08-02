@@ -36,6 +36,19 @@ globs:
 - 从 `timeline.json` 读取动效参数，不从聊天上下文获取
 - 渲染失败时降级：FFmpeg 静态文字卡 + 记录 warning
 - 不修改 `episode.json`，不管理 Episode 状态
+- 动效任务必须先读 `third_party_skills/hyperframes`（见 `docs/video-plugin-routing.md`）
+
+## 多渲染器（ADR-0006）
+
+- Remotion / ChatCut / CapCut / video-use / OpenMontage 允许进入正式链路
+- 开始前读 `docs/video-plugin-routing.md` 并加载对应 Skill
+- 旁路产物必须回挂 Episode `work/` 或 `output/`；失败不得静默成功
+
+## 其它视频插件（强制路由）
+
+处理剪辑/成片/提示词/策略前，按 `docs/video-plugin-routing.md` 加载：
+Remotion、video-use、Seedance、ChatCut、capcut-david、cut-skill、ip-strategist、openmontage。
+禁止伪造 QA 状态。
 
 ## 音频
 

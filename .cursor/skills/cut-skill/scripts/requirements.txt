@@ -1,0 +1,26 @@
+# cut.skill Python 依赖
+# 安装：pip install -r requirements.txt
+
+# 核心依赖（必需）
+# 无第三方依赖即可使用剪映后端（纯 stdlib）
+
+# Premiere 后端（可选）
+pymiere>=0.2.0
+
+# UI 自动化导出（可选，剪映导出辅助）
+pyautogui>=0.9.54
+pygetwindow>=0.0.9; sys_platform == "win32"
+
+# MCP Server（可选）
+mcp>=0.1.0
+
+# HTTP API（可选）
+flask>=2.0.0
+
+# 媒体探测（可选，但强烈推荐）
+# ffmpeg/ffprobe 需系统安装，不是 pip 包
+# Windows: choco install ffmpeg
+# macOS: brew install ffmpeg
+
+# ASR（可选，自动字幕示例用）
+# openai-whisper>=20230918

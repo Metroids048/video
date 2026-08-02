@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.db
+*.sqlite
+*.sqlite3
+
+# 虚拟环境 / Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 测试 / Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 备份文件 / Backup files (draft 自动备份)
+*.bak
+*.bak.*
+
+# 临时文件 / Temp files
+*.tmp
+*.tmp.*
+draft_save_*
+
+# 日志 / Logs
+*.log
+dev.log
+server.log
+
+# 操作系统 / OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 剪映项目文件（用户私密）/ JianYing project files (user private)
+draft_content.json.bak.*
+*.draft
+
+# 环境变量 / Environment
+.env
+.env.local
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 临时安装目录
+.cut-skill-tmp-*

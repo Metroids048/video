@@ -10,7 +10,8 @@
 1. `AGENTS.md` — 项目总规则（核心约束、状态机、媒体规则、完成报告格式）
 2. `docs/Agent-Video-Studio-V1.md` — 项目规范快速参考
 3. `tools-manifest.yaml` — 工具版本约束
-4. 当前模块的 Prompt（见 `docs/Agent_Video_Studio_V1_逐模块开发_Prompts.md`）
+4. **视频相关任务额外必读：** `docs/video-plugin-routing.md`，并按场景加载 `third_party_skills/` 中对应 Skill
+5. 当前模块的 Prompt（见 `docs/Agent_Video_Studio_V1_逐模块开发_Prompts.md`）
 
 ## 业务 CLI
 
@@ -29,6 +30,12 @@ python -m avs run <ID>            # 全流程
 
 npm 命令是薄包装，所有业务逻辑在 Python CLI 中实现。
 
+```bash
+npm run skills:sync      # 同步项目自有 skills-src
+npm run skills:vendor    # 拉取/同步第三方视频 Skills
+npm run skills:vendor:check
+```
+
 Windows 环境由 npm 包装脚本统一调用 `AGENT_PYTHON`，不要创建或调用项目 `.venv`。
 
 ## Subagents
@@ -45,3 +52,4 @@ Windows 环境由 npm 包装脚本统一调用 `AGENT_PYTHON`，不要创建或�
 4. 不自动发布，不存储密钥
 5. HyperFrames 失败时必须有 FFmpeg 降级路径
 6. 只有 `--force` 可重新生成可再生成产物
+7. **视频任务必须按 `docs/video-plugin-routing.md` 调用第三方 Skills**（HyperFrames / Remotion / video-use / Seedance / ChatCut / CapCut / IP Strategist / OpenMontage）

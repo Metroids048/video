@@ -4,7 +4,7 @@
 # 修改此文件需同步更新 src/avs/doctor.py 中的检查逻辑（模块1实现）。
 
 version: "1"
-updated_at: "2026-07-20"
+updated_at: "2026-08-02"
 
 # ── 必需工具（缺失时 doctor 返回非零退出码）────────────────────────────────────
 required:
@@ -67,18 +67,38 @@ optional:
       doctor 通过 npx hyperframes doctor 间接检查，
       不直接检测系统 Chromium 路径，避免版本绑定。
 
-# ── V1 明确延后（不安装，不检测）──────────────────────────────────────────────
+  remotion:
+    check_command: "npx remotion --version"
+    purpose: "代码驱动视频渲染（按 docs/video-plugin-routing.md 启用）"
+    default_enabled: false
+    note: >
+      Skills 来自 remotion-dev/skills，已 vendor 到 third_party_skills/。
+      缺失时 doctor WARNING，不阻断 FFmpeg 粗剪。
+
+  video_use:
+    purpose: "对话式粗剪 / EDL（browser-use/video-use）"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/video-use；缺失时 WARNING。"
+
+  chatcut:
+    purpose: "ChatCut 云端可编辑时间线（需 MCP 登录）"
+    default_enabled: false
+    note: "Skills 位于 third_party_skills/chatcut；不存储登录态。"
+
+  capcut_david:
+    check_command: "capcut-david --help"
+    purpose: "CapCut/剪映草稿 CLI（原 cut-motion 继任）"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/capcut-david。"
+
+# ── 明确延后（不安装，不检测）────────────────────────────────────────────────
 deferred_post_v1:
-  - name: "remotion"
-    reason: "Remotion 主渲染器不在 V1 范围"
   - name: "heygen_digital_human"
     reason: "数字人和声音克隆不在 V1 范围"
   - name: "cloud_render"
     reason: "云端分布式渲染不在 V1 范围"
   - name: "auto_publish_sdk"
     reason: "自动发布抖音/小红书不在 V1 范围"
-  - name: "jianying_sdk"
-    reason: "剪映草稿逆向工程不在 V1 范围"
 
 # ── 画布规格（FFmpeg 渲染基准）─────────────────────────────────────────────────
 canvas:

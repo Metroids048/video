@@ -1,0 +1,129 @@
+# Video third-party skills vendor manifest
+# Consumed by scripts/vendor_video_skills.py and scripts/ensure_video_plugins.py
+version: 1
+updated_at: "2026-08-02"
+
+defaults:
+  repos_dir: vendor/repos
+  skills_dir: third_party_skills
+  sync_targets:
+    - .claude/skills
+    - .agents/skills
+    - .cursor/skills
+  global_sync_targets:
+    - ~/.claude/skills
+    - ~/.codex/skills
+    - ~/.cursor/skills
+
+packages:
+  hyperframes:
+    kind: npm_bundle
+    source_repository: https://github.com/heygen-com/hyperframes
+    npm_package: hyperframes
+    local_skills_glob: node_modules/hyperframes/dist/skills/*
+    skill_names:
+      - hyperframes
+      - hyperframes-cli
+    license: MIT
+    usage: production_allowed
+    note: "Copy from installed npm package; do not clone monorepo."
+
+  remotion:
+    kind: git_skills
+    source_repository: https://github.com/remotion-dev/skills
+    commit: "954abf64096dc18d1599cde9c8026c9ab71579a4"
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: remotion
+    license: MIT
+    usage: production_allowed
+    remotion_primary_renderer: true
+    note: "Official Remotion agent skills; framework via npm separately."
+
+  video-use:
+    kind: git_skills
+    source_repository: https://github.com/browser-use/video-use
+    commit: "92c2b34e44c205cbc2acae7f6ca7c1c219d5dd66"
+    # Full shallow clone — helpers/ must sit beside SKILL.md (cone sparse cannot mix files)
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: video-use
+    license: MIT
+    usage: production_allowed
+
+  seedance:
+    kind: git_skills
+    source_repository: https://github.com/automatorsplus/seedance-skill
+    commit: "3c1c022d9e52cdbc737eb034a73461a47075f826"
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: seedance
+    license: unknown
+    usage: production_allowed
+
+  chatcut:
+    kind: git_skills
+    source_repository: https://github.com/ChatCut-Inc/agent-plugin
+    commit: "e1867a8b48fae0153ef3542efb0ca8fa4e80ad3a"
+    sparse_paths:
+      - claude/skills
+      - docs
+      - README.md
+    skill_source: claude/skills
+    skill_dir_name: chatcut
+    license: unknown
+    usage: production_allowed
+    note: "MCP login required on host; skills only vendored here."
+
+  capcut-david:
+    kind: git_skills
+    source_repository: https://github.com/Davidb-2107/capcut-cli-david
+    commit: "d9be57ee46ec42d8119e9fcfbb603250a8cd5fb3"
+    sparse_paths:
+      - skills
+      - docs
+      - README.md
+      - package.json
+      - dist
+    skill_source: skills/capcut-david
+    skill_dir_name: capcut-david
+    license: unknown
+    usage: production_allowed
+    note: "Supersedes legacy cut-motion / cut-draft skills."
+
+  cut-skill:
+    kind: git_skills
+    source_repository: https://github.com/ygtec/cut.skill
+    commit: "a2408b82ce0b898d469eca4dd141870dbe056c49"
+    sparse_paths: []
+    skill_source: auto
+    skill_dir_name: cut-skill
+    license: unknown
+    usage: production_allowed
+
+  ip-strategist:
+    kind: git_skills
+    source_repository: https://github.com/erduo1998-cell/ip-strategist
+    commit: "45e88feccc3841d4a981bea42fc656d723ded276"
+    sparse_paths: []
+    skill_source: auto
+    skill_dir_name: ip-strategist
+    license: unknown
+    usage: production_allowed
+
+  openmontage:
+    kind: git_skills
+    source_repository: https://github.com/calesthio/OpenMontage
+    commit: "c36e41223e819441748817105635ac4036d41b10"
+    sparse_paths:
+      - skills
+      - AGENT_GUIDE.md
+      - PROJECT_CONTEXT.md
+      - pipeline_defs
+      - README.md
+      - README_zh-CN.md
+    skill_source: curated_entry
+    skill_dir_name: openmontage
+    license: AGPL-3.0
+    usage: production_allowed
+    note: "Sparse clone only; curated entry skill points at vendor/repos/openmontage."
