@@ -34,6 +34,8 @@ report_format: |
 
 使用项目内的 `workflow` 命令协调现有 CLI；它只能续跑确定性步骤，不能伪造内容审核、素材批准或发布。
 
+账号级内容先读取 `creator-workflow` Skill 与 `config/creator-workflow.yaml`，再进入本 Skill 的 Episode 续跑。账号层只提供定位、选题、变现假设和输入契约，不创建第二套状态；`episode.json` 仍是单条内容唯一状态源。
+
 ## 标准运行
 
 ```bash
@@ -73,6 +75,8 @@ python -m avs content approve <ID>
 
 旁路渲染（Remotion / ChatCut / CapCut / jianying-editor / MoneyPrinterTurbo /
 OpenMontage 等）产物必须回挂 Episode `work/` 或 `output/`，不得伪造 `QA_PASSED`。
+
+只有 URL 的参考片只能做页面级研究；需要判断画面、节奏、字幕或声音时，必须有授权本地副本并完成 `ffprobe`、转写/人工笔记、镜头边界、联系表和采样帧检查。
 
 不得把参考原文案、案例、标题或封面复制进 `REFERENCE_ADAPT` 成片。无法核实的事实必须标记为待确认。
 

@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-08-03T01:13:29.141326+00:00",
+  "locked_at": "2026-08-03T14:25:44.182332+00:00",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
   "project_skills": {
     "create-episode": {
@@ -112,7 +112,18 @@
       "status": "synced",
       "implemented_in_module": 10,
       "description": "从 Episode 输入安全续跑确定性短视频步骤，并在 Agent 或人工关口停止",
-      "source_sha256": "b423a8c4d2a42154cc5ed6646625e090f3280f3f30ea3e759b922dc305f4fa3e"
+      "source_sha256": "bf98a1458d9e310f7c3937b9a54710e0b659a890023132b3eb247d1e759eb23e"
+    },
+    "creator-workflow": {
+      "source": "skills-src/creator-workflow",
+      "targets": [
+        ".claude/skills/creator-workflow",
+        ".agents/skills/creator-workflow"
+      ],
+      "status": "synced",
+      "implemented_in_module": 10,
+      "description": "账号级选题、变现假设、Skill 路由与 Episode 生产闭环",
+      "source_sha256": "b6488dbd4a7612b44c8c62923b994bba6c2a644a8e26cea7d3474d1d0f603720"
     }
   },
   "third_party_skills": {

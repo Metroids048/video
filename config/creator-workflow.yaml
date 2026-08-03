@@ -1,0 +1,147 @@
+# config/creator-workflow.yaml — 账号级内容生产与变现契约
+#
+# 账号策略属于 Episode 之上的指导层；它不保存运行状态。
+# 单条内容的唯一状态仍由 episode.json 拥有，时间线仍由 timeline.json 拥有。
+
+creator_workflow:
+  version: "1.0"
+  positioning:
+    identity: "AI 产品经理"
+    promise: "利用下班后的碎片时间，用 AI 把真实想法从 0 做成可验证项目，并公开过程、结果、踩坑和方法。"
+    scope: "multi_project"
+    anchor_series: "下班后 0→1"
+    audience:
+      - "有主业、每周只能投入 3-6 小时，想用 AI 做项目的人"
+      - "产品经理、设计师、开发者和业务负责人"
+    exclusions:
+      - "不承诺稳赚、爆款或投资收益"
+      - "不把单个项目包装成账号边界"
+
+  intake:
+    minimum_input:
+      - "一个具体问题、冲突或项目节点"
+      - "至少一个可核实事实来源（项目文件、日志、录屏、截图或用户口述待确认事实）"
+      - "允许公开的边界说明"
+    accepted_inputs:
+      - "idea_or_question"
+      - "project_files_or_logs"
+      - "screen_recording"
+      - "screenshots"
+      - "voice_or_audio"
+      - "local_reference_video"
+      - "reference_url"
+      - "published_metrics"
+    reference_video_rule:
+      links_only: "只能记录来源和结构假设，不宣称逐帧复刻"
+      local_copy_required_for_visual_review: true
+      required_evidence: "ffprobe + transcript_or_manual_notes + shot_boundaries + contact_sheet + sampled_frame_review"
+      allowed_adaptation: "结构、节奏、镜头语法和动效逻辑"
+      forbidden_copy: "原文案、原配音、原素材、原案例、原数据、原标题和原封面"
+
+  content_contract:
+    one_primary_action_per_post: true
+    default_duration_seconds: "25-45"
+    every_post_must_have:
+      - "一个具体问题或冲突"
+      - "一个真实动作"
+      - "一个证据画面"
+      - "一个当前结论"
+      - "一个下一步承诺"
+    pillars:
+      project_log: 0.35
+      product_judgment: 0.25
+      tool_skill_test: 0.15
+      failure_and_qa: 0.15
+      monetization_experiment: 0.10
+
+  pipeline:
+    - id: "intake"
+      owner: "agent"
+      skills: ["creator-workflow", "ip-strategist"]
+      outputs: ["content-contract", "fact-boundary", "monetization-hypothesis"]
+      gate: "没有具体问题、事实来源或公开边界时停在 WAITING_FOR_INPUT"
+    - id: "reference-study"
+      owner: "agent"
+      skills: ["analyze-reference", "video-shotcraft", "ai-video-shot-prompt", "ltx-prompt-director"]
+      outputs: ["reference-recipe", "reference-report", "shot-language-notes"]
+      gate: "只有本地授权副本才允许做视觉与节奏判断"
+    - id: "content"
+      owner: "agent"
+      skills: ["write-video-script", "create-storyboard"]
+      outputs: ["brief", "script", "storyboard", "missing-assets"]
+      gate: "每段脚本必须有 source_refs；缺口不得用无关素材硬凑"
+    - id: "assets-and-voice"
+      owner: "agent"
+      skills: ["prepare-assets", "azure-speech", "text-to-speech", "epidemic-sound"]
+      outputs: ["asset-manifest", "narration", "audio-plan"]
+      gate: "真实录音优先；付费 Provider 缺失时使用免费平替并明确标注"
+    - id: "edit-and-motion"
+      owner: "agent"
+      skills: ["create-rough-cut", "ffmpeg", "hyperframes", "hyperframes-cli"]
+      outputs: ["timeline", "clean-mp4", "captioned-mp4", "srt"]
+      gate: "所有旁路渲染产物必须回挂 Episode，不得伪造完成状态"
+    - id: "review-and-delivery"
+      owner: "agent_and_human"
+      skills: ["quality-review", "revise-video", "create-publish-pack"]
+      outputs: ["qa-report", "edit-notes", "publish-copy", "delivery-package"]
+      gate: "确定性 QA、语义视觉审核和用户完整播放批准缺一不可"
+    - id: "publish-and-learn"
+      owner: "human_and_agent"
+      skills: ["ip-strategist"]
+      outputs: ["metrics-snapshot", "experiment-retro", "next-topic"]
+      gate: "人工发布；只按发布前契约解释数据，不把一次结果写成规律"
+
+  quality_gates:
+    hard_fail:
+      - "事实、收益、案例或产品能力无法追溯"
+      - "参考片原文案或素材被复制"
+      - "关键证据画面不可读、字幕遮挡主体或画面与旁白不一致"
+      - "音频缺失、明显失真或未说明 TTS/音乐来源"
+      - "human_approval"
+    publishable_requires:
+      - "episode_status=DELIVERY_READY"
+      - "visual_review=passed"
+      - "final_video_fingerprint_approved"
+      - "publish_copy_and_platform_variant_ready"
+
+  monetization:
+    north_star: "用真实项目证据验证谁愿意留下联系方式、购买小产品或提出高价值问题"
+    stages:
+      - id: "free_proof"
+        offer: "项目拆解清单、AI PM 验收模板、视频检查表"
+        price: 0
+        trigger: "起号前 30 条，优先验证收藏、关注和有效私信"
+      - id: "low_ticket"
+        offer: "AI 项目 0→1 模板包 / Prompt 与评审包"
+        price_range: "39-99 CNY"
+        trigger: "同类需求出现至少 3 次有效私信"
+      - id: "diagnosis"
+        offer: "AI 项目诊断或工作流梳理"
+        price_range: "299-999 CNY"
+        trigger: "低客单资料无法解决、且出现明确问题型需求"
+      - id: "delivery_service"
+        offer: "企业 AI 项目 0→1 陪跑"
+        price_range: "3000-15000+ CNY"
+        trigger: "有可展示的项目证据、明确交付范围和保密边界"
+    prohibited_claims:
+      - "保证播放量、收入或投资收益"
+      - "用未验证案例证明产品有效"
+      - "在没有交付能力和证据前销售高客单结果"
+
+  collaboration:
+    agent_owns:
+      - "选题池、内容契约、事实台账、脚本、分镜、素材清单、配音草稿、剪辑、字幕、封面候选、发布文案和复盘"
+    user_owns:
+      - "真实事实、敏感信息边界、最终完整看片批准、人工发布和带回后台数据"
+    expected_user_time_minutes_per_post: "10-20"
+    weekly_cadence:
+      - "Agent 提供 3 个选题与各自赌注"
+      - "用户只选 1 个并补充事实/素材"
+      - "Agent 连续完成脚本到粗稿"
+      - "用户一次完整看片，批准或指出最高优先级问题"
+      - "发布后回传数据，Agent 更新下一批实验"
+
+  metrics:
+    first_batch_size: 12
+    primary_signals: ["有效停留", "完播", "收藏/转发", "关注", "有效私信"]
+    review_rule: "每批只改变一个主要变量；单条数据不足时只做低置信度归因"

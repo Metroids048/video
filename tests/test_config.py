@@ -16,6 +16,24 @@ def test_project_episodes_root_override(tmp_path: Path) -> None:
     assert Config(tmp_path).episodes_root == tmp_path / "custom-episodes"
 
 
+def test_creator_workflow_config_is_loaded_and_has_reusable_contract() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = Config(root)
+
+    creator = config.creator_workflow["creator_workflow"]
+    assert creator["positioning"]["scope"] == "multi_project"
+    assert creator["intake"]["reference_video_rule"]["local_copy_required_for_visual_review"] is True
+    assert creator["pipeline"][0]["id"] == "intake"
+    assert any("ip-strategist" in stage["skills"] for stage in creator["pipeline"])
+    assert "human_approval" in creator["quality_gates"]["hard_fail"]
+
+
+def test_creator_workflow_is_part_of_full_config_validation() -> None:
+    config = Config(Path(__file__).resolve().parents[1])
+    assert "creator-workflow.yaml" in config.required_config_files
+    assert config.validate_all() == []
+
+
 def test_video_shotcraft_is_pinned_as_reference_only_skill() -> None:
     root = Path(__file__).resolve().parents[1]
     lock = json.loads((root / "skills.lock.json").read_text(encoding="utf-8"))

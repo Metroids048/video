@@ -34,3 +34,5 @@ npm run verify
 ```
 
 详见 [入门指南](docs/getting-started.md)、[输入说明](docs/input-guide.md)、[编辑说明](docs/editing-guide.md)、[排障](docs/troubleshooting.md) 和 [兼容性](docs/compatibility.md)。
+
+账号级内容生产与变现流程见 [AI 产品经理创作者工作流](docs/creator-video-workflow.md)；它支持多个项目共用同一套输入契约、Skill 路由、质量门禁和数据复盘，不把账号绑定在单个量化项目上。

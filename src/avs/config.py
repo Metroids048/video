@@ -39,6 +39,7 @@ class Config:
         "audio.yaml",
         "providers.yaml",
         "content-pillars.yaml",
+        "creator-workflow.yaml",
     ]
 
     def __init__(self, root: Path) -> None:
@@ -80,6 +81,16 @@ class Config:
     @property
     def content_pillars(self) -> dict[str, Any]:
         return self._get("content-pillars.yaml")
+
+    @property
+    def creator_workflow(self) -> dict[str, Any]:
+        """Account-level content and monetization contract."""
+        return self._get("creator-workflow.yaml")
+
+    @property
+    def required_config_files(self) -> tuple[str, ...]:
+        """Expose the canonical config contract for tests and diagnostics."""
+        return tuple(self._REQUIRED_FILES)
 
     # ── 便捷属性 ──────────────────────────────────────────────────────
 
