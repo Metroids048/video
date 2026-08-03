@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -83,8 +82,32 @@ def main() -> None:
         print("  MISSING vendor/repos")
 
     print("=== env hints ===")
-    for key in ["ELEVENLABS_API_KEY", "AGENT_PYTHON", "KIE_API_KEY", "SEEDANCE_API_KEY"]:
+    for key in [
+        "ELEVENLABS_API_KEY",
+        "AZURE_SPEECH_KEY",
+        "AZURE_SPEECH_REGION",
+        "AGENT_PYTHON",
+        "KIE_API_KEY",
+        "SEEDANCE_API_KEY",
+    ]:
         print(f"  {key}: {'set' if os.environ.get(key) else 'unset'}")
+
+    print("=== batch skill presence ===")
+    for name in [
+        "jianying-editor",
+        "ffmpeg",
+        "azure-speech",
+        "elevenlabs",
+        "ai-video-shot-prompt",
+        "ltx-prompt-director",
+        "epidemic-sound",
+        "moneyprinterturbo",
+        "pixelle-video",
+        "openmontage",
+    ]:
+        p = ROOT / "third_party_skills" / name
+        ok = p.is_dir() and any(p.rglob("SKILL.md"))
+        print(f"  {name}: {'OK' if ok else 'MISSING'}")
 
     print("=== npm local ===")
     hf = ROOT / "node_modules" / "hyperframes"

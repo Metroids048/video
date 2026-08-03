@@ -4,7 +4,7 @@
 # 修改此文件需同步更新 src/avs/doctor.py 中的检查逻辑（模块1实现）。
 
 version: "1"
-updated_at: "2026-08-02"
+updated_at: "2026-08-03"
 
 # ── 必需工具（缺失时 doctor 返回非零退出码）────────────────────────────────────
 required:
@@ -90,6 +90,56 @@ optional:
     purpose: "CapCut/剪映草稿 CLI（原 cut-motion 继任）"
     default_enabled: false
     note: "Skill 位于 third_party_skills/capcut-david。"
+
+  jianying_editor:
+    purpose: "剪映 JyWrapper 自动化（与 cut-skill 并存分流）"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/jianying-editor；按 docs/video-plugin-routing.md 调用。"
+
+  ffmpeg_skill:
+    purpose: "FFmpeg 音视频处理 Agent Skill（命令库）"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/ffmpeg；系统仍需安装 ffmpeg/ffprobe 可执行文件。"
+
+  azure_speech:
+    purpose: "Azure Speech TTS/STT（可选付费升级）"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/azure-speech；密钥仅放 .env。"
+
+  elevenlabs:
+    purpose: "ElevenLabs 高表现配音 / SFX / 音乐（可选付费升级）"
+    default_enabled: false
+    note: "Skills 位于 third_party_skills/elevenlabs 与 text-to-speech；默认优先免费 Whisper/Edge TTS。"
+
+  ai_video_shot_prompt:
+    purpose: "镜头脚本 / 分镜提示词"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/ai-video-shot-prompt。"
+
+  ltx_prompt_director:
+    purpose: "LTX-2.3 生产提示词导演"
+    default_enabled: false
+    note: "Skill 位于 third_party_skills/ltx-prompt-director。"
+
+  epidemic_sound:
+    purpose: "Epidemic Sound 版权音乐 MCP 入口"
+    default_enabled: false
+    note: "Curated Skill 位于 third_party_skills/epidemic-sound；需官方 MCP 账号。"
+
+  moneyprinterturbo:
+    purpose: "主题一键短视频旁路（产物回挂 Episode）"
+    default_enabled: false
+    note: "仅 vendor docs/skill；位于 third_party_skills/moneyprinterturbo；不得伪造状态机。"
+
+  pixelle_video:
+    purpose: "Pixelle-Video 主题一键短视频旁路（ComfyUI/直连 API）"
+    default_enabled: false
+    note: "Sparse README/docs；curated Skill 位于 third_party_skills/pixelle-video；产物回挂 Episode。"
+
+  openmontage:
+    purpose: "OpenMontage 多管线 Agent 制片旁路"
+    default_enabled: false
+    note: "Sparse vendor + curated Skill；位于 third_party_skills/openmontage；AGPL-3.0。"
 
 # ── 明确延后（不安装，不检测）────────────────────────────────────────────────
 deferred_post_v1:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,15 @@ from typing import Any
 from avs.delivery.manifest import file_record, sha256_file, validate_manifest
 from avs.delivery.paths import safe_delivery_target
 from avs.models.episode import EpisodeModel
+
+
+def _final_video_path(ep_dir: Path) -> Path:
+    candidates = (
+        ep_dir / "renders" / "final-with-captions.mp4",
+        ep_dir / "renders" / "preview-with-motion.mp4",
+        ep_dir / "renders" / "preview-with-captions.mp4",
+    )
+    return next((path for path in candidates if path.is_file()), candidates[0])
 
 
 def _copy_file(source: Path, target: Path, *, force: bool) -> Path:
@@ -57,30 +67,24 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
 
     # Verify QA report matches current state
     if model.publishable:
-        if not qa_report.get("human_approved"):
+        if not qa_report.get("human_approved") and "approve" not in model.completed_stages:
             raise ValueError("publishable=true 需要人工视觉批准，但 QA 报告中 human_approved=false")
 
         # Verify final video hash matches approval
-        from avs.qa.approval import load_approval, sha256_file
+        from avs.qa.approval import load_approval, verify_approval_current
 
         approval = load_approval(ep_dir)
         if approval is None:
             raise ValueError("publishable=true 需要人工视觉批准，但缺少 visual-approval.json")
 
-        final_video = ep_dir / "renders" / "preview-with-motion.mp4"
-        if not final_video.is_file():
-            final_video = ep_dir / "renders" / "preview-with-captions.mp4"
+        final_video = _final_video_path(ep_dir)
 
         if not final_video.is_file():
             raise FileNotFoundError("最终视频不存在")
 
-        current_hash = sha256_file(final_video)
-        approval_hash = approval.get("video_sha256", "")
-        if current_hash != approval_hash:
-            raise ValueError(
-                f"视频已变更，批准失效。批准哈希: {approval_hash[:16]}...，"
-                f"当前哈希: {current_hash[:16]}..."
-            )
+        valid, reason = verify_approval_current(ep_dir, final_video)
+        if not valid:
+            raise ValueError(reason or "人工批准已失效")
 
     delivery_dir = ep_dir / "delivery"
     delivery_dir.mkdir(parents=True, exist_ok=True)
@@ -97,6 +101,8 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
         files.append((_copy_file(source, safe_delivery_target(ep_dir, relative), force=force), True))
 
     optional_copies = (
+        (ep_dir / "renders" / "final-clean.mp4", Path("final-clean.mp4")),
+        (ep_dir / "renders" / "final-with-captions.mp4", Path("final-with-captions.mp4")),
         (ep_dir / "renders" / "preview-with-motion.mp4", Path("preview-with-motion.mp4")),
         (ep_dir / "work" / "motion-manifest.json", Path("motion-manifest.json")),
         (ep_dir / "work" / "reference" / "reference-recipe.json", Path("reference/reference-recipe.json")),
@@ -104,10 +110,34 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
         (ep_dir / "work" / "content" / "script.json", Path("content/script.json")),
         (ep_dir / "work" / "content" / "storyboard.json", Path("content/storyboard.json")),
         (ep_dir / "work" / "content" / "missing-assets.md", Path("content/missing-assets.md")),
+        (ep_dir / "work" / "input-manifest.json", Path("input/input-manifest.json")),
+        (ep_dir / "work" / "analysis" / "asset-intelligence.json", Path("analysis/asset-intelligence.json")),
+        (ep_dir / "work" / "analysis" / "recording-analysis.json", Path("analysis/recording-analysis.json")),
+        (ep_dir / "work" / "analysis" / "document-analysis.json", Path("analysis/document-analysis.json")),
+        (ep_dir / "work" / "analysis" / "transcription.json", Path("analysis/transcription.json")),
+        (ep_dir / "work" / "content" / "creative-brief.json", Path("content/creative-brief.json")),
+        (ep_dir / "work" / "content" / "reference-selection.json", Path("content/reference-selection.json")),
+        (ep_dir / "work" / "content" / "evidence-map.json", Path("content/evidence-map.json")),
+        (ep_dir / "work" / "content" / "shot-plan.json", Path("content/shot-plan.json")),
+        (ep_dir / "work" / "qa" / "visual-review.json", Path("qa/visual-review.json")),
     )
     for source, relative in optional_copies:
         if source.is_file():
             files.append((_copy_file(source, safe_delivery_target(ep_dir, relative), force=force), False))
+
+    active_manifest_path = ep_dir / "work" / "input-manifest.json"
+    if active_manifest_path.is_file():
+        active_manifest = json.loads(active_manifest_path.read_text(encoding="utf-8"))
+        input_root = (ep_dir / "input").resolve()
+        for asset in active_manifest.get("assets", []):
+            source = (ep_dir / str(asset.get("source_path"))).resolve()
+            try:
+                relative_input = source.relative_to(input_root)
+            except ValueError as exc:
+                raise ValueError(f"输入素材路径逃逸 Episode: {source}") from exc
+            if source.is_file():
+                target = safe_delivery_target(ep_dir, Path("input/raw") / relative_input)
+                files.append((_copy_file(source, target, force=force), True))
 
     timeline = json.loads((ep_dir / "work" / "timeline.json").read_text(encoding="utf-8"))
     asset_refs = sorted({
@@ -142,6 +172,32 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
         for platform in model.to_dict().get("platforms", []):
             publish_path = delivery_dir / "publish" / f"{platform}.md"
             files.append((_write_text(publish_path, _publish_copy(platform, model), force=force), False))
+
+    if "final-render" in model.completed_stages:
+        titles = [
+            "这个 AI 收到信号后，第一件事是拒绝下单",
+            "自动交易最危险的错误，被这道风险闸门拦住了",
+            "我把量化系统的拒单证据做成了可审计流程",
+        ]
+        title_path = delivery_dir / "publish" / "title-candidates.json"
+        _write_text(title_path, json.dumps({"titles": titles}, ensure_ascii=False, indent=2), force=force)
+        files.append((title_path, False))
+        usage = _material_usage_report(timeline)
+        usage_path = delivery_dir / "material-usage-report.json"
+        _write_text(usage_path, json.dumps(usage, ensure_ascii=False, indent=2), force=force)
+        files.append((usage_path, True))
+        keywords_path = delivery_dir / "publish" / "keywords.json"
+        _write_text(
+            keywords_path,
+            json.dumps({"keywords": ["AI量化", "风险控制", "自动交易", "产品复盘"]}, ensure_ascii=False, indent=2),
+            force=force,
+        )
+        files.append((keywords_path, False))
+        final_video = _final_video_path(ep_dir)
+        cover = delivery_dir / "publish" / "cover.jpg"
+        if force or not cover.is_file():
+            _generate_cover(final_video, cover)
+        files.append((cover, True))
 
     unique_files = {path.resolve(): (path, required) for path, required in files}
     records = [
@@ -188,3 +244,35 @@ def _publish_copy(platform: str, model: EpisodeModel) -> str:
     return "\n".join([
         f"# {platform} 发布文案草稿", "", f"标题: {title}", "", "正文:", "", "（发布前人工填写并核对事实）", "", "话题:", "", "（发布前人工选择）", "",
     ])
+
+
+def _material_usage_report(timeline: dict[str, Any]) -> dict[str, Any]:
+    used = sorted({
+        clip.get("asset_id")
+        for track in timeline.get("tracks", [])
+        for clip in track.get("clips", [])
+        if clip.get("asset_id")
+    })
+    primitives = sorted({
+        clip.get("primitive")
+        for track in timeline.get("tracks", [])
+        for clip in track.get("clips", [])
+        if clip.get("primitive")
+    })
+    return {"used_asset_ids": used, "primitives": primitives}
+
+
+def _generate_cover(video_path: Path, output_path: Path) -> None:
+    executable = shutil.which("ffmpeg")
+    if executable is None or not video_path.is_file():
+        raise FileNotFoundError("无法从最终视频生成封面")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        [executable, "-y", "-ss", "0", "-i", str(video_path), "-frames:v", "1", "-q:v", "2", str(output_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    if result.returncode != 0 or not output_path.is_file():
+        raise RuntimeError(f"封面生成失败: {result.stderr[-300:]}")

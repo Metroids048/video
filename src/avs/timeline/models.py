@@ -36,6 +36,13 @@ class Clip:
     transform: dict[str, Any] | None = None  # 例如 {"layout": "contain"}
     text: str | None = None          # 文字内容（字幕/占位卡）
     style: dict[str, Any] | None = None      # 样式参数
+    primitive: str | None = None
+    asset_id: str | None = None
+    region_id: str | None = None
+    segment_id: str | None = None
+    evidence_id: str | None = None
+    reference_pattern_ids: list[str] | None = None
+    keyframes: list[dict[str, Any]] | None = None
 
     @property
     def end(self) -> float:
@@ -52,6 +59,13 @@ class Clip:
             "transform": self.transform,
             "text": self.text,
             "style": self.style,
+            "primitive": self.primitive,
+            "asset_id": self.asset_id,
+            "region_id": self.region_id,
+            "segment_id": self.segment_id,
+            "evidence_id": self.evidence_id,
+            "reference_pattern_ids": self.reference_pattern_ids,
+            "keyframes": self.keyframes,
         }
 
 
@@ -124,9 +138,9 @@ class Timeline:
         for td in data.get("tracks", []):
             clips = [Clip(**{
                 k: v for k, v in cd.items()
-                if k in ("clip_id","start","duration","asset_ref","in_point","out_point","transform","text","style")
+                if k in ("clip_id","start","duration","asset_ref","in_point","out_point","transform","text","style", "primitive", "asset_id", "region_id", "segment_id", "evidence_id", "reference_pattern_ids", "keyframes")
             }) for cd in td.get("clips", [])]
-            tracks.append(Track(track_id=td["track_id"], kind=td["kind"], clips=clips))
+            tracks.append(Track(track_id=td["track_id"], kind=td["kind"], clips=clips, audio_role=td.get("audio_role")))
         return cls(
             episode_id=data["episode_id"],
             canvas=canvas,

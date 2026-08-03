@@ -13,11 +13,28 @@ from avs.ingest.hashing import sha256_file, config_hash
 from avs.ingest.manifest import save_manifest
 from avs.ingest.normalize import normalize_asset, prepared_path
 from avs.ingest.probe import probe_media
+from avs.intake.manifest import InputCompletenessError, build_input_manifest, save_input_manifest
 
 log = logging.getLogger(__name__)
 
 _CACHE_FILE = "work/.ingest-cache.json"
 _INGEST_CONFIG = {"canvas_w": 540, "canvas_h": 960, "video_crf": 28}
+
+
+def _proxy_dimensions(
+    width: int | None,
+    height: int | None,
+    *,
+    canvas_w: int = 540,
+    canvas_h: int = 960,
+) -> tuple[int | None, int | None]:
+    """Predict the equal-aspect proxy dimensions recorded in the manifest."""
+    if not width or not height:
+        return None, None
+    ratio = min(canvas_w / width, canvas_h / height)
+    proxy_w = max(2, int(round(width * ratio)))
+    proxy_h = max(2, int(round(height * ratio)))
+    return proxy_w - proxy_w % 2, proxy_h - proxy_h % 2
 
 
 def _load_cache(episode_dir: Path) -> dict:
@@ -75,6 +92,7 @@ def run_ingest(
     cache = {} if force else _load_cache(episode_dir)
 
     files = discover_inputs(episode_dir)
+    requested = _load_requested_manifest(episode_dir)
     log.info("发现 %d 个输入文件", len(files))
 
     assets: list[dict[str, Any]] = []
@@ -160,6 +178,34 @@ def run_ingest(
                        "codec_video", "codec_audio")},
         }
 
+    # Apply explicit user notes/roles after discovery.  A role is never
+    # inferred from a filename on the active path.
+    if requested:
+        by_source = {str(item.get("source_path")): item for item in requested}
+        discovered_sources = {str(asset.get("source_path")) for asset in assets}
+        for asset in assets:
+            override = by_source.get(asset["source_path"])
+            if override:
+                for field in ("must_use", "user_note", "audio_role"):
+                    if field in override:
+                        asset[field] = override[field]
+        for source_path, override in by_source.items():
+            if source_path in discovered_sources:
+                continue
+            assets.append({
+                "asset_id": str(override.get("asset_id") or _asset_id(source_path)),
+                "source_path": source_path,
+                "working_path": None,
+                "kind": "audio" if override.get("audio_role") else "unknown",
+                "mime_type": "application/octet-stream",
+                "sha256": "0" * 64,
+                "status": "missing",
+                "must_use": bool(override.get("must_use", True)),
+                "user_note": override.get("user_note"),
+                "audio_role": override.get("audio_role"),
+                "notes": "用户清单声明了该素材，但 input/ 中未找到",
+            })
+
     # 标记内容重复项，但保留各自工作副本和来源追踪。
     first_by_hash: dict[str, str] = {}
     for asset in assets:
@@ -170,11 +216,40 @@ def run_ingest(
 
     # --- 写 manifest 和日志 ---
     save_manifest(episode_dir, episode_id, assets)
+    # The richer manifest is the contract for the active multimodal path.
+    # Keep asset-manifest.json above for legacy timeline/renderer consumers.
+    input_doc_assets = build_input_manifest(episode_id, assets)
+    save_input_manifest(episode_dir, episode_id, input_doc_assets)
+    if requested:
+        missing = [
+            {"source_path": item["source_path"], "impact": item.get("user_note") or "用户声明的必用素材", "action": "补充素材或批准排除"}
+            for item in input_doc_assets
+            if item.get("must_use") and item.get("status") != "ok"
+        ]
+        if missing:
+            raise InputCompletenessError(missing)
     _save_cache(episode_dir, cache)
     _write_ingest_log(episode_dir, episode_id, assets, cfg_hash)
     log.info("ingest 完成：%d 个素材（%d corrupt）",
              len(assets), sum(1 for a in assets if a["status"] == "corrupt"))
     return assets
+
+
+def _load_requested_manifest(episode_dir: Path) -> list[dict[str, Any]]:
+    """Read an optional user-authored manifest before generated outputs."""
+    for path in (episode_dir / "input" / "input-manifest.json", episode_dir / "input" / "manifest.json"):
+        if not path.is_file():
+            continue
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise IngestError(f"用户输入清单不是有效 JSON: {path}: {exc}") from exc
+        if isinstance(raw, list):
+            return [item for item in raw if isinstance(item, dict)]
+        if isinstance(raw, dict) and isinstance(raw.get("assets"), list):
+            return [item for item in raw["assets"] if isinstance(item, dict)]
+        raise IngestError(f"用户输入清单必须是 assets 数组: {path}")
+    return []
 
 
 def _write_ingest_log(
@@ -204,6 +279,13 @@ def _write_ingest_log(
 
 
 def _build_record(df, sha: str, dst_rel: str, probe: dict) -> dict:
+    kind = df.kind
+    is_media = kind in {"image", "video", "audio"}
+    proxy_width, proxy_height = (
+        _proxy_dimensions(probe.get("width"), probe.get("height"))
+        if kind == "video"
+        else (probe.get("width"), probe.get("height"))
+    )
     return {
         "asset_id": _asset_id(df.rel_path),
         "source_path": df.rel_path,
@@ -219,7 +301,16 @@ def _build_record(df, sha: str, dst_rel: str, probe: dict) -> dict:
         "has_audio": probe.get("has_audio"),
         "codec_video": probe.get("codec_video"),
         "codec_audio": probe.get("codec_audio"),
-        "layout": "contain" if df.kind == "video" else None,
+        "layout": None,
+        "must_use": is_media,
+        "user_note": None,
+        "audio_role": None,
+        "original_path": df.rel_path,
+        "proxy_path": dst_rel,
+        "original_width": probe.get("width"),
+        "original_height": probe.get("height"),
+        "proxy_width": proxy_width,
+        "proxy_height": proxy_height,
         "notes": None,
     }
 
@@ -238,6 +329,15 @@ def _corrupt_record(df, reason: str) -> dict:
         "height": None,
         "fps": None,
         "has_audio": None,
+        "must_use": df.kind in {"image", "video", "audio"},
+        "user_note": None,
+        "audio_role": None,
+        "original_path": df.rel_path,
+        "proxy_path": None,
+        "original_width": None,
+        "original_height": None,
+        "proxy_width": None,
+        "proxy_height": None,
         "notes": reason,
     }
 
@@ -267,6 +367,21 @@ def _rebuild_from_cache(df, cached: dict, sha: str, dst_rel: str) -> dict:
         "has_audio": probe.get("has_audio"),
         "codec_video": probe.get("codec_video"),
         "codec_audio": probe.get("codec_audio"),
-        "layout": "contain" if df.kind == "video" else None,
+        "layout": None,
+        "must_use": df.kind in {"image", "video", "audio"},
+        "user_note": None,
+        "audio_role": None,
+        "original_path": df.rel_path,
+        "proxy_path": dst_rel if status == "ok" else None,
+        "original_width": probe.get("width"),
+        "original_height": probe.get("height"),
+        "proxy_width": (
+            _proxy_dimensions(probe.get("width"), probe.get("height"))[0]
+            if df.kind == "video" else probe.get("width")
+        ),
+        "proxy_height": (
+            _proxy_dimensions(probe.get("width"), probe.get("height"))[1]
+            if df.kind == "video" else probe.get("height")
+        ),
         "notes": None,
     }

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from avs.timeline.models import Canvas, Clip, Timeline, Track
+from avs.timeline.shot_expander import expand_shot
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,7 @@ def build_timeline(
 
     storyboard_path = ep_dir / "work" / "content" / "storyboard.json"
     manifest_path = ep_dir / "work" / "asset-manifest.json"
+    input_manifest_path = ep_dir / "work" / "input-manifest.json"
 
     # 尝试从多个候选路径加载
     storyboard: dict | None = None
@@ -88,7 +90,8 @@ def build_timeline(
             break
 
     manifest: dict = {"assets": []}
-    for p in [manifest_path, ep_dir / "work" / "prepared" / "asset-manifest.json"]:
+    manifest_is_legacy = not input_manifest_path.is_file()
+    for p in [input_manifest_path, manifest_path, ep_dir / "work" / "prepared" / "asset-manifest.json"]:
         if p.exists():
             manifest = _load_json(p)
             break
@@ -109,21 +112,43 @@ def build_timeline(
     current_t = 0.0
 
     if storyboard:
-        shots = storyboard.get("shots", [])
+        shots: list[dict[str, Any]] = []
+        for source_shot in storyboard.get("shots", []):
+            refs = source_shot.get("asset_refs") or source_shot.get("asset_ids") or []
+            normalized = dict(source_shot)
+            normalized["asset_refs"] = refs
+            normalized["duration_seconds"] = float(
+                source_shot.get("duration")
+                or source_shot.get("duration_estimate")
+                or _DEFAULT_SHOT_DURATION
+            )
+            atomic, _ = expand_shot(normalized)
+            shots.extend(atomic)
         for index, shot in enumerate(shots):
             scene_id = shot.get("scene_id") or shot.get("shot_id") or f"scene{index + 1:03d}"
-            dur = float(shot.get("duration") or shot.get("duration_estimate") or _DEFAULT_SHOT_DURATION)
-            dur = max(dur, _MIN_PLACEHOLDER_DURATION)
+            dur = float(shot.get("duration_seconds") or shot.get("duration") or shot.get("duration_estimate") or _DEFAULT_SHOT_DURATION)
+            dur = max(dur, 0.4)
 
-            asset_ids = shot.get("asset_ids") or []
-            asset_ref = asset_ids[0] if asset_ids else shot.get("asset_ref")
-            working_path, is_missing, layout = _resolve_asset(ep_dir, asset_ref, manifest)
+            asset_refs = shot.get("asset_refs") or []
+            first_ref = asset_refs[0] if asset_refs else shot.get("asset_ref")
+            asset_id = first_ref.get("asset_id") if isinstance(first_ref, dict) else first_ref
+            region_id = first_ref.get("region_id") if isinstance(first_ref, dict) else None
+            working_path, is_missing, layout = _resolve_asset(ep_dir, asset_id, manifest)
+            primitive = shot.get("primitive") or ("screenshot_focus" if working_path else "kinetic_text")
+            generated_visual = primitive in {"kinetic_text", "metric_card"}
+            if generated_visual:
+                is_missing = False
 
             transform: dict | None = None
             if working_path:
                 # 检测横屏素材（简单启发：宽>高）→ 使用 contain
                 # 在实际 render 时 ffprobe 会做精确判断
-                transform = {"layout": layout, "zoom_meta": None}
+                region = first_ref.get("region") if isinstance(first_ref, dict) else None
+                redactions = first_ref.get("redactions") if isinstance(first_ref, dict) else None
+                transform = {
+                    "layout": layout, "zoom_meta": None,
+                    "region": region, "redactions": redactions,
+                }
 
             segment_ids = shot.get("script_segment_ids") or []
             caption_text = " ".join(script_text.get(item, "") for item in segment_ids).strip()
@@ -145,6 +170,13 @@ def build_timeline(
                 transform=transform,
                 text=placeholder_text if is_missing else None,
                 style={"placeholder": True} if is_missing else None,
+                primitive=primitive,
+                asset_id=asset_id,
+                region_id=region_id,
+                segment_id=segment_ids[0] if segment_ids else shot.get("segment_id"),
+                evidence_id=shot.get("evidence_id"),
+                reference_pattern_ids=shot.get("reference_pattern_ids"),
+                keyframes=shot.get("keyframes"),
             )
             video_clips.append(clip)
 
@@ -180,12 +212,15 @@ def build_timeline(
     # 旁白和 BGM 只从 Manifest 的工作副本选择。
     audio_assets = [
         asset for asset in manifest.get("assets", [])
-        if asset.get("kind") == "audio" and asset.get("status") == "ok"
+        if (asset.get("kind") == "audio" or asset.get("source_type") == "audio") and asset.get("status") == "ok"
         and _prepared_working_path(ep_dir, asset.get("working_path"))
     ]
     for asset in audio_assets:
         source_name = Path(asset["source_path"]).name.lower()
-        if source_name.startswith(("narration", "voice")):
+        role = asset.get("audio_role")
+        if role in {"narration", "original_voice"} or (
+            manifest_is_legacy and source_name.startswith(("narration", "voice"))
+        ):
             working_path = _prepared_working_path(ep_dir, asset.get("working_path"))
             assert working_path is not None
             voice_clips.append(Clip(
@@ -199,7 +234,8 @@ def build_timeline(
 
     for asset in audio_assets:
         source_name = Path(asset["source_path"]).name.lower()
-        if source_name.startswith(("bgm", "music")):
+        role = asset.get("audio_role")
+        if role == "bgm" or (manifest_is_legacy and source_name.startswith(("bgm", "music"))):
             working_path = _prepared_working_path(ep_dir, asset.get("working_path"))
             assert working_path is not None
             music_clips.append(Clip(
@@ -215,9 +251,9 @@ def build_timeline(
         Track(track_id="video-main", kind="video", clips=video_clips),
     ]
     if voice_clips:
-        tracks.append(Track(track_id="audio-voice", kind="audio", clips=voice_clips))
+        tracks.append(Track(track_id="audio-voice", kind="audio", clips=voice_clips, audio_role="voice"))
     if music_clips:
-        tracks.append(Track(track_id="audio-music", kind="audio", clips=music_clips))
+        tracks.append(Track(track_id="audio-music", kind="audio", clips=music_clips, audio_role="bgm"))
     if caption_clips:
         tracks.append(Track(track_id="captions-main", kind="caption", clips=caption_clips))
 
@@ -245,6 +281,7 @@ def build_timeline(
         episode_id=episode_id,
         canvas=Canvas(width=1080, height=1920, fps=30.0),
         tracks=tracks,
+        version="1.1",
     )
     timeline.total_duration = total_duration
 

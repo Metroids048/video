@@ -1,4 +1,6 @@
-# 🎬 AI量化交易视频项目 - 完成报告
+# AI 量化视频项目历史记录（当前不作为完成证明）
+
+> 这是一份 2026-08-01 的历史准备记录。它不能证明当前视频已完成、已通过视觉审核或可发布。当前黄金 Episode 为 `EP-QUANT-ACCOUNT-INTRO-20260803`，真实状态是 `BLOCKED`：FFmpeg/HyperFrames 粗稿已生成，但正式视觉语义审核因缺少 `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` 未执行，且尚未完成人工批准。
 
 **项目名称**: EP-20260801-QUANT-INTRO  
 **执行日期**: 2026-08-01  

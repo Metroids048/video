@@ -8,7 +8,7 @@
   "additionalProperties": false,
   "properties": {
     "episode_id": {"type": "string"},
-    "version": {"type": "string", "description": "协议版本，当前 1.0"},
+    "version": {"type": "string", "description": "协议版本，当前 1.1"},
     "canvas": {
       "type": "object",
       "required": ["width", "height", "fps"],
@@ -49,7 +49,14 @@
                 "out_point": {"type": ["number", "null"]},
                 "transform": {"type": ["object", "null"]},
                 "text": {"type": ["string", "null"]},
-                "style": {"type": ["object", "null"]}
+                "style": {"type": ["object", "null"]},
+                "primitive": {"type": ["string", "null"]},
+                "asset_id": {"type": ["string", "null"]},
+                "region_id": {"type": ["string", "null"]},
+                "segment_id": {"type": ["string", "null"]},
+                "evidence_id": {"type": ["string", "null"]},
+                "reference_pattern_ids": {"type": ["array", "null"], "items": {"type": "string"}},
+                "keyframes": {"type": ["array", "null"], "items": {"type": "object"}}
               }
             }
           }

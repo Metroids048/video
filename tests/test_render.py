@@ -12,6 +12,7 @@ from click.testing import CliRunner
 
 from avs.timeline.models import Canvas, Clip, Timeline, Track
 from avs.render.captions import build_srt, _seconds_to_srt_time, has_subtitle_overflow
+from avs.render.ffmpeg import _caption_filter
 from avs.cli import main
 from avs.models.episode import EpisodeModel
 from avs.paths import create_episode_skeleton
@@ -44,6 +45,30 @@ class TestBuildSrt:
         count = build_srt(tl, srt_path)
         assert count == 0
         assert srt_path.read_text() == ""
+
+    def test_graphic_card_text_is_not_duplicated_as_caption(self, tmp_path):
+        tl = Timeline("EP-X", tracks=[
+            Track("captions-main", "caption", [
+                Clip("c1", 0.0, 3.0, text="动效卡已经显示这句话"),
+                Clip("c2", 3.0, 3.0, text="普通画面保留字幕"),
+            ]),
+            Track("graphics-main", "graphic", [
+                Clip("g1", 0.0, 3.0, text="动效卡已经显示这句话", style={"motion_template": "HookTitle"}),
+            ]),
+        ], total_duration=6.0)
+        srt_path = tmp_path / "captions.srt"
+
+        build_srt(tl, srt_path)
+
+        content = srt_path.read_text(encoding="utf-8")
+        assert "动效卡已经显示这句话" not in content
+        assert "普通画面保留字幕" in content
+
+    def test_caption_burn_style_uses_bottom_safe_zone(self, tmp_path):
+        graph = _caption_filter(tmp_path / "captions.srt")
+        assert "FontSize=15" in graph
+        assert "MarginV=40" in graph
+        assert "Alignment=2" in graph
 
     def test_overflow_truncated(self, tmp_path):
         # 字幕超出 total_duration 应被截断

@@ -2,7 +2,7 @@
 
 规则：
 - 原文件只读，只写 work/prepared/ 副本
-- 视频：ffmpeg 可用时降码率 Proxy；横屏强制 contain（pad 黑边）
+- 视频：ffmpeg 可用时生成等比 Proxy；不在 ingest 阶段裁切或加黑边
 - 无音频视频：跳过音频流，不报错
 - ffmpeg 不可用：直接 shutil.copy2
 - 所有路径相对于 episode_dir
@@ -41,17 +41,11 @@ def _build_video_filter(
     canvas_w: int = _CANVAS_W,
     canvas_h: int = _CANVAS_H,
 ) -> str:
-    """返回 contain（pad）滤镜字符串；横屏视频明确缩放+填充，禁止静默拉伸。"""
-    if _is_landscape(width, height):
-        # contain: 等比缩放后在 1080×1920 画布上居中，其余区域填黑
-        return (
-            f"scale={canvas_w}:{canvas_h}:"
-            "force_original_aspect_ratio=decrease,"
-            f"pad={canvas_w}:{canvas_h}:(ow-iw)/2:(oh-ih)/2:black"
-        )
+    """Return an equal-aspect proxy filter; crop/layout is deferred to render."""
+    del width, height
     return (
         f"scale={canvas_w}:{canvas_h}:force_original_aspect_ratio=decrease,"
-        f"pad={canvas_w}:{canvas_h}:(ow-iw)/2:(oh-ih)/2:black"
+        "scale=trunc(iw/2)*2:trunc(ih/2)*2"
     )
 
 

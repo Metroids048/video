@@ -45,7 +45,7 @@ npm run skills:vendor:check
 6. 不自动发布，不存储密钥（`.env` 已被 gitignore）
 7. 未运行验证命令，不得声称完成
 8. 完成报告必须包含：命令、退出码、产物路径、已知限制
-9. **视频相关任务必须按 `docs/video-plugin-routing.md` 调用 HyperFrames / Remotion / video-use / Seedance / ChatCut / CapCut / IP Strategist / OpenMontage**
+9. **视频相关任务必须按 `docs/video-plugin-routing.md` 调用第三方 Skills**（含 HyperFrames / Remotion / video-use / Seedance / ChatCut / CapCut / jianying-editor / ffmpeg / azure-speech / elevenlabs / ai-video-shot-prompt / ltx-prompt-director / epidemic-sound / moneyprinterturbo / pixelle-video / IP Strategist / OpenMontage）
 
 ## 状态机（禁止跳过）
 

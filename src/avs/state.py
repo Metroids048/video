@@ -24,6 +24,7 @@ class EpisodeStatus(str, Enum):
     # ── 辅助状态 ──────────────────────────────────────────────────────
     WAITING_FOR_INPUT = "WAITING_FOR_INPUT"
     WAITING_FOR_REVIEW = "WAITING_FOR_REVIEW"
+    BLOCKED = "BLOCKED"
     FAILED = "FAILED"
 
 
@@ -33,40 +34,48 @@ _DEFAULT_TRANSITIONS: dict[str, frozenset[str]] = {
     EpisodeStatus.CREATED: frozenset({
         EpisodeStatus.INGESTED,
         EpisodeStatus.WAITING_FOR_INPUT,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.INGESTED: frozenset({
         EpisodeStatus.REFERENCE_READY,
         EpisodeStatus.CONTENT_READY,  # 无参考视频时跳过
         EpisodeStatus.WAITING_FOR_INPUT,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.REFERENCE_READY: frozenset({
         EpisodeStatus.CONTENT_READY,
         EpisodeStatus.WAITING_FOR_REVIEW,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.CONTENT_READY: frozenset({
         EpisodeStatus.ASSETS_READY,
         EpisodeStatus.WAITING_FOR_REVIEW,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.ASSETS_READY: frozenset({
         EpisodeStatus.TIMELINE_READY,
         EpisodeStatus.WAITING_FOR_INPUT,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.TIMELINE_READY: frozenset({
         EpisodeStatus.ROUGH_CUT_READY,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.ROUGH_CUT_READY: frozenset({
         EpisodeStatus.QA_PASSED,
         EpisodeStatus.WAITING_FOR_REVIEW,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.QA_PASSED: frozenset({
         EpisodeStatus.DELIVERY_READY,
+        EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.DELIVERY_READY: frozenset(),  # 终态
@@ -81,6 +90,7 @@ _DEFAULT_TRANSITIONS: dict[str, frozenset[str]] = {
         EpisodeStatus.QA_PASSED,
         EpisodeStatus.FAILED,
     }),
+    EpisodeStatus.BLOCKED: frozenset(),
     EpisodeStatus.FAILED: frozenset({
         EpisodeStatus.CREATED,  # 通过 reset --force 重试
     }),

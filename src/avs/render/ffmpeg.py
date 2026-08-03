@@ -19,6 +19,7 @@ from typing import Any
 
 from avs.render.filters import scale_pad_filter
 from avs.render.layouts import choose_layout
+from avs.render.primitives import PRIMITIVES, apply_redactions, primitive_filter
 from avs.timeline.models import Clip, Timeline
 
 logger = logging.getLogger(__name__)
@@ -117,7 +118,25 @@ def _render_segment(
     dur = clip.duration
     in_pt = clip.in_point if clip.in_point is not None else 0.0
 
-    # ── 占位卡（黑底白字）────────────────────────────────────────────────
+    # ── Deterministic information graphic (not a missing-asset placeholder) ──
+    if asset_path is None and clip.primitive in {"kinetic_text", "metric_card"}:
+        text = clip.text or ""
+        background = "#111111" if clip.primitive == "kinetic_text" else "#f5f5f5"
+        foreground = "white" if clip.primitive == "kinetic_text" else "#111111"
+        fade_out = max(0.0, dur - 0.25)
+        cmd = [
+            "ffmpeg", "-y",
+            "-f", "lavfi", "-i", f"color=c={background}:s={CANVAS_W}x{CANVAS_H}:r={FPS}:d={dur}",
+            "-vf", f"drawtext=text='{_escape_drawtext(text)}':fontcolor={foreground}:fontsize=54"
+                   ":x=(w-text_w)/2:y=(h-text_h)/2:alpha='if(lt(t,0.25),t/0.25,if(gt(t," + str(fade_out) + "),(" + str(dur) + "-t)/0.25,1))'",
+            "-t", str(dur),
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-an", "-f", "mpegts", str(out_path),
+        ]
+        _run(cmd, f"{clip.primitive} seg {idx}")
+        return out_path
+
+    # ── Missing asset placeholder (legacy/internal only) ─────────────────
     if asset_path is None:
         text = clip.text or "[缺失素材]"
         cmd = [
@@ -135,7 +154,19 @@ def _render_segment(
 
     # ── 图片 → 视频 ──────────────────────────────────────────────────────
     if _is_image(asset_path):
-        vf = scale_pad_filter(CANVAS_W, CANVAS_H, FPS)
+        if clip.primitive in PRIMITIVES:
+            vf = primitive_filter(
+                clip.primitive,
+                duration=dur,
+                width=CANVAS_W,
+                height=CANVAS_H,
+                fps=FPS,
+                region=(clip.transform or {}).get("region"),
+                options=clip.transform,
+            )
+            vf = apply_redactions(vf, (clip.transform or {}).get("redactions"))
+        else:
+            vf = scale_pad_filter(CANVAS_W, CANVAS_H, FPS)
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1", "-i", str(asset_path),
@@ -152,7 +183,19 @@ def _render_segment(
     meta = _probe_media(asset_path)
     src_w = meta.get("width")
     src_h = meta.get("height")
-    vf = choose_layout(clip.transform, src_w, src_h)
+    if clip.primitive in PRIMITIVES:
+        vf = primitive_filter(
+            clip.primitive,
+            duration=dur,
+            width=CANVAS_W,
+            height=CANVAS_H,
+            fps=FPS,
+            region=(clip.transform or {}).get("region"),
+            options=clip.transform,
+        )
+        vf = apply_redactions(vf, (clip.transform or {}).get("redactions"))
+    else:
+        vf = choose_layout(clip.transform, src_w, src_h)
 
     cmd = [
         "ffmpeg", "-y",
@@ -262,14 +305,15 @@ def _mix_audio_and_mux(
         _run(cmd, "mux single audio")
         return
 
-    # 双音轨：旁白 + BGM ducking（简化版：固定降低 BGM 音量）
+    # 双音轨：旁白同时进入主混音和 sidechain，动态压低 BGM。
     cmd = [
         "ffmpeg", "-y",
         *inputs,
         "-filter_complex",
-        f"[{voice_idx}:a]volume={voice_volume},atrim=duration={total_duration}[v];"
+        f"[{voice_idx}:a]volume={voice_volume},atrim=duration={total_duration},asplit=2[v][sc];"
         f"[{bgm_idx}:a]volume={bgm_volume},atrim=duration={total_duration}[b];"
-        f"[v][b]amix=inputs=2:duration=first,alimiter=limit=0.95[a]",
+        f"[b][sc]sidechaincompress=threshold=0.04:ratio=10:attack=20:release=450[ducked];"
+        f"[v][ducked]amix=inputs=2:duration=first,alimiter=limit=0.95[a]",
         "-map", "0:v",
         "-map", "[a]",
         "-c:v", "copy",
@@ -291,6 +335,21 @@ def _burn_captions(
         shutil.copy2(str(input_video), str(output_path))
         return
 
+    filter_graph = _caption_filter(srt_path)
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(input_video),
+        "-vf", filter_graph,
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-c:a", "copy",
+        str(output_path),
+    ]
+    _run(cmd, "burn subtitles")
+
+
+def _caption_filter(srt_path: Path) -> str:
+    """Build the portrait-safe libass subtitle filter."""
     # Windows 路径处理：先规范化为正斜杠，再转义驱动器号冒号
     srt_str = str(srt_path.resolve()).replace("\\", "/")
     # C:/path/... → C\:/path/... （FFmpeg subtitles filter 要求转义冒号）
@@ -299,15 +358,11 @@ def _burn_captions(
     else:
         drive_colon_escaped = srt_str
 
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", str(input_video),
-        "-vf", f"subtitles='{drive_colon_escaped}':force_style='FontSize=30,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,Shadow=1,MarginV=80'",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-        "-c:a", "copy",
-        str(output_path),
-    ]
-    _run(cmd, "burn subtitles")
+    return (
+        f"subtitles='{drive_colon_escaped}':force_style='FontSize=15,"
+        "PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
+        "Outline=2,Shadow=1,Alignment=2,MarginV=40'"
+    )
 
 
 def _validate_render_output(path: Path) -> None:

@@ -52,4 +52,4 @@ Windows 环境由 npm 包装脚本统一调用 `AGENT_PYTHON`，不要创建或�
 4. 不自动发布，不存储密钥
 5. HyperFrames 失败时必须有 FFmpeg 降级路径
 6. 只有 `--force` 可重新生成可再生成产物
-7. **视频任务必须按 `docs/video-plugin-routing.md` 调用第三方 Skills**（HyperFrames / Remotion / video-use / Seedance / ChatCut / CapCut / IP Strategist / OpenMontage）
+7. **视频任务必须按 `docs/video-plugin-routing.md` 调用第三方 Skills**（HyperFrames / Remotion / video-use / Seedance / ChatCut / CapCut / jianying-editor / ffmpeg / azure-speech / elevenlabs / ai-video-shot-prompt / ltx-prompt-director / epidemic-sound / moneyprinterturbo / pixelle-video / IP Strategist / OpenMontage）

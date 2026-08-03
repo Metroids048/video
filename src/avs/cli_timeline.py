@@ -331,9 +331,16 @@ def register_commands(main_group: click.Group) -> None:
 
         try:
             from avs.qa import run_qa
-            report = run_qa(ep_dir, model.id, publishable=model.publishable, force=force)
-        except ImportError:
-            console.print("[yellow]⚠ qa 模块尚未实现（模块8），跳过[/yellow]")
+            active_path = "final-render" in model.completed_stages
+            report = run_qa(
+                ep_dir,
+                model.id,
+                publishable=model.publishable,
+                force=force,
+                require_human_approval=not active_path,
+            )
+        except ImportError as exc:
+            console.print(f"[red]✗ QA 核心模块加载失败: {exc}[/red]")
             sys.exit(1)
         except Exception as exc:
             console.print(f"[red]✗ QA 失败: {exc}[/red]")
@@ -361,21 +368,21 @@ def register_commands(main_group: click.Group) -> None:
         blocking_reasons = report.get("blocking_reasons", [])
 
         if not technical_passed:
-            console.print(f"\n[red]✗ 技术检查失败[/red]")
+            console.print("\n[red]✗ 技术检查失败[/red]")
             sys.exit(1)
 
-        if model.publishable and (not publishability_passed or not human_approved):
-            console.print(f"\n[yellow]⚠ 技术检查通过，但尚未满足发布条件：[/yellow]")
+        if model.publishable and (not publishability_passed or (not human_approved and "final-render" not in model.completed_stages)):
+            console.print("\n[yellow]⚠ 技术检查通过，但尚未满足发布条件：[/yellow]")
             for reason in blocking_reasons:
                 console.print(f"  [yellow]- {reason}[/yellow]")
 
-            if not human_approved:
-                console.print(f"\n[yellow]状态将转为 WAITING_FOR_REVIEW，等待人工视觉批准[/yellow]")
+            if not human_approved and "final-render" not in model.completed_stages:
+                console.print("\n[yellow]状态将转为 WAITING_FOR_REVIEW，等待人工视觉批准[/yellow]")
                 model.transition("WAITING_FOR_REVIEW")
                 model.save(ep_json)
                 sys.exit(2)  # Exit code 2: waiting for human approval
             else:
-                console.print(f"\n[red]✗ 发布质量检查未通过[/red]")
+                console.print("\n[red]✗ 发布质量检查未通过[/red]")
                 sys.exit(1)
 
         # 状态转换 → QA_PASSED
@@ -413,15 +420,19 @@ def register_commands(main_group: click.Group) -> None:
             console.print(f"[red]✗ 加载 episode.json 失败: {exc}[/red]")
             sys.exit(1)
 
-        if model.status not in {"QA_PASSED", "DELIVERY_READY"}:
+        if "final-render" in model.completed_stages:
+            if "qa" not in model.completed_stages or "approve" not in model.completed_stages:
+                console.print("[red]✗ Active Episode 必须先通过 qa 并完成人工 approve[/red]")
+                sys.exit(1)
+        elif model.status not in {"QA_PASSED", "DELIVERY_READY"}:
             console.print(f"[red]✗ 当前状态 {model.status}，请先运行 avs qa 并通过[/red]")
             sys.exit(1)
 
         try:
             from avs.delivery import run_delivery
             run_delivery(ep_dir, model, force=force)
-        except ImportError:
-            console.print("[yellow]⚠ delivery 模块尚未实现（模块8），跳过[/yellow]")
+        except ImportError as exc:
+            console.print(f"[red]✗ delivery 核心模块加载失败: {exc}[/red]")
             sys.exit(1)
         except Exception as exc:
             console.print(f"[red]✗ deliver 失败: {exc}[/red]")
@@ -444,7 +455,7 @@ def register_commands(main_group: click.Group) -> None:
     @click.argument("episode_id")
     @click.option("--force", is_flag=True, help="强制重建所有产物")
     def run_cmd(episode_id: str, force: bool) -> None:
-        """全流程执行: timeline→subtitles→render→qa→deliver。"""
+        """Resume the canonical workflow until the next human/Agent gate."""
         import logging
         from avs.config import Config
 
@@ -453,22 +464,14 @@ def register_commands(main_group: click.Group) -> None:
         cfg = Config(root)
         _get_ep_dir(cfg, episode_id)
 
-        for step in RUN_STEPS:
-            console.print(f"\n[bold cyan]── {step} ──[/bold cyan]")
-            force_args = ["--force"] if force else []
-            # 用 subprocess 调用自身，保证 Click 命令上下文隔离
-            import subprocess as _sp
-            import os as _os
-            env = _os.environ.copy()
-            env.setdefault("PYTHONPATH", str(root / "src"))
-            ret = _sp.run(
-                [sys.executable, "-m", "avs"] + step.split() + [episode_id] + force_args,
-                cwd=str(root),
-                env=env,
-            )
-            if ret.returncode != 0:
-                console.print(f"[red]✗ {step} 失败（exit {ret.returncode}），中止 run[/red]")
-                sys.exit(ret.returncode)
-
-        console.print("\n[green]✓ 全流程完成[/green]")
-        sys.exit(0)
+        import subprocess as _sp
+        import os as _os
+        env = _os.environ.copy()
+        env.setdefault("PYTHONPATH", str(root / "src"))
+        args = [sys.executable, "-m", "avs", "workflow", "resume", episode_id]
+        if force:
+            args.append("--force")
+        result = _sp.run(args, cwd=str(root), env=env)
+        if result.returncode != 0:
+            console.print(f"[red]✗ Active workflow 停止（exit {result.returncode}）[/red]")
+        sys.exit(result.returncode)

@@ -1,0 +1,261 @@
+"""Active multimodal workflow stages.
+
+All artifacts are attached to the existing Episode directory; ``episode.json``
+remains the only state store.  Legacy timeline/render commands can still be
+used for internal filter tests, but these helpers are the publishable route.
+"""
+from __future__ import annotations
+
+import json
+import hashlib
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import jsonschema
+
+from avs.analysis import analyze_assets, analyze_documents, analyze_recordings, transcribe_audio_assets
+from avs.creative import (
+    build_creative_brief,
+    build_evidence_map,
+    plan_script,
+    plan_shots,
+    select_reference_patterns,
+)
+from avs.creative.brief import save_creative_brief
+from avs.creative.reference_matcher import save_reference_selection
+from avs.models.episode import EpisodeModel
+from avs.render.captions import build_srt
+from avs.timeline import build_timeline
+from avs.timeline.models import Clip, Timeline, Track
+
+
+def _read(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write(path: Path, value: dict[str, Any]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
+    manifest = _read(ep_dir / "work" / "input-manifest.json")
+    # screenshot_intro 只允许依据用户明确备注生成“待 Provider 复核”的预览
+    # 分析；最终 visual-review 仍会要求真实 Vision Provider。
+    intelligence = analyze_assets(
+        ep_dir,
+        manifest=manifest,
+        require_provider=model.input_mode != "screenshot_intro",
+        allow_manual_notes=model.input_mode == "screenshot_intro",
+        force=force,
+    )
+    recording = analyze_recordings(ep_dir, manifest=manifest, force=force)
+    documents = analyze_documents(ep_dir, manifest)
+    transcription = transcribe_audio_assets(ep_dir, manifest)
+    model.complete_stage("analyze")
+    model.to_dict().setdefault("artifacts", {})
+    reasons = [
+        str(item.get("blocking_reason") or "分析被阻塞")
+        for item in (intelligence, transcription)
+        if item.get("blocked")
+    ]
+    if documents.get("blocked"):
+        reasons.append("必须使用的文档无法提取")
+    if reasons:
+        model.block("; ".join(reasons))
+    model.save(ep_dir / "episode.json")
+    return {"asset_intelligence": intelligence, "recording_analysis": recording, "document_analysis": documents, "transcription": transcription}
+
+
+def active_plan(ep_dir: Path, model: EpisodeModel, *, platform: str = "douyin", hook_variant: str = "conflict", pattern_ids: list[str] | None = None) -> dict[str, Any]:
+    intelligence = _read(ep_dir / "work" / "analysis" / "asset-intelligence.json")
+    if intelligence.get("blocked"):
+        raise RuntimeError(str(intelligence.get("blocking_reason") or "asset intelligence blocked"))
+    manifest = _read(ep_dir / "work" / "input-manifest.json")
+    must_use = [asset["asset_id"] for asset in manifest.get("assets", []) if asset.get("must_use")]
+    brief = build_creative_brief(model.id, platform=platform, must_use_asset_ids=must_use, hook_variant=hook_variant)
+    selection = select_reference_patterns(model.id, platform=platform, pattern_ids=pattern_ids)
+    script = plan_script(brief, intelligence, selection, hook_variant=hook_variant)
+    referenced = {
+        ref.get("asset_id")
+        for segment in script.get("segments", [])
+        for ref in segment.get("asset_refs", [])
+    }
+    visual_asset_ids = {
+        asset["asset_id"] for asset in manifest.get("assets", [])
+        if asset.get("source_type") in {"screenshot", "recording", "video"}
+    }
+    missing_evidence = [
+        asset_id for asset_id in must_use
+        if asset_id in visual_asset_ids and asset_id not in referenced
+    ]
+    if missing_evidence:
+        raise RuntimeError(
+            "must-use 素材尚未形成可验证事实: " + ", ".join(missing_evidence)
+        )
+    evidence = build_evidence_map(model.id, script, intelligence=intelligence)
+    regions = {
+        (asset.get("asset_id"), region.get("region_id")): region.get("box")
+        for asset in intelligence.get("assets", [])
+        for region in asset.get("regions", [])
+    }
+    for segment in evidence.get("segments", []):
+        for ref in segment.get("asset_refs", []):
+            box = regions.get((ref.get("asset_id"), ref.get("region_id")))
+            if box:
+                ref["region"] = box
+    shot_plan = plan_shots(model.id, evidence, selection=selection)
+    shot_plan["excluded_assets"] = [
+        {
+            "asset_id": asset["asset_id"],
+            "excluded": True,
+            "reason": "未匹配到新的可见产品事实",
+        }
+        for asset in manifest.get("assets", [])
+        if asset.get("asset_id") not in referenced and not asset.get("must_use")
+    ]
+    shot_plan["analysis_asset_ids"] = [
+        asset["asset_id"] for asset in manifest.get("assets", [])
+        if asset.get("must_use")
+        and asset.get("source_type") in {"document", "text", "link", "audio"}
+        and asset.get("status") == "ok"
+    ]
+    save_creative_brief(ep_dir, brief)
+    save_reference_selection(ep_dir, selection)
+    _write(ep_dir / "work" / "content" / "hook-selection.json", {
+        "episode_id": model.id,
+        "selected": hook_variant,
+        "hook": brief["hook"],
+        "confirmed_by": "cli-user",
+    })
+    _write(ep_dir / "work" / "content" / "script.json", script)
+    _write(ep_dir / "work" / "content" / "evidence-map.json", evidence)
+    _write(ep_dir / "work" / "content" / "shot-plan.json", shot_plan)
+    if model.status == "INGESTED":
+        model.ensure_stage("content", "CONTENT_READY")
+    model.complete_stage("plan")
+    model.save(ep_dir / "episode.json")
+    return {"brief": brief, "selection": selection, "script": script, "evidence_map": evidence, "shot_plan": shot_plan}
+
+
+def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> Timeline:
+    plan = _read(ep_dir / "work" / "content" / "shot-plan.json")
+    script = _read(ep_dir / "work" / "content" / "script.json")
+    by_segment = {item["segment_id"]: item for item in script.get("segments", [])}
+    storyboard_shots: list[dict[str, Any]] = []
+    shots = plan.get("shots", [])
+    for index, shot in enumerate(shots):
+        segment = by_segment.get(shot.get("segment_id"), {})
+        refs = [ref.get("asset_id") for ref in shot.get("asset_refs", []) if ref.get("asset_id")]
+        if index == 0:
+            motion_template = "HookTitle"
+        elif index == len(shots) - 1:
+            motion_template = "EndCard"
+        elif not refs:
+            motion_template = "InfoCard"
+        else:
+            motion_template = None
+        storyboard_shots.append({
+            "scene_id": shot["shot_id"],
+            "script_segment_ids": [shot.get("segment_id")],
+            "duration": shot["duration_seconds"],
+            "visual_type": "image" if refs else "motion_graphic",
+            "asset_ids": refs,
+            "asset_refs": shot.get("asset_refs", []),
+            "caption": segment.get("spoken_text", ""),
+            "motion_template": motion_template,
+            "missing_assets": [],
+            "notes": shot.get("primitive"),
+            "primitive": shot.get("primitive"),
+            "reference_pattern_ids": shot.get("reference_pattern_ids", []),
+            "keyframes": shot.get("keyframes", []),
+        })
+    script_path = ep_dir / "work" / "content" / "script.json"
+    brief_path = ep_dir / "work" / "content" / "creative-brief.json"
+    storyboard = {
+        "episode_id": model.id,
+        "shots": storyboard_shots,
+        "asset_gaps": [],
+        "traceability": {"script_sha256": _sha256(script_path), "creative_profile_sha256": _sha256(brief_path)},
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    schema_path = Path(__file__).resolve().parents[2] / "schemas" / "storyboard.schema.json"
+    jsonschema.Draft7Validator(json.loads(schema_path.read_text(encoding="utf-8"))).validate(storyboard)
+    _write(ep_dir / "work" / "content" / "storyboard.json", storyboard)
+    if model.status == "CONTENT_READY":
+        model.ensure_stage("assets", "ASSETS_READY")
+    timeline = build_timeline(ep_dir, model.id, force=force)
+    voice_track = next((track for track in timeline.tracks if track.kind == "audio" and track.audio_role == "voice"), None)
+    if voice_track is None:
+        from avs.render.tts import ensure_edge_narration
+        narration = ensure_edge_narration(ep_dir, script, force=force)
+        relative = narration.relative_to(ep_dir).as_posix()
+        duration = float(timeline.total_duration or timeline.compute_duration())
+        timeline.tracks.append(Track(
+            track_id="audio-voice-generated", kind="audio", audio_role="voice",
+            clips=[Clip(
+                clip_id="voice-edge-tts", start=0.0, duration=duration,
+                asset_ref=relative, style={"volume": 1.0, "role": "voice", "provider": "edge_tts"},
+            )],
+        ))
+        timeline.save(ep_dir / "work" / "timeline.json")
+    if model.status == "ASSETS_READY":
+        model.ensure_stage("timeline", "TIMELINE_READY")
+    build_srt(timeline, ep_dir / "work" / "captions.srt")
+    from avs.render import render_rough_cut
+    render_rough_cut(ep_dir, timeline, force=force)
+    from avs.hyperframes import render_motion_graphics
+    render_motion_graphics(Path(__file__).resolve().parents[2], ep_dir, timeline, force=force)
+    model.complete_stage("preview")
+    model.save(ep_dir / "episode.json")
+    return timeline
+
+
+def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
+    review_path = ep_dir / "work" / "qa" / "visual-review.json"
+    if not review_path.is_file():
+        raise RuntimeError("final-render 必须先完成 visual-review")
+    review = _read(review_path)
+    if not review.get("passed") or review.get("blocked"):
+        raise RuntimeError("visual-review 未通过，禁止进入 final-render")
+    timeline = Timeline.load(ep_dir / "work" / "timeline.json")
+    build_srt(timeline, ep_dir / "work" / "captions.srt")
+    from avs.render import render_rough_cut
+    rough = render_rough_cut(ep_dir, timeline, force=force)
+    renders = ep_dir / "renders"
+    final_clean = renders / "final-clean.mp4"
+    final_captions = renders / "final-with-captions.mp4"
+    from avs.hyperframes import render_motion_graphics
+    project_root = Path(__file__).resolve().parents[2]
+    clean_motion = render_motion_graphics(
+        project_root, ep_dir, timeline, force=force,
+        base_video=rough["preview_clean"], output_path=final_clean,
+        write_manifest=False,
+    )
+    caption_motion = render_motion_graphics(
+        project_root, ep_dir, timeline, force=force,
+        base_video=rough["preview_with_captions"], output_path=final_captions,
+    )
+    if clean_motion.output_path is None:
+        import shutil
+        shutil.copy2(rough["preview_clean"], final_clean)
+    if caption_motion.output_path is None:
+        import shutil
+        shutil.copy2(rough["preview_with_captions"], final_captions)
+    result = {
+        "final_clean": final_clean,
+        "final_with_captions": final_captions,
+        "preview_clean": rough["preview_clean"],
+        "preview_with_captions": rough["preview_with_captions"],
+    }
+    if model.status == "TIMELINE_READY":
+        model.ensure_stage("rough_cut", "ROUGH_CUT_READY")
+    model.complete_stage("final-render")
+    model.save(ep_dir / "episode.json")
+    return result

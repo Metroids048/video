@@ -19,6 +19,23 @@ def sha256_file(path: Path) -> str:
     return hasher.hexdigest()
 
 
+def artifact_fingerprint(ep_dir: Path, video_path: Path) -> str:
+    """Hash every artifact whose change invalidates visual approval."""
+    paths = (
+        ep_dir / "work" / "input-manifest.json",
+        ep_dir / "work" / "content" / "script.json",
+        ep_dir / "work" / "content" / "evidence-map.json",
+        ep_dir / "work" / "content" / "shot-plan.json",
+        ep_dir / "work" / "timeline.json",
+        video_path,
+    )
+    hasher = hashlib.sha256()
+    for path in paths:
+        hasher.update(path.relative_to(ep_dir).as_posix().encode("utf-8"))
+        hasher.update(sha256_file(path).encode("ascii") if path.is_file() else b"MISSING")
+    return hasher.hexdigest()
+
+
 def _project_root(ep_dir: Path) -> Path:
     """Locate project root by finding schemas directory."""
     for candidate in (ep_dir, *ep_dir.parents):
@@ -99,6 +116,7 @@ def create_approval(
         "reviewer": reviewer,
         "video_path": relative_path,
         "video_sha256": video_sha256,
+        "artifact_fingerprint": artifact_fingerprint(ep_dir, video_path),
         "reviewed_at": datetime.now(timezone.utc).isoformat(),
         "checklist": checklist,
         "notes": notes,
@@ -153,6 +171,12 @@ def verify_approval_current(ep_dir: Path, final_video: Path) -> tuple[bool, str 
             f"视频已变更：批准哈希 {approval_hash[:16]}...，"
             f"当前哈希 {current_hash[:16]}..."
         )
+
+    approved_fingerprint = approval.get("artifact_fingerprint")
+    if (ep_dir / "work" / "content" / "shot-plan.json").is_file() and not approved_fingerprint:
+        return False, "Active Episode 的人工批准缺少完整 Artifact Fingerprint"
+    if approved_fingerprint and approved_fingerprint != artifact_fingerprint(ep_dir, final_video):
+        return False, "输入、Script、Shot Plan、Timeline 或视频已变更，批准指纹失效"
 
     return True, None
 

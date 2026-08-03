@@ -13,7 +13,6 @@
 """
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import subprocess
@@ -92,6 +91,8 @@ def step_hyperframes() -> tuple[bool, str]:
     # skills install into globals via existing script
     code_s, out_s = _run(_node_cmd("scripts/install_skills.mjs"), timeout=300)
     notes.append(f"install_skills rc={code_s} {out_s[-400:]}")
+    # Refresh lock hash if install_skills mutated third_party copy
+    _run(_node_cmd("scripts/run-python.mjs", "scripts/apply_free_provider_overlays.py"))
     return True, "\n".join(notes)
 
 
@@ -193,9 +194,50 @@ def step_openmontage() -> tuple[bool, str]:
     return ok, f"guide={guide.is_file()} entry={entry.is_file()}"
 
 
+def step_pixelle_video() -> tuple[bool, str]:
+    readme = ROOT / "vendor" / "repos" / "pixelle-video" / "README.md"
+    entry = ROOT / "third_party_skills" / "pixelle-video" / "SKILL.md"
+    ok = readme.is_file() and entry.is_file()
+    return ok, f"readme={readme.is_file()} entry={entry.is_file()}"
+
+
 def step_ip_strategist() -> tuple[bool, str]:
     p = ROOT / "third_party_skills" / "ip-strategist" / "SKILL.md"
     return p.is_file(), f"present={p.is_file()}"
+
+
+def step_batch_manifest_skills() -> tuple[bool, str]:
+    """Verify Batch 2026-08-03 + A+1 reference packages are on disk."""
+    required = [
+        "video-shotcraft",
+        "jianying-editor",
+        "ffmpeg",
+        "azure-speech",
+        "elevenlabs",
+        "text-to-speech",
+        "ai-video-shot-prompt",
+        "ltx-prompt-director",
+        "epidemic-sound",
+        "moneyprinterturbo",
+        "pixelle-video",
+        "seedance-free",
+    ]
+    missing: list[str] = []
+    for name in required:
+        path = ROOT / "third_party_skills" / name
+        ok = path.is_dir() and any(path.rglob("SKILL.md"))
+        if not ok:
+            missing.append(name)
+    mpt_helper = ROOT / "third_party_skills" / "moneyprinterturbo" / "mpt_agent.py"
+    if not mpt_helper.is_file():
+        missing.append("moneyprinterturbo/mpt_agent.py")
+    # Soft: jianying wrapper entry
+    jy = ROOT / "third_party_skills" / "jianying-editor" / "SKILL.md"
+    if not jy.is_file():
+        missing.append("jianying-editor/SKILL.md")
+    if missing:
+        return False, "missing: " + ", ".join(missing)
+    return True, f"{len(required)} skill trees present; mpt_agent.py OK"
 
 
 def step_free_providers() -> tuple[bool, str]:
@@ -224,6 +266,12 @@ def _user_needed() -> list[str]:
     needed.append(
         "（可选付费升级）Seedance/Kie：仅当需要生成式视频时再配 KIE_API_KEY；"
         "默认用 seedance-free（FFmpeg Ken Burns）或 OpenMontage"
+    )
+    needed.append(
+        "（可选）Azure Speech：仅当明确要求神经语音时再配 Azure 凭证；默认 Edge TTS / Whisper"
+    )
+    needed.append(
+        "（可选）Epidemic Sound：配置官方 MCP 并登录账号；无账号则标素材缺口，不伪造曲库"
     )
     # ChatCut login status — soft reminder
     needed.append(
@@ -283,7 +331,9 @@ def main() -> int:
         ("seedance", step_seedance_tools),
         ("free-providers", step_free_providers),
         ("openmontage", step_openmontage),
+        ("pixelle-video", step_pixelle_video),
         ("ip-strategist", step_ip_strategist),
+        ("batch-manifest-skills", step_batch_manifest_skills),
     ]
     for name, fn in steps:
         print(f"[ensure] {name} ...")
@@ -306,8 +356,10 @@ def main() -> int:
         "seedance",
         "free-providers",
         "openmontage",
+        "pixelle-video",
         "ip-strategist",
         "cut-skill",
+        "batch-manifest-skills",
     ]
     hard_fail = [k for k in critical if not results.get(k, (False, ""))[0]]
     # chatcut-cli is soft — skills may exist without CLI

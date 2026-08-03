@@ -241,6 +241,9 @@ def render_motion_graphics(
     *,
     force: bool = False,
     timeout: int = 180,
+    base_video: Path | None = None,
+    output_path: Path | None = None,
+    write_manifest: bool = True,
 ) -> MotionRenderResult:
     """Render graphic-track clips, fall back per clip, and compose over the rough cut."""
     output_dir = ep_dir / "delivery" / "motion-graphics"
@@ -291,11 +294,11 @@ def render_motion_graphics(
             "output": output.relative_to(ep_dir).as_posix(), "warning": warning,
         })
 
-    base_video = ep_dir / "renders" / "preview-with-captions.mp4"
-    if composed and base_video.is_file():
-        motion_output = ep_dir / "renders" / "preview-with-motion.mp4"
+    selected_base = base_video or ep_dir / "renders" / "preview-with-captions.mp4"
+    if composed and selected_base.is_file():
+        motion_output = output_path or ep_dir / "renders" / "preview-with-motion.mp4"
         if force or not _valid_video(motion_output, require_audio=True):
-            _compose_motion(base_video, composed, motion_output)
+            _compose_motion(selected_base, composed, motion_output)
         result.output_path = motion_output
     elif composed:
         result.warnings.append("基础粗剪不存在，已保留独立动效片段但未合成")
@@ -313,6 +316,7 @@ def render_motion_graphics(
     jsonschema.Draft7Validator(
         schema, format_checker=jsonschema.FormatChecker(),
     ).validate(payload)
-    manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    if write_manifest:
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return result

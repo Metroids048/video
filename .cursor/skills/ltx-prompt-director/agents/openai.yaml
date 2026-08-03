@@ -1,0 +1,4 @@
+interface:
+  display_name: "LTX-2.3 Prompt Director"
+  short_description: "生成并诊断 LTX-2.3 全场景视频提示词"
+  default_prompt: "Use $ltx-2-3-prompt-director to turn my brief into a production-ready LTX-2.3 prompt and choose the correct workflow route."

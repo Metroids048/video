@@ -12,6 +12,7 @@ _VIDEO_EXT = frozenset({".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v", ".ts"})
 _AUDIO_EXT = frozenset({".mp3", ".wav", ".aac", ".m4a", ".flac", ".ogg", ".opus"})
 _IMAGE_EXT = frozenset({".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif"})
 _TEXT_EXT  = frozenset({".txt", ".md", ".srt", ".json", ".yaml", ".yml", ".csv"})
+_DOCUMENT_EXT = frozenset({".pdf", ".docx", ".doc", ".rtf"})
 
 
 @dataclass
@@ -44,6 +45,9 @@ def classify_kind(path: Path) -> tuple[str, str]:
         return "image", mime
     if suffix in _TEXT_EXT:
         return "text", "text/plain"
+    if suffix in _DOCUMENT_EXT:
+        mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        return "document", mime
 
     mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     return "unknown", mime
@@ -68,6 +72,8 @@ def discover_inputs(episode_dir: Path) -> list[DiscoveredFile]:
         if file.name.startswith("."):
             continue
         if file.name == ".gitkeep" or file.suffix == ".gitkeep":
+            continue
+        if file.parent.resolve() == input_dir and file.name in {"input-manifest.json", "manifest.json"}:
             continue
 
         abs_path = file.resolve()

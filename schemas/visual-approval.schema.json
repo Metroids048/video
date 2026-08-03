@@ -37,6 +37,11 @@
       "pattern": "^[a-f0-9]{64}$",
       "description": "视频文件的 SHA-256 哈希值"
     },
+    "artifact_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "输入、脚本、分镜、时间线与视频的联合指纹"
+    },
     "reviewed_at": {
       "type": "string",
       "format": "date-time",

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "evidence-map.schema.json",
+  "title": "Narration evidence map",
+  "type": "object",
+  "required": ["episode_id", "segments"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["segment_id", "spoken_text", "purpose", "duration_seconds", "evidence_required", "asset_refs", "reference_pattern_ids"],
+        "additionalProperties": false,
+        "properties": {
+          "segment_id": {"type": "string"},
+          "spoken_text": {"type": "string"},
+          "purpose": {"type": "string"},
+          "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+          "evidence_required": {"type": "boolean"},
+          "asset_refs": {"type": "array", "items": {"type": "object"}},
+          "reference_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^PAT-[0-9]{3}$"}, "minItems": 1}
+        }
+      }
+    }
+  }
+}

@@ -282,11 +282,21 @@ def check_third_party_video_skills(project_root: Path) -> CheckResult:
         "remotion-best-practices",
         "video-use",
         "seedance",
+        "seedance-free",
         "chatcut",
         "capcut-david",
         "cut-skill",
         "ip-strategist",
         "openmontage",
+        "video-shotcraft",
+        "jianying-editor",
+        "ffmpeg",
+        "azure-speech",
+        "elevenlabs",
+        "ai-video-shot-prompt",
+        "ltx-prompt-director",
+        "epidemic-sound",
+        "moneyprinterturbo",
     ]
     root = project_root / "third_party_skills"
     if not root.is_dir():

@@ -145,37 +145,22 @@ def format_cue_lines(text: str, max_chars_per_line: int = 14, max_lines: int = 2
     if _count_cjk_chars(text) <= max_chars_per_line:
         return text
 
-    # 尝试按标点自然分行
     parts = _split_by_punctuation(text)
+    compact = "".join(parts) if parts else text
     lines: list[str] = []
-    current_line = ""
-
-    for part in parts:
-        part_chars = _count_cjk_chars(part)
-
-        # 如果加上这部分会超过一行，先输出当前行
-        if current_line and (_count_cjk_chars(current_line) + part_chars > max_chars_per_line):
-            lines.append(current_line)
-            current_line = part
-        else:
-            current_line = current_line + part if current_line else part
-
-    # 输出最后一行
-    if current_line:
-        lines.append(current_line)
-
-    # 限制行数
-    lines = lines[:max_lines]
-
-    # 如果仍然超出，强制截断
-    result_lines = []
-    for line in lines:
-        if _count_cjk_chars(line) > max_chars_per_line:
-            result_lines.append(line[:max_chars_per_line] + "...")
-        else:
-            result_lines.append(line)
-
-    return "\n".join(result_lines)
+    current = ""
+    current_units = 0
+    for char in compact:
+        units = 1 if ("一" <= char <= "鿿" or not char.isspace()) else 0
+        if current and current_units + units > max_chars_per_line:
+            lines.append(current)
+            current = ""
+            current_units = 0
+        current += char
+        current_units += units
+    if current:
+        lines.append(current)
+    return "\n".join(lines[:max_lines])
 
 
 def check_caption_quality(cue: CaptionCue, *, max_cjk_per_second: float = 12.0) -> list[str]:

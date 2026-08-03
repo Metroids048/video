@@ -10,7 +10,7 @@ from typing import Any, Callable
 
 import jsonschema
 
-from avs.qa.approval import load_approval, verify_approval_current
+from avs.qa.approval import verify_approval_current
 from avs.qa.audio_levels import detect_max_volume
 from avs.qa.black_frames import detect_black_intervals
 from avs.qa.contact_sheet import create_final_contact_sheet
@@ -46,6 +46,15 @@ def _safe_call(function: Callable[[Path], Any], path: Path) -> tuple[Any, str | 
         return function(path), None
     except Exception as exc:
         return None, str(exc)
+
+
+def _final_video_path(ep_dir: Path) -> Path:
+    candidates = (
+        ep_dir / "renders" / "final-with-captions.mp4",
+        ep_dir / "renders" / "preview-with-motion.mp4",
+        ep_dir / "renders" / "preview-with-captions.mp4",
+    )
+    return next((path for path in candidates if path.is_file()), candidates[0])
 
 
 def _sha256_file(path: Path) -> str:
@@ -95,13 +104,6 @@ def _compute_input_fingerprint(
 
     combined = "|".join(parts)
     return hashlib.sha256(combined.encode("utf-8")).hexdigest()
-
-
-def _safe_call(function: Callable[[Path], Any], path: Path) -> tuple[Any, str | None]:
-    try:
-        return function(path), None
-    except Exception as exc:
-        return None, str(exc)
 
 
 def _media_checks(path: Path, label: str, prefix: str, expected_duration: float) -> tuple[list[QACheck], dict[str, Any]]:
@@ -158,7 +160,7 @@ def _media_checks(path: Path, label: str, prefix: str, expected_duration: float)
     return checks, metadata
 
 
-def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False) -> dict[str, Any]:
+def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False, require_human_approval: bool = True) -> dict[str, Any]:
     """Run deterministic QA with three-layer gate logic and fingerprint checking.
 
     Args:
@@ -174,9 +176,7 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
     report_path = delivery_dir / "qa-report.json"
 
     # Determine final video path
-    final_video = ep_dir / "renders" / "preview-with-motion.mp4"
-    if not final_video.is_file():
-        final_video = ep_dir / "renders" / "preview-with-captions.mp4"
+    final_video = _final_video_path(ep_dir)
 
     # Compute input fingerprint
     current_fingerprint = _compute_input_fingerprint(ep_dir, final_video, publishable)
@@ -210,9 +210,15 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         message="; ".join(timeline_warnings) or None, value=timeline_warnings,
     ))
 
+    clean_video = ep_dir / "renders" / "final-clean.mp4"
+    if not clean_video.is_file():
+        clean_video = ep_dir / "renders" / "preview-clean.mp4"
+    caption_video = ep_dir / "renders" / "final-with-captions.mp4"
+    if not caption_video.is_file():
+        caption_video = ep_dir / "renders" / "preview-with-captions.mp4"
     media_specs = (
-        (ep_dir / "renders" / "preview-clean.mp4", "无字幕 MP4", "clean"),
-        (ep_dir / "renders" / "preview-with-captions.mp4", "带字幕 MP4", "captions"),
+        (clean_video, "无字幕 MP4", "clean"),
+        (caption_video, "带字幕 MP4", "captions"),
     )
     for path, label, prefix in media_specs:
         media_checks, _ = _media_checks(path, label, prefix, total_duration)
@@ -265,9 +271,7 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         placeholder_count,
     ))
 
-    final_video = ep_dir / "renders" / "preview-with-motion.mp4"
-    if not final_video.is_file():
-        final_video = ep_dir / "renders" / "preview-with-captions.mp4"
+    final_video = _final_video_path(ep_dir)
     final_probe, final_probe_error = _safe_call(probe_media, final_video)
     final_meta = final_probe if final_video.is_file() and isinstance(final_probe, dict) else {
         "error": final_probe_error or "最终视觉视频不存在",
@@ -326,8 +330,71 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
             QACheck("visual_contact_sheet", "生成视觉联系表", False, "warning", "无可检查的最终视频"),
         ])
 
+    # Active multimodal gates are part of the canonical QA report, not side
+    # reports. Legacy Episodes without these artifacts keep the old checks.
+    input_manifest_path = ep_dir / "work" / "input-manifest.json"
+    evidence_path = ep_dir / "work" / "content" / "evidence-map.json"
+    shot_plan_path = ep_dir / "work" / "content" / "shot-plan.json"
+    visual_review_path = ep_dir / "work" / "qa" / "visual-review.json"
+    reference_selection_path = ep_dir / "work" / "content" / "reference-selection.json"
+    if all(path.is_file() for path in (input_manifest_path, evidence_path, shot_plan_path)):
+        from avs.qa.evidence_coverage import check_evidence_coverage
+        from avs.qa.input_coverage import check_input_coverage
+        from avs.qa.pacing import check_pacing
+
+        active_manifest = json.loads(input_manifest_path.read_text(encoding="utf-8"))
+        evidence_map = json.loads(evidence_path.read_text(encoding="utf-8"))
+        shot_plan = json.loads(shot_plan_path.read_text(encoding="utf-8"))
+        used_asset_ids = {
+            ref.get("asset_id")
+            for shot in shot_plan.get("shots", [])
+            for ref in shot.get("asset_refs", [])
+            if ref.get("asset_id")
+        }
+        used_asset_ids.update(shot_plan.get("analysis_asset_ids", []))
+        exclusions = {
+            item.get("asset_id") for item in shot_plan.get("excluded_assets", [])
+            if item.get("excluded") and item.get("asset_id")
+        }
+        input_coverage = check_input_coverage(active_manifest, used_asset_ids, approved_exclusions=exclusions)
+        evidence_coverage = check_evidence_coverage(evidence_map, active_manifest)
+        pacing = check_pacing(shot_plan, platform="douyin")
+        checks.extend([
+            QACheck("active_input_coverage", "must-use 素材覆盖", input_coverage["passed"], value=input_coverage,
+                    message=None if input_coverage["passed"] else f"未使用: {input_coverage['missing_asset_ids']}"),
+            QACheck("active_evidence_coverage", "旁白事实证据覆盖", evidence_coverage["passed"], value=evidence_coverage,
+                    message=None if evidence_coverage["passed"] else "存在未绑定真实素材的事实"),
+            QACheck("active_pacing", "平台节奏与产品画面占比", pacing["passed"], value=pacing,
+                    message=None if pacing["passed"] else "前 10 秒变化、静态时长或产品画面占比不合格"),
+        ])
+        visual_review = json.loads(visual_review_path.read_text(encoding="utf-8")) if visual_review_path.is_file() else {"passed": False, "blocked": True}
+        visual_passed = bool(visual_review.get("passed")) and not bool(visual_review.get("blocked"))
+        checks.append(QACheck(
+            "active_visual_review", "视觉语义审核", visual_passed,
+            message=None if visual_passed else "视觉审核未通过或已阻塞", value=visual_review,
+        ))
+        if reference_selection_path.is_file():
+            selected = json.loads(reference_selection_path.read_text(encoding="utf-8"))
+            selected_ids = {item.get("pattern_id") for item in selected.get("selections", [])}
+            shot_ids = {
+                pattern for shot in shot_plan.get("shots", [])
+                for pattern in shot.get("reference_pattern_ids", [])
+            }
+            reference_passed = bool(selected_ids) and selected_ids.issubset(shot_ids)
+        else:
+            reference_passed = False
+            selected_ids = set()
+        checks.append(QACheck(
+            "active_reference_trace", "Reference Pattern 进入 Shot Plan", reference_passed,
+            message=None if reference_passed else "缺少具体 pattern_id 或未进入 Shot Plan",
+            value=sorted(selected_ids),
+        ))
+
     errors = [check for check in checks if not check.passed and check.severity == "error"]
     warnings = [check for check in checks if not check.passed and check.severity == "warning"]
+    for check in errors:
+        if check.check_id.startswith("active_") and check.name not in blocking_reasons:
+            blocking_reasons.append(check.name)
 
     # Three-layer gate logic
     technical_passed = not errors
@@ -350,9 +417,9 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
                     blocking_reasons.append("音频静音或异常长静音")
 
     # Human approval check
-    human_approved = False
+    human_approved = not require_human_approval
     approval_message = None
-    if publishable and quality_config.get("quality", {}).get("publishable", {}).get("require_human_visual_approval", True):
+    if publishable and require_human_approval and quality_config.get("quality", {}).get("publishable", {}).get("require_human_visual_approval", True):
         is_valid, error = verify_approval_current(ep_dir, final_video)
         human_approved = is_valid
         if not is_valid:
@@ -367,7 +434,7 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         "human_visual_approval",
         "人工视觉批准有效" if publishable else "人工批准（非必需）",
         human_approved,
-        "error" if publishable else "info",
+        "error" if publishable and require_human_approval else "info",
         approval_message,
         None,
     ))

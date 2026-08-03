@@ -17,6 +17,11 @@
       "enum": ["REFERENCE_CLONE", "REFERENCE_ADAPT", "ORIGINAL"],
       "description": "制作模式"
     },
+    "input_mode": {
+      "type": "string",
+      "enum": ["multimodal", "screenshot_intro"],
+      "description": "Active 输入路线；screenshot_intro 允许先生成待审阅的截图图文预览"
+    },
     "publishable": {
       "type": "boolean",
       "description": "是否允许生成发布包；REFERENCE_CLONE 强制为 false"
@@ -35,6 +40,7 @@
         "DELIVERY_READY",
         "WAITING_FOR_INPUT",
         "WAITING_FOR_REVIEW",
+        "BLOCKED",
         "FAILED"
       ]
     },
@@ -48,13 +54,17 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["ingest", "reference", "content", "assets", "timeline", "rough_cut", "qa", "delivery"]
+        "enum": ["ingest", "reference", "content", "assets", "analyze", "plan", "preview", "visual-review", "final-render", "approve", "timeline", "rough_cut", "qa", "delivery", "export"]
       },
       "uniqueItems": true
     },
     "last_error": {
       "type": ["string", "null"],
       "description": "最后一次失败原因"
+    },
+    "blocked": {
+      "type": "boolean",
+      "description": "主动阻塞标记；需要人工修复后才能继续"
     },
     "artifacts": {
       "type": "object",

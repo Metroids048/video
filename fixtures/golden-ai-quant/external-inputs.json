@@ -1,0 +1,21 @@
+{
+  "episode_id": "GOLDEN-AI-QUANT",
+  "status": "BLOCKED",
+  "assets": [
+    {"asset_id": "quant-screen-01", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-c228fd8b-6747-40af-94fd-089a24278a0f.png", "sha256": "350327b4767bd7dfa9b765337980de10ced611a353df64cec8b9e4d23fbd33de", "must_use": true, "user_note": "交易台模拟交易总览；展示持仓、未成交订单和拒绝原因；公开版遮蔽余额与账户数值"},
+    {"asset_id": "quant-screen-02", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-51c8b53d-4f8b-467f-923a-4be6f7816d23.png", "sha256": "170bc020e68fc9e415be3b0945110ca2988719758e22d884a73062c0fa75d90b", "must_use": true, "user_note": "交易台行情、K线与订单记录；公开版遮蔽订单号和账户标识"},
+    {"asset_id": "quant-screen-03", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-f6676f18-4b25-4356-9316-9daea8de0007.png", "sha256": "94f8e1d150e5607bc128617161821de6642db46222e686e590da093f8dfea791", "must_use": true, "user_note": "账户详情；展示钱包、可用余额和持仓结构；公开版只保留结构不展示真实金额"},
+    {"asset_id": "quant-screen-04", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-6bfa78ca-fd69-4d34-8e46-91139c280ac0.png", "sha256": "eb8b15ef33312d0104fbdbe25a5823b7e60a7e788989a2aa1ea78beac025fe70", "must_use": true, "user_note": "策略设置与风险参数；展示运行模式、杠杆、拒单阈值和信号不足原因"},
+    {"asset_id": "quant-screen-05", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-9f5e46e0-56fe-46eb-aee7-ffe253544cde.png", "sha256": "2e120ed819c1b0192313a080578e499e8bcdd8cb6ace607c3481c0b4ce10aadb", "must_use": true, "user_note": "运维控制台；展示系统健康、任务状态、依赖和故障通知；公开版移除地址与内部服务标识"},
+    {"asset_id": "quant-screen-06", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-917971d1-4fb1-4aa2-bcc6-3d275474c154.png", "sha256": "96b6837ea8d3fa39381cf8679d46f20b878377c2052db2dd49ac37b5cdf5198a", "must_use": true, "user_note": "研究工作台；展示研究来源与策略资产入口"},
+    {"asset_id": "quant-screen-07", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-9ec9a963-4e57-4198-a883-faf0470a3fb4.png", "sha256": "aac118a262e676e07a8a436263f7d69af0c018dbe1956d405db23dbcadbef36a", "must_use": true, "user_note": "复盘中心；展示每日复盘、失败知识和决策记忆；不公开未验证收益结论"},
+    {"asset_id": "quant-screen-08", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-f444d350-2c8f-4eda-8e89-32c1a05bbdb1.png", "sha256": "ffda984b10a29d3206cdd7b8ea5c53f9661f522e1cfe09eb143ae399815c5633", "must_use": true, "user_note": "验证中心；展示历史回测、参数优化和验证阶段；只能描述验证流程，不能声称盈利"},
+    {"asset_id": "quant-screen-09", "source_type": "screenshot", "external_source": "C:/Users/Windows11/AppData/Local/Temp/codex-clipboard-6e9df5af-f814-43a4-99b2-3c8f2f9203d1.png", "sha256": "1c0a77714bbf5a938f573a57eeafc02e2784a546339f9a40f025312d3e0327db", "must_use": true, "user_note": "策略库外部策略资料；展示研究来源、许可证和仅研究用途边界"},
+    {"asset_id": "quant-product-spec", "source_type": "document", "external_source": "C:/Users/Windows11/Desktop/量化项目/docs/product/product-spec.md", "sha256": "c168478c58f3607eac2dadad9b0c0ba10134e92e71cd93d9e223c978af153340", "must_use": true}
+  ],
+  "missing": [
+    {"source_type": "recording", "must_use": true, "reason": "缺少 1 段真实横屏操作录屏"},
+    {"source_type": "audio", "audio_role": "original_voice", "must_use": true, "reason": "缺少 1 段真实语音"},
+    {"source_type": "vision_provider", "must_use": true, "reason": "未配置 Anthropic/OpenAI API Key"}
+  ]
+}

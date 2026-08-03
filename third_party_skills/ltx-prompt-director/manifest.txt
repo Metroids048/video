@@ -1,0 +1,10 @@
+SKILL.md
+agents/openai.yaml
+references/model-and-workflow-map.md
+references/prompt-construction-playbook.md
+references/prompt-relay.md
+references/dialogue-audio-lipsync.md
+references/scenario-library.md
+references/troubleshooting-and-qa.md
+references/source-map.md
+scripts/ltx_prompt_lint.py

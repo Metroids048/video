@@ -65,6 +65,43 @@ def _content_workspace_initialized(ep_dir: Path) -> bool:
 def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
     """Return the next action without mutating state or creating files."""
     status = model.status
+    active_manifest = ep_dir / "work" / "input-manifest.json"
+    stages = set(model.completed_stages)
+
+    if model.to_dict().get("blocked"):
+        kind: ActionKind = "input" if "输入" in (model.last_error or "") or "素材" in (model.last_error or "") else "human"
+        return WorkflowAction(
+            kind=kind,
+            stage="blocked",
+            summary=model.last_error or "Active workflow 已阻塞，需要人工修复。",
+        )
+
+    # The multimodal manifest switches publishable Episodes onto the only
+    # active delivery path. Legacy actions below remain internal compatibility.
+    if model.publishable and active_manifest.is_file() and status != "CREATED":
+        if "analyze" not in stages:
+            return WorkflowAction("command", "analyze", "理解全部输入并生成素材语义索引。", ("analyze",))
+        if "plan" not in stages:
+            return WorkflowAction(
+                "human", "hook-review",
+                "从 result/conflict/pain 三个 Hook 中确认一个，再执行 avs plan --hook。",
+                required_artifacts=("work/analysis/asset-intelligence.json",),
+            )
+        if "preview" not in stages:
+            return WorkflowAction("command", "preview", "生成原子镜头时间线和低清预览。", ("preview",))
+        if "visual-review" not in stages:
+            return WorkflowAction("command", "visual-review", "执行视觉语义审核。", ("visual-review",))
+        if "final-render" not in stages:
+            return WorkflowAction("command", "final-render", "渲染通过审核的最终视频。", ("final-render",))
+        if "qa" not in stages:
+            return WorkflowAction("command", "qa", "执行技术与发布质量 Gate。", ("qa",))
+        if "approve" not in stages:
+            return WorkflowAction("human", "approve", "人工完整播放后批准最终视频哈希。", ("approve",))
+        if "delivery" not in stages:
+            return WorkflowAction("command", "deliver", "生成完整交付包。", ("deliver",))
+        if "export" not in stages:
+            return WorkflowAction("command", "export", "导出可复验 Episode 包。", ("export",))
+        return WorkflowAction("complete", "complete", "Active workflow 已完成并导出。")
 
     if status == "CREATED":
         return WorkflowAction(
@@ -156,7 +193,7 @@ def run_automatic_steps(
     executed: list[tuple[str, ...]] = []
     seen: set[tuple[str, tuple[str, ...]]] = set()
 
-    for _ in range(8):
+    for _ in range(16):
         model = EpisodeModel.load(ep_json)
         action = action_for_episode(ep_dir, model)
         if action.kind != "command" or action.command is None:

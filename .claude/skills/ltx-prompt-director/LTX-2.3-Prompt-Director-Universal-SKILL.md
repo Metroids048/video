@@ -1,0 +1,1671 @@
+---
+name: ltx-2-3-prompt-director
+description: Create, rewrite, diagnose, and route production-ready prompts for LTX-2.3 and its ComfyUI ecosystem. Use for text-to-video, image-to-video, audio-to-video, video-to-video, Prompt Relay, first/last or first/middle/last frame, multi-person dialogue, talking avatars, lipdub, custom audio, Foley, music video, long-video extension, loops, multi-reference identity, pose/depth/edge/camera control, retake, inpaint, outpaint, restyle, product ads, cinematic shots, social video, and prompt troubleshooting. Accept Chinese or English briefs; produce model-ready English prompts by default and distinguish official model capabilities from community or experimental workflows.
+version: "1.0-universal"
+format: "single-file-agent-skill"
+---
+# LTX-2.3 Prompt Director — Universal Single-File Skill
+This file is the self-contained edition. Apply the core instructions first, then consult the embedded reference chapters as needed. Do not require access to external local files.
+## Core Skill Instructions
+
+# LTX-2.3 Prompt Director
+
+Use this skill as a **director, prompt architect, workflow router, and failure diagnostician** for LTX-2.3. Do not merely decorate the user's words. Determine the generation mode, temporal structure, identity/audio/control requirements, then write the smallest prompt and workflow specification that can reliably express the intended shot.
+
+## Core operating rules
+
+1. Treat an LTX prompt as a **chronological shot description**, not a tag pile.
+2. Use **present tense**, observable physical actions, explicit camera behavior, lighting, environment, and synchronized audio.
+3. Default to an **English model prompt**, even when the brief is Chinese. Keep requested spoken dialogue in its target language and label the language/accent when relevant.
+4. Distinguish three layers:
+   - **Native prompt control:** subject, action, camera, lighting, dialogue, ambience, Foley, music, temporal order.
+   - **Official model/workflow control:** image conditioning, multiple keyframes, A2V, V2V, video extension, LoRA/IC-LoRA, pose/depth/edge/camera controls, retake, lipdub, upscaling.
+   - **Community/experimental control:** Prompt Relay implementations, multi-speaker packs, first-middle-last guiders, long-loop graphs, multi-reference identity stacks, specialized effect LoRAs. Label these as workflow-dependent rather than guaranteed model behavior.
+5. Never promise exact text rendering, exact logo fidelity, exact multi-person lip synchronization, or unlimited long-video consistency from prompt text alone.
+6. For I2V, describe **what begins moving and what happens next**. Do not waste tokens redescribing static details already visible in the input image.
+7. For A2V, treat the supplied audio as the timing backbone. Describe the visual performance, subject identity, camera, environment, and reactions that should align to it.
+8. For V2V/editing, specify **what must remain unchanged**, what may change, where the change occurs, and whether motion/timing/camera should be preserved.
+9. Use Prompt Relay only when one flowing prompt cannot clearly allocate different actions, speakers, or camera beats across time.
+10. Prefer one decisive camera plan. Multiple incompatible camera instructions often reduce adherence.
+
+## First classify the request
+
+Determine these fields before writing:
+
+- `mode`: T2V, I2V, A2V, V2V, Lipdub, Talking Avatar, Prompt Relay, FLF/FML, Control, Retake/Edit, Long/Loop, Music Video, or Multi-reference.
+- `duration`: seconds and, when known, frame count/fps.
+- `aspect`: landscape, portrait, square, or source-preserving.
+- `subject_count`: one, two, or crowd.
+- `identity_requirement`: loose, reference-image, face-ID/ID-LoRA, character sheet, or trained LoRA.
+- `dialogue_requirement`: none, single speaker, alternating speakers, overlap, voice clone, translation/dubbing.
+- `audio_source`: native generated audio, reference audio, TTS, music track, silent, or preserve source audio.
+- `temporal_complexity`: one action, chained action, multi-beat, multi-scene, or continuation.
+- `control_requirement`: pose, depth, edge/canny, motion track, camera path, masks, keyframes, or none.
+- `preserve`: subject, wardrobe, background, composition, motion, timing, camera, audio, or selected regions.
+- `deliverable`: final prompt only, bilingual explanation, Prompt Relay fields, workflow recommendation, parameter hints, or failure repair.
+
+When important values are missing, infer conservative defaults and state them briefly. Ask questions only when the missing information makes the requested result materially impossible; otherwise produce a usable draft immediately.
+
+## Route to the right workflow family
+
+Use `references/model-and-workflow-map.md` for the full matrix. Apply these defaults:
+
+| User intent | Preferred route |
+|---|---|
+| One coherent shot from text | T2V single prompt |
+| Animate a supplied still | I2V motion prompt |
+| Drive visuals from an audio clip | A2V/custom-audio workflow |
+| Several timed actions in one clip | Prompt Relay |
+| Exact opening and ending composition | First/Last Frame |
+| Preserve a midpoint composition too | First/Middle/Last Frame guider |
+| Two or more speaking characters | Prompt Relay + speaker blocking; add TTS/reference audio or dual-character workflow when exact voice/lips matter |
+| Translate/rephrase an existing performance | Lipdub workflow |
+| Add speech to an existing silent person | Just-Talk / masked V2V talking workflow |
+| Preserve a specific person across shots | Reference image + face-ID/ID-LoRA; trained identity LoRA for repeated production |
+| Transfer body motion or camera motion | Pose/motion/camera control workflow |
+| Change only part of a video | V2V inpaint/retake with mask |
+| Add/remove/replace/restyle content | EditAnything/V2V editing route |
+| Reframe landscape ↔ portrait | Outpaint/reframing IC-LoRA |
+| Continue beyond one generation | Forward/backward extension; render in controlled shot units |
+| Seamless repetition | Loop workflow with end-state matching |
+| Music-driven cuts or performance | Music-video workflow + beat-based Prompt Relay |
+| Improve resolution/details | Multiscale, spatial/temporal upscaler, or detailer route; do not encode “4K” as a substitute for workflow settings |
+
+## Build the prompt with the SHOT-AUDIO sequence
+
+Construct a single-shot prompt in this order. It should normally read as one flowing paragraph:
+
+1. **Shot and medium** — cinematic/live action/animation, framing, lens feel, viewpoint.
+2. **Hero subject** — only identity-defining visible attributes necessary for this shot.
+3. **Opening state** — where the subject is, posture, gaze, object relationships.
+4. **Ordered action** — “At first… then… as… finally…”; use physical cues rather than abstract emotion labels.
+5. **Camera execution** — one primary move and, at most, one compatible secondary adjustment.
+6. **Environment reaction** — cloth, hair, particles, reflections, props, background movement.
+7. **Lighting and visual finish** — motivated light, contrast, palette, texture, medium/style.
+8. **Audio timeline** — dialogue in quotes, voice quality, pauses, Foley, ambience, music, and silence.
+9. **Ending state** — final pose/composition when continuity or looping matters.
+
+### Physicalize emotions
+
+Replace abstract directions with visible behavior:
+
+- Weak: “She is anxious.”
+- Better: “Her shoulders tighten, she draws a shallow breath, glances toward the door, and grips the paper until its edge bends.”
+
+- Weak: “He speaks confidently.”
+- Better: “He holds steady eye contact, keeps his chin level, and delivers the line without hesitation.”
+
+### Keep temporal density realistic
+
+These are production heuristics, not hard model limits:
+
+- 3–5 seconds: one principal action, optionally one reaction.
+- 6–10 seconds: two to four clear beats; use Prompt Relay if timing matters.
+- 10–20 seconds: a controlled continuous shot with several simple beats, or Prompt Relay/keyframes. Avoid writing a full screenplay into one generation.
+- Longer narratives: divide into shots and maintain continuity through references, LoRAs, keyframes, and extension workflows.
+
+## Mode-specific writing
+
+### T2V
+
+Describe subject, setting, chronological action, camera, lighting, and audio. Start with the most visually consequential information. Avoid mutually exclusive art directions.
+
+### I2V
+
+Assume the source image supplies appearance and composition. Write:
+
+`[initial motion] → [main action] → [camera response] → [secondary environmental motion] → [audio] → [ending state]`
+
+Do not invent a different outfit, face, location, or composition unless the user explicitly requests transformation.
+
+### A2V/custom audio
+
+Treat audio timing as fixed. Identify who performs, the style of performance, mouth/body behavior, camera response, and environmental reaction. Do not include a second contradictory dialogue script when reference audio already carries speech.
+
+### V2V/edit/retake
+
+Use a preservation contract:
+
+`Preserve: ... Change only: ... Region/time: ... Motion/timing: preserve or reinterpret ... Camera: preserve or change ... Audio: preserve/replace/generate ...`
+
+Then write the positive transformation prompt. For masks, describe the desired result inside the mask and how boundaries should blend.
+
+### Prompt Relay
+
+Read `references/prompt-relay.md`. Select **one syntax only**:
+
+- Inline: `segment | segment | segment`, optionally weighted.
+- Block: `Scene 1:` headers, optionally range-weighted.
+
+The first segment/global anchor establishes persistent static facts. Later segments describe only changes. Provide timing weights, speaker ownership, and transition sharpness recommendations when the workflow exposes them.
+
+### Dialogue and multi-speaker scenes
+
+Read `references/dialogue-audio-lipsync.md`. For each speaking beat include:
+
+`speaker identity/location → listener behavior → physical cue → short quoted line → voice/language → pause/reaction → camera implication`
+
+For two-person scenes, keep one active speaker per beat unless intentional overlap is essential. Name or spatially identify the speaker every time. Exact voices and lip sync require appropriate audio/TTS/lipdub/dual-character workflow support, not prompt wording alone.
+
+### FLF/FML, loops, and continuation
+
+Describe the **transition logic**, not just both endpoint images. State what changes continuously, what remains fixed, and how the final motion eases into the target frame. For loops, make the final pose, camera position, lighting, and moving elements reconnect to the opening state.
+
+### Control workflows
+
+When pose/depth/edge/motion/camera conditioning is supplied, let the control signal own geometry and motion. The prompt should own appearance, identity, environment, material, lighting, performance nuance, and audio. Do not fight the control signal with contradictory spatial instructions.
+
+## Output contracts
+
+Choose the smallest format that satisfies the user.
+
+### Contract A — final prompt only
+
+```text
+[English model-ready prompt]
+```
+
+### Contract B — production prompt package
+
+```text
+Mode: ...
+Recommended workflow: ...
+Assumptions: ...
+
+Final English Prompt:
+...
+
+Optional Negative Prompt:
+...
+
+Key controls:
+- Duration/aspect/fps: ...
+- Reference/control inputs: ...
+- Audio route: ...
+```
+
+### Contract C — Prompt Relay package
+
+```text
+Mode: Prompt Relay + [T2V/I2V/A2V]
+Global anchor: ...
+
+Smart Prompt:
+Scene 1:
+...
+Scene 2-3:
+...
+
+Timing rationale: ...
+Recommended transition settings: ...
+Audio/speaker routing: ...
+```
+
+### Contract D — diagnostic repair
+
+```text
+Primary failure: ...
+Likely cause: ...
+Prompt-level fix: ...
+Workflow-level fix: ...
+Rewritten prompt: ...
+```
+
+When the user asks for “only the prompt,” omit all commentary.
+
+## Negative prompts
+
+Negative prompting is workflow-dependent. Keep it short and defect-oriented. Do not use a giant generic blacklist that competes with the positive prompt. Typical optional terms:
+
+`on-screen text, subtitles, watermarks, duplicated subjects, extra limbs, fused hands, identity drift, abrupt camera jumps, flicker, temporal warping, muddy audio, overlapping unintelligible speech`
+
+Remove any item that conflicts with an intended effect.
+
+## Quality gate before returning
+
+Check all of the following:
+
+- One clear generation mode and workflow family.
+- Prompt length matches duration and complexity.
+- Actions are chronological and physically observable.
+- Speaker ownership is unambiguous.
+- Camera instructions are compatible.
+- Audio does not contradict supplied audio.
+- I2V prompt does not redundantly redescribe the entire image.
+- Persistent character/style facts are not needlessly repeated in every Prompt Relay segment.
+- Control signals and text instructions do not fight each other.
+- No unsupported promise of perfect text/logo, exact lip sync, or indefinite consistency.
+- Ending state is stated when FLF/FML, continuation, or looping requires it.
+- Experimental/community techniques are labeled as such.
+
+Run `scripts/ltx_prompt_lint.py` when a prompt is long, segmented, or being delivered as part of an automated workflow.
+
+## Progressive reference loading
+
+Load only the reference needed for the task:
+
+- `references/model-and-workflow-map.md` — capability tiers, routing, checkpoints, control/edit families.
+- `references/prompt-construction-playbook.md` — detailed grammar, camera/audio vocabulary, temporal design, mode templates.
+- `references/prompt-relay.md` — syntax, timing, global/local logic, multi-beat and multi-scene construction.
+- `references/dialogue-audio-lipsync.md` — single/multi-speaker dialogue, TTS, reference audio, lipdub, Foley, music.
+- `references/scenario-library.md` — reusable recipes for ads, films, portraits, action, music, social, editing, controls, and stylized work.
+- `references/troubleshooting-and-qa.md` — symptom-to-cause-to-fix matrix.
+- `references/source-map.md` — source provenance, verification date, official/community distinctions.
+
+# Embedded Reference Library
+
+
+---
+
+## Reference Chapter: Model And Workflow Map
+
+# LTX-2.3 Model and Workflow Map
+
+Last verified: 2026-07-23.
+
+This document separates **native/official capabilities** from **community workflow compositions**. A workflow's existence does not guarantee perfect results for every checkpoint, quantization, node version, resolution, or hardware profile.
+
+## 1. Model identity
+
+LTX-2.3 is a joint audio-video diffusion-transformer family designed to generate synchronized visual and audio content. The official model card lists a full 22B development checkpoint, distilled variants, a distilled LoRA, and spatial/temporal upscalers. The development model is the flexible route for high-control workflows and training; distilled models prioritize low-step iteration.
+
+### Practical checkpoint routing
+
+| Goal | Typical checkpoint route | Prompt implication |
+|---|---|---|
+| Maximum control, LoRA stacking, advanced workflows | 22B dev or supported dev derivative | Can tolerate richer conditioning; still avoid overloaded prompts |
+| Fast previews and iteration | 22B distilled / distilled 1.1 | Keep prompt decisive; use workflow controls rather than verbal overconstraint |
+| Fast draft then high-quality finish | Distilled preview → dev/multiscale/detail/upscale pass | Preserve the same core prompt and references across passes |
+| Low-memory local execution | Quantized/community packaging | Test prompt adherence and audio separately; quantization/workflow can change behavior |
+
+Do not encode sampler, CFG, steps, resolution, or model filename inside prose unless the user explicitly wants a reproducibility record. Those belong in workflow metadata.
+
+## 2. Capability tiers
+
+### Tier A — official/native model family
+
+- Text-to-video.
+- Image-to-video.
+- Joint generation of video and synchronized audio.
+- Audio-to-video / custom-audio conditioning in supported workflows.
+- Multiple keyframe conditioning.
+- Forward and backward video extension.
+- Video-to-video transformations.
+- LoRA and IC-LoRA customization.
+- Pose, depth, edge/canny, motion/structure and camera-oriented control through supported models/workflows.
+- Spatial and temporal upscaling/multiscale rendering.
+- Lipdub and audio-oriented workflows in the official ecosystem.
+- Native portrait output and generative reframing/outpainting in the 2.3 ecosystem.
+
+### Tier B — official ecosystem compositions
+
+These combine the model with official or maintained nodes/models:
+
+- Single-stage and two-stage T2V/I2V.
+- Union control using pose/depth/edge signals.
+- Motion tracking/reference control.
+- HDR conditioning.
+- Pixel/detail upscaling.
+- Text-to-audio or audio-conditioned video.
+- Retake, colorization, deblur, decompression, day-to-night, in/outpainting and specialized effects where an appropriate LoRA/IC-LoRA is available.
+
+### Tier C — community/experimental workflows
+
+Treat these as powerful but version-sensitive:
+
+- Prompt Relay and timeline editors.
+- Multi-sequence movie-maker graphs.
+- Prompt Relay with custom audio.
+- Dual-character or multi-character lip-sync packs.
+- First-middle-last-frame guiders.
+- Multi-reference character sheets and multi-subject reference stacks.
+- Long-video loop and repeated extension graphs.
+- Music-video creators with segment export/merge/interpolation.
+- Just-Talk masked speech injection.
+- Cross-view viewpoint change.
+- EditAnything add/remove/replace/restyle pipelines.
+- Community Foley, style transition, audio-reactive, water, ingredient, shave, cross-eye and other effect LoRAs.
+
+## 3. Workflow router
+
+### Text-to-video
+
+Use when no reference visual is required. Best for establishing shots, concepts, environments, stylized animation, product concepts, and short narrative shots. Prompt must carry appearance, blocking, camera, lighting and sound.
+
+### Image-to-video
+
+Use when the user has a good first frame or character/product reference. The image already encodes identity, wardrobe, composition and palette. Prompt only the motion trajectory, camera behavior, environment reaction, sound and desired ending.
+
+### Audio-to-video / custom audio
+
+Use when dialogue, song, speech rhythm, or sound design should dictate the timing. Audio is the temporal anchor. Prompt the visual interpretation and performance. For exact speech content, do not ask the model to invent a competing line.
+
+### Video-to-video
+
+Use when source timing, motion, performance, or camera should be retained. Decide whether the task is:
+
+- global restyle,
+- local inpaint,
+- object/person add/remove/replace,
+- viewpoint change,
+- outpaint/reframe,
+- audio insertion/Foley,
+- lipdub,
+- retake,
+- extension,
+- shot-to-shot transition,
+- restoration/detail/HDR.
+
+### Prompt Relay
+
+Use when the clip has distinguishable time blocks: sequential actions, alternating dialogue, product reveal, transformation stages, music beats, or camera phases. Prompt Relay is not a substitute for scene editing when the user actually wants hard cuts between unrelated locations.
+
+### First/Last Frame and First/Middle/Last Frame
+
+Use when endpoint composition matters more than free generation. Good for morphs, match transitions, entrances/exits, product assembly, pose transitions, and constrained camera moves. The prompt explains the continuous bridge between anchors.
+
+### Long video and extension
+
+Generate in shot units. Preserve identity/style through reference frames, LoRA/ID-LoRA, keyframes and a continuity ledger. Repeated extension accumulates drift; write prompts that describe only the next shot segment and preserve the last stable frame.
+
+### Loop
+
+The final state must reconnect to the first: same camera position, subject pose family, lighting phase, moving-object phase, and audio cadence. Avoid irreversible actions unless the loop visually hides the reset.
+
+### Multi-reference identity
+
+Choose by production need:
+
+- One-off: strong first-frame image.
+- Several angles: character sheet/multiple references.
+- Repeated series: ID-LoRA or trained character LoRA.
+- Multiple subjects: separate references and unambiguous spatial labels; reduce simultaneous complex actions.
+
+### Control reference
+
+- Pose: body skeleton, dance, action blocking.
+- Depth: spatial layout, camera-space structure.
+- Edge/canny: silhouettes, object boundaries, architectural form.
+- Motion tracking: trajectory and movement transfer.
+- Camera-control LoRA/path: dolly, jib, static, or referenced camera motion.
+
+When control is active, prompt appearance and performance; do not re-specify incompatible geometry.
+
+## 4. Prompt vs workflow responsibility
+
+| Requirement | Prompt owns | Workflow/control owns |
+|---|---|---|
+| Character behavior | action, gaze, expression, rhythm | identity reference/LoRA for exact person |
+| Camera | semantic move and composition intent | exact path/pose/depth/camera LoRA when precision matters |
+| Speech | line, tone, language, pause | TTS/reference audio/lipdub for exact timing and voice |
+| Multiple speakers | blocking and turn-taking | segmented audio, masks, dual/multi-character workflow for exact lips |
+| Style | medium, lighting, texture, palette | style LoRA for repeatability |
+| Start/end | transition description | keyframes/FLF/FML for exact endpoints |
+| Edit region | desired appearance | mask/retake/inpaint for spatial restriction |
+| Long continuity | next-shot continuity text | references, LoRA, saved frames, extension graph |
+| Resolution | detail intent | latent/spatial/temporal upscalers and render settings |
+| Text/logo | placement intent only | compositing/post-production for exact typography |
+
+## 5. Production recommendations
+
+1. Draft at a lower-cost setting, but validate motion and speaker ownership before upscaling.
+2. Lock identity references, seed strategy, model/checkpoint, LoRA stack and key prompt phrases before batch comparisons.
+3. Change one variable at a time when diagnosing: prompt, seed, control strength, denoise, LoRA strength, timing, or sampler—not all simultaneously.
+4. For multi-character scenes, use spatial names such as “the woman on camera left” and “the man on camera right,” then keep those labels stable.
+5. For product ads and UI/text shots, generate the visual plate and composite exact labels afterward.
+6. Treat community workflow names as routing hints; inspect the actual graph and node versions before execution.
+
+
+---
+
+## Reference Chapter: Prompt Construction Playbook
+
+# Prompt Construction Playbook
+
+## 1. The fundamental grammar
+
+An effective LTX-2.3 prompt behaves like a director describing one shot to a cinematographer, actors and sound team at once:
+
+`[medium + framing] + [subject/opening state] + [chronological action] + [camera] + [environmental response] + [lighting/style] + [dialogue/Foley/ambience/music] + [ending state]`
+
+Write in a coherent paragraph unless a Prompt Relay or structured production package is requested.
+
+## 2. Information priority
+
+Put information in this order when token budget is limited:
+
+1. Who/what is central.
+2. What physically happens.
+3. Where the camera is and how it moves.
+4. What must remain consistent.
+5. What sound occurs and when.
+6. Lighting and visual treatment.
+7. Secondary decoration.
+
+Delete decorative adjectives before deleting action or camera logic.
+
+## 3. Action language
+
+Use verbs with visible consequences:
+
+- turns, steps, reaches, grips, releases, leans, flinches, pauses, exhales, nods, pivots, stumbles, catches, opens, folds, pours, splashes, tears, snaps, spins.
+- for materials: billows, ripples, wrinkles, fractures, scatters, condenses, glints, smears, drips, curls, disperses.
+
+Link events chronologically:
+
+- “At first…”
+- “As she…”
+- “Then…”
+- “A beat later…”
+- “While the camera…”
+- “Finally…”
+
+Avoid simultaneous overload such as five characters performing unrelated actions while the camera executes three movements.
+
+## 4. Camera vocabulary
+
+### Framing
+
+- extreme close-up, close-up, medium close-up, medium shot, medium-wide, full body, wide establishing shot, aerial/overhead, low angle, high angle, over-the-shoulder, POV, profile, two-shot.
+
+### Primary moves
+
+- static locked-off shot.
+- slow push-in / dolly in.
+- pull-back / dolly out.
+- pan left/right.
+- tilt up/down.
+- lateral tracking shot.
+- orbit/circle around the subject.
+- crane/jib rise or descent.
+- handheld follow.
+- gimbal follow.
+- rack focus between subjects.
+- whip pan for transition.
+
+### Compatible combinations
+
+- slow lateral track + gentle push-in.
+- handheld follow + slight reframing.
+- orbit + gradual rise.
+- static shot + rack focus.
+
+### Common conflicts
+
+- “static locked camera” and “rapid handheld orbit.”
+- “single continuous take” and “rapid montage cuts.”
+- “extreme close-up” while demanding full-body choreography without a reframing beat.
+- several unrelated lens types in one short shot.
+
+State the camera in physical terms. “Dynamic camera” is too vague.
+
+## 5. Lighting and finish
+
+Describe motivated sources and behavior:
+
+- warm window light from camera left.
+- hard noon sunlight with short shadows.
+- overcast diffuse daylight.
+- flickering fluorescent ceiling lights.
+- neon reflections moving across wet pavement.
+- candlelight that trembles across the face.
+- cool moonlight with a warm practical lamp in the background.
+
+Then add finish:
+
+- realistic live action, natural skin texture, restrained film grain.
+- polished commercial photography, crisp specular highlights.
+- tactile stop-motion felt miniature.
+- cel-shaded anime, clean linework, controlled motion smear.
+- monochrome archival documentary.
+
+Avoid contradictory lighting stacks unless a deliberate transition is written chronologically.
+
+## 6. Sound grammar
+
+Audio should be spatially and temporally grounded:
+
+`[source] + [character] + [timing] + [space]`
+
+Examples:
+
+- “Her heel clicks sharply on the marble floor, followed by a soft room echo.”
+- “A distant train horn drifts through the open window beneath low city ambience.”
+- “He says in Mandarin, quietly and with a dry northern accent, ‘别回头。’ A two-second silence follows.”
+- “The music starts as a muted electronic pulse, then swells when the package opens.”
+
+Audio layers:
+
+1. Dialogue/voice.
+2. Foley tied to visible actions.
+3. Environmental ambience.
+4. Music.
+5. Intentional silence.
+
+Do not fill every second with all layers. Silence is useful for emphasis and speaker separation.
+
+## 7. Dialogue construction
+
+Keep lines short enough for the intended duration. Surround exact speech with quotation marks. State:
+
+- speaker,
+- language/accent,
+- vocal age/texture,
+- volume/emotional delivery,
+- physical behavior during the line,
+- listener reaction,
+- pause.
+
+Example:
+
+`The woman on camera left leans closer but keeps her voice low. In Mandarin with a calm Suzhou accent she says, “钥匙不在我这里。” The man on camera right remains silent, watches her hands, and swallows before answering.`
+
+Do not rely on pronouns alone after the first speaker switch.
+
+## 8. Duration-aware design
+
+### 3–5 seconds
+
+- One main action.
+- One camera move.
+- One short sound cue or line.
+- Clear final pose.
+
+Template:
+
+`A [shot] of [subject]. [Subject] begins [action], then [small consequence]. The camera [single move]. [Lighting/style]. [Foley/short line]. The shot ends with [state].`
+
+### 6–10 seconds
+
+- Two to four beats.
+- One continuous camera plan or a small compatible evolution.
+- One or two short lines.
+- Prompt Relay when precise beat ownership matters.
+
+### 10–20 seconds
+
+- Keep the scene continuous and actions simple.
+- Use keyframes or relay segments for planned timing.
+- Prefer a small number of characters.
+- Separate exact dialogue production into audio/TTS when necessary.
+
+## 9. T2V templates
+
+### Cinematic narrative
+
+`A [framing] live-action shot in [location/time]. [Character description] is [opening posture]. At first [beat 1]. Then [beat 2 with physical reaction]. The camera [move] while [environmental motion]. [Lighting and palette]. [Dialogue/Foley/ambience]. The shot ends [final composition].`
+
+### Product commercial
+
+`A polished commercial [framing] of [product] on [surface/background]. [Opening light behavior]. The product [mechanical/visual action], revealing [feature]. The camera [precise move] as [material response]. Clean [palette/material detail]. [Foley and music cue]. End on a stable hero composition with empty negative space for post-produced copy.`
+
+### Stylized animation
+
+`A [animation medium] [shot] of [subject]. [Material/style-specific action]. The camera [move]. [Texture behavior]. [Audio style]. Avoid requesting photorealism if the desired medium is graphic or handcrafted.`
+
+## 10. I2V templates
+
+### Portrait animation
+
+`She first blinks naturally and takes a quiet breath. A light breeze lifts several strands of hair and moves the fabric at her shoulder. She turns her gaze from the window toward the camera, then gives a restrained half-smile. The camera performs a very slow push-in without changing the original composition. Soft room ambience and faint fabric rustle accompany the movement. Her face, wardrobe, background and lighting remain consistent with the reference image.`
+
+### Product image animation
+
+`A narrow highlight travels across the product surface as the camera slowly orbits ten degrees clockwise. The lid opens with controlled mechanical precision and a soft magnetic click; a subtle vapor plume rises and disperses. Preserve the product geometry, branding plate position and background arrangement from the source image. End on a clean frontal hero angle.`
+
+### Action from still
+
+`He shifts his weight forward, plants his left foot, then accelerates into a run toward camera right. His coat trails behind with believable inertia while dust lifts from each footfall. The camera changes from a stable medium-wide composition into a low tracking follow. Preserve his face, clothing and environment from the first frame.`
+
+## 11. A2V templates
+
+### Speech performance
+
+`Use the supplied speech as the exact temporal guide. The seated speaker maintains the identity and wardrobe of the reference image, articulates naturally to the audio, and supports emphasis with restrained eyebrow movement, small head nods and occasional hand gestures. The listener remains silent and reacts only during pauses. A locked medium two-shot with subtle rack focus; quiet studio ambience, no additional dialogue.`
+
+### Music performance
+
+`The supplied music drives all timing. On each strong beat the performer completes one readable gesture rather than constant random motion. The camera begins with a slow push-in, transitions into a controlled side track during the chorus, and settles into a stable close-up for the final vocal phrase. Stage lights pulse in the song's palette without obscuring the face.`
+
+## 12. V2V preservation templates
+
+### Global restyle
+
+`Preserve the source video's timing, body motion, camera path, shot boundaries and subject identity. Transform only the visual medium into [style], with [materials/lighting/palette]. Keep silhouettes and object placement stable. Preserve or replace audio as specified.`
+
+### Local replacement
+
+`Preserve the entire source clip outside the mask. Inside the mask, replace [object] with [new object] that follows the same motion, perspective, lighting, reflections and occlusion. Blend boundaries cleanly through every frame; no change to camera, background, subject face or audio.`
+
+### Retake performance
+
+`Preserve composition, wardrobe, set, lighting and camera timing. Change only the actor's performance from [old] to [new physical behavior]. The altered motion begins at [time/beat] and resolves before [time/beat]. Preserve the existing dialogue/audio unless a new track is supplied.`
+
+## 13. Control-conditioned templates
+
+### Pose transfer
+
+`Follow the supplied pose/motion sequence for body geometry and timing. Render [character identity/wardrobe] in [environment/style]. Add natural secondary motion in hair and clothing without changing the controlled skeleton. Camera [compatible movement]. [Audio].`
+
+### Depth/edge control
+
+`Use the supplied depth/edge structure as the fixed spatial layout. Render the scene as [style/material/lighting], preserving major boundaries and perspective. Add only subtle local motion that does not break the controlled geometry.`
+
+### Camera control
+
+`Follow the provided camera trajectory exactly. The subject performs [simple action] while maintaining identity and position relative to the path. Prompt lighting, performance and environmental parallax; do not issue a conflicting camera command.`
+
+## 14. Bilingual handling
+
+When the user briefs in Chinese:
+
+1. Parse intent in Chinese.
+2. Generate the final production prompt in natural English.
+3. Keep spoken Chinese lines in Chinese quotation marks or standard quotes.
+4. Add “speaks in Mandarin/Cantonese/etc.” in English around the line.
+5. Offer a Chinese back-translation only when requested or when semantic verification is important.
+
+## 15. Prompt compression
+
+When a prompt is too long, remove in this order:
+
+1. Redundant quality adjectives.
+2. Repeated identity details already supplied by an image/LoRA.
+3. Minor props with no action role.
+4. Duplicate style terms.
+5. Secondary audio layers.
+
+Never remove the chronological action chain, speaker labels, primary camera move, preservation constraints, or key ending state first.
+
+
+---
+
+## Reference Chapter: Prompt Relay
+
+# Prompt Relay for LTX-2.3
+
+Prompt Relay is an inference-time conditioning technique implemented through community ComfyUI nodes. It assigns different text segments to different temporal regions. Treat it as **workflow-dependent and evolving**, not as a native text syntax universally understood by every LTX interface.
+
+## 1. When to use it
+
+Use Prompt Relay for:
+
+- multi-step action in one continuous shot,
+- alternating dialogue,
+- product reveal with timed phases,
+- transformation stages,
+- music-video beats,
+- planned camera phases,
+- a short narrative with several events,
+- custom audio where visual actions must align to time blocks.
+
+Do not use it to force many unrelated locations and hard cuts into one shot. Generate separate shots when the narrative is truly multi-scene.
+
+## 2. Supported syntax families
+
+Pick one syntax per prompt. Do not mix them.
+
+### Inline pipe-separated syntax
+
+Equal timing:
+
+```text
+Static opening description | First change | Second change | Final change
+```
+
+Weighted timing:
+
+```text
+Static opening description [0-20] | First action [20-55] | Dialogue reaction [55-85] | Final hold [85-100]
+```
+
+The ranges are relative spans, not literal frame numbers. A plain weight such as `[30]` can also be used in implementations that support it.
+
+### Block/header syntax
+
+Equal timing:
+
+```text
+Scene 1:
+Static opening description
+Scene 2:
+First change
+Scene 3:
+Second change
+```
+
+Proportional timing:
+
+```text
+Scene 0-20:
+Static opening description
+Scene 20-55:
+First action
+Scene 55-85:
+Dialogue reaction
+Scene 85-100:
+Final hold
+```
+
+Header words can usually be `Scene`, `Part`, `Shot`, `Beat`, `Segment`, or similar; the parser relies on the number/range and colon.
+
+## 3. Global anchor vs local changes
+
+The most important rule:
+
+- Segment 1/global prompt contains the **persistent, static state**: subject identity, wardrobe, location, composition, lighting baseline, visual style.
+- Later segments contain **only what changes**: action, gaze, speaker turn, camera phase, prop movement, light transition, audio event.
+
+This reduces semantic re-introduction and identity drift. Do not rewrite the entire scene in every segment.
+
+### Global anchor example
+
+```text
+A cinematic medium two-shot in a quiet late-night diner. The same woman in a cream trench coat sits on camera left, and the same man in a dark green jacket sits on camera right. A rain-streaked window glows behind them; warm tungsten light, realistic live action, restrained film grain, stable spatial positions.
+```
+
+### Local beats
+
+```text
+Beat 1:
+Both remain silent; the woman turns a coffee cup slowly while the man watches her hands. The camera is locked.
+
+Beat 2:
+The woman on camera left raises her eyes and says in Mandarin, “你跟踪我多久了？” Her voice is controlled and quiet; the man remains silent.
+
+Beat 3:
+The man on camera right leans back, exhales, and replies in Mandarin, “从你上车开始。” A subtle rack focus moves from her to him.
+
+Beat 4:
+Neither speaks. A truck passes outside, throwing a band of white light across both faces; the woman stops turning the cup.
+```
+
+## 4. Beat design
+
+Each beat should have one dominant purpose:
+
+- one speaker,
+- one action,
+- one emotional/physical cue,
+- one camera implication,
+- one key sound event.
+
+This is a heuristic for clarity, not a parser requirement. A segment can contain more than one item, but crowded segments reduce temporal ownership.
+
+## 5. Timing allocation
+
+Allocate time by what must be legible, not by sentence length alone:
+
+- Static establishing anchor: 10–20%.
+- Simple movement: 15–25%.
+- Short spoken line: estimate from actual speech duration; give room for articulation and a reaction.
+- Fast impact/action: 10–20%, but provide anticipation and recovery in neighboring beats.
+- Final hero hold: 10–20%.
+
+When exact audio exists, derive segment ranges from the waveform/transcript timestamps rather than guessing.
+
+### Example for a 10-second dialogue
+
+```text
+0.0–1.5 s: establish both characters and silence
+1.5–4.3 s: speaker A line
+4.3–5.2 s: listener reaction/pause
+5.2–8.2 s: speaker B line
+8.2–10.0 s: shared reaction/final hold
+```
+
+Translate those durations into relative weights or actual timeline fields supported by the node.
+
+## 6. Transition controls
+
+Community Prompt Relay nodes may expose variants of:
+
+- `epsilon`: boundary softness/sharpness.
+- video window/strength or conditioning scale.
+- audio epsilon/strength/window.
+- explicit segment lengths in frames or seconds.
+- token-normalized distribution.
+
+General practice:
+
+- Lower epsilon/sharper boundaries: clearer ownership, higher risk of abrupt semantic change.
+- Higher epsilon/softer boundaries: smoother transition, higher risk of bleed between actions/speakers.
+- Start near the node default. Change only after diagnosing boundary bleed or abrupt cuts.
+- Do not invent a universal numeric optimum; node versions and workflows differ.
+
+## 7. Prompt Relay for multi-person dialogue
+
+### Rules
+
+1. Lock character positions in the global anchor.
+2. Use unique labels repeatedly: “woman on camera left,” “man on camera right.”
+3. One active speaker per segment.
+4. Explicitly state that non-speakers keep their mouths closed and react silently when necessary.
+5. Keep each line short enough for the segment.
+6. Add a pause/reaction segment between lines when lip ownership bleeds.
+7. For exact voices/lips, use separate TTS/reference audio and an appropriate multi-character/lipdub workflow.
+
+### Two-person inline example
+
+```text
+A locked medium two-shot of the same two detectives in a dim evidence room, woman on camera left and man on camera right, cool overhead light, realistic live action, stable identities and positions [0-15] | The woman on camera left leans over the table and says in Mandarin, “照片不是昨晚拍的。” The man remains silent with his mouth closed [15-42] | The man studies the photograph, lifts one eyebrow, and remains silent while the woman waits [42-55] | The man on camera right answers in Mandarin, “那就有人改了时间。” The woman keeps her mouth closed and watches him [55-83] | Both fall silent as the fluorescent lamp flickers; the camera slowly pushes toward the photograph [83-100]
+```
+
+### Three-person strategy
+
+Do not ask all three to speak in rapid succession without pauses. Use:
+
+- a wider establishing anchor,
+- one speaker per beat,
+- listener reaction beats,
+- spatial labels (left/center/right),
+- longer total duration or separate shots,
+- external audio tracks for exact speaker identity.
+
+## 8. Product reveal example
+
+```text
+Scene 0-15:
+A polished macro commercial shot of a matte black wireless earbud case centered on wet obsidian, cool cyan rim light, dark background, stable product geometry.
+Scene 15-40:
+A narrow highlight sweeps across the lid while the camera slides slowly from left to right; droplets tremble but remain attached.
+Scene 40-68:
+The lid opens with precise mechanical motion and a soft magnetic click; both earbuds rise slightly into view as a low electronic pulse begins.
+Scene 68-88:
+The camera performs a controlled ten-degree orbit; cyan light shifts to a warm white hero light, revealing the surface texture.
+Scene 88-100:
+The product settles into a stable frontal hero composition; music resolves, leaving clean negative space for post-produced text.
+```
+
+## 9. Transformation example
+
+```text
+Scene 0-20:
+The reference woman stands motionless in the same studio pose and clothing; neutral white background, locked full-body camera.
+Scene 20-45:
+Fine silver threads grow from the hem of her dress and travel upward across the fabric; her body and face remain unchanged.
+Scene 45-72:
+The threads weave into reflective metallic panels while she slowly turns one quarter toward camera right; the camera begins a gentle push-in.
+Scene 72-90:
+The final futuristic dress locks into place, catching sharp highlights; loose particles collapse into the seams rather than floating away.
+Scene 90-100:
+She faces the camera and holds a stable fashion pose; the camera stops and the studio falls silent.
+```
+
+## 10. Music-video example
+
+Build segments from beat markers or lyric timestamps:
+
+```text
+Beat 0-12:
+Establish performer, stage, costume and palette; minimal movement before the downbeat.
+Beat 12-35:
+First phrase: one clear body gesture repeated with rhythm; slow push-in.
+Beat 35-60:
+Chorus: stronger dance phrase; lateral track; lighting pulses on major beats.
+Beat 60-82:
+Bridge: performer becomes still while background motion continues; close-up.
+Beat 82-100:
+Final hit: decisive pose and lighting change; hold for edit.
+```
+
+If the workflow accepts custom audio, map the real timestamps rather than using arbitrary percentages.
+
+## 11. First-frame treatment in I2V Relay
+
+The first segment should describe only the static visible state of the provided image. Do not add motion or infer hidden details. Later segments describe only changes. This is especially important when a VLM drafts the segments from the input image.
+
+## 12. Failure modes
+
+| Symptom | Likely cause | Repair |
+|---|---|---|
+| Actions happen in the wrong order | Segments overlap semantically; each repeats multiple actions | One dominant change per segment; sharpen boundaries slightly |
+| Identity drifts at every beat | Full subject re-described differently | Move stable identity/style to global anchor; use reference/ID-LoRA |
+| Both characters talk | Pronouns and speaker ownership ambiguous | Spatial labels; one speaker per segment; silent listener instructions; separate audio |
+| Abrupt visual jump | Local prompt introduces a new location/style | Keep scene continuity or generate a separate shot; soften transition |
+| Prompt bleed | Boundary too soft or local prompts share verbs | Reduce semantic overlap; adjust epsilon/window conservatively |
+| No action in early clip | First segment allocated too much time | Shorten static anchor after validating identity |
+| Final frame never settles | No final hold segment | Add a 10–20% stable ending beat |
+| Audio and video disagree | Generated dialogue conflicts with custom audio | Remove invented dialogue; anchor to supplied timestamps |
+
+## 13. Output package for Codex
+
+When creating relay prompts, return:
+
+1. Mode and assumed duration.
+2. Global anchor.
+3. Smart prompt in the exact selected syntax.
+4. Segment timing table.
+5. Speaker/audio routing.
+6. Recommended node-level adjustments only if the user requested them.
+7. A warning when the workflow is experimental or version-sensitive.
+
+
+---
+
+## Reference Chapter: Dialogue Audio Lipsync
+
+# Dialogue, Audio, Lip Sync and Multi-Speaker Playbook
+
+## 1. Separate four different tasks
+
+They are often confused:
+
+1. **Native generated dialogue** — prompt contains the spoken line; model generates video and audio together.
+2. **Audio-to-video/custom audio** — an existing voice/music track controls timing; prompt supplies visuals.
+3. **Lipdub** — replace or translate speech in an existing performance while preserving identity and motion.
+4. **Talking-avatar/Just-Talk** — make a still or silent person speak, usually with TTS/reference audio and a face/mouth-targeted workflow.
+
+Choose the route before writing the prompt.
+
+## 2. Single-speaker native dialogue
+
+Use this sequence:
+
+`framing → speaker identity → pre-speech physical cue → quoted line → language/accent/voice → mouth/body behavior → post-line pause → ambience`
+
+Example:
+
+```text
+A realistic medium close-up of a middle-aged shopkeeper behind a wooden counter at night. He wipes his hands on a cloth, looks directly toward the unseen customer, and lowers his voice. In Mandarin with a warm Sichuan accent he says, “今天不卖了，明早再来。” His delivery is tired but firm, with natural articulation and one small nod at the end. A refrigerator hum and distant rain fill the quiet shop; no music.
+```
+
+Guidelines:
+
+- Keep the line short.
+- Quote exact speech.
+- Specify language/accent only as needed.
+- Use performance cues that fit the duration.
+- Do not add several simultaneous Foley events over a quiet line.
+
+## 3. Two-person dialogue
+
+The model must know who speaks, who listens and where each person is.
+
+### Global blocking
+
+```text
+The same woman remains on camera left; the same man remains on camera right. They sit across a narrow table in a stable medium two-shot.
+```
+
+### Turn template
+
+```text
+[Speaker label] [physical cue] and says in [language/voice], “[short line].” [Listener label] remains silent with mouth closed and [reaction]. [Camera/focus change].
+```
+
+### Recommended sequence
+
+1. Establish both characters.
+2. Speaker A line.
+3. Silent reaction/pause.
+4. Speaker B line.
+5. Shared final reaction.
+
+Use Prompt Relay for timing. For exact voice and lip isolation, render or supply separate speaker audio and use a dual/multi-character workflow or separate shots.
+
+## 4. Three or more speakers
+
+Prompt-only reliability declines as simultaneous face, voice and turn-taking complexity rises. Prefer:
+
+- shot/reverse-shot editing,
+- separate close-ups per speaker,
+- one master two/three-shot for silent reactions,
+- externally generated dialogue stems,
+- spatial masks or speaker-specific workflows,
+- a character continuity ledger.
+
+A single long group shot is suitable for short, slow, one-at-a-time dialogue—not a rapid ensemble argument.
+
+## 5. Overlapping speech
+
+Only request overlap when essential. Define exact start/end relationship:
+
+`As A reaches the final word, B interrupts with “...”; A stops speaking immediately and closes her mouth.`
+
+External audio is strongly preferred because text-only timing is approximate.
+
+## 6. Voice specification
+
+Use a small set of audible properties:
+
+- gender/age range when relevant,
+- pitch/register,
+- texture (breathy, rough, clear, nasal, resonant),
+- pace,
+- volume,
+- accent/language,
+- emotional delivery.
+
+Avoid contradictory voice stacks such as “whispered, booming, fast, slow.”
+
+## 7. Custom audio / A2V
+
+When audio is supplied:
+
+- do not rewrite the spoken words unless the workflow expects transcript guidance;
+- state “use the supplied audio as the exact temporal guide”;
+- map visible emphasis to audio events;
+- keep extra sounds minimal unless the workflow mixes them intentionally;
+- preserve silence and breaths because they support believable motion.
+
+Template:
+
+```text
+Use the supplied audio as the exact timing and performance guide. [Identity/reference] articulates naturally to the speech, with [restrained gestures] aligned to emphasized phrases. [Listener/background] reacts only during pauses. [Camera plan]. Preserve the reference identity, wardrobe and setting. Do not generate additional dialogue; retain the supplied voice track.
+```
+
+## 8. Talking avatar
+
+### Head-and-shoulders presenter
+
+- locked or gently drifting camera,
+- stable head size,
+- natural blink and breath,
+- restrained hand gestures inside frame,
+- mouth articulation driven by TTS/reference audio,
+- avoid constant head bobbing,
+- specify no extra speech.
+
+Prompt:
+
+```text
+A stable medium close-up of the same presenter facing the camera. Use the supplied voice as the exact timing guide. She speaks with natural articulation, subtle jaw and cheek movement, occasional blinks, small eyebrow emphasis and two restrained hand gestures. Her shoulders remain mostly steady; no exaggerated head bobbing. The camera is locked, soft studio lighting remains constant, and no additional dialogue or music is generated.
+```
+
+### Podcast/two-person avatar
+
+Use a master two-shot for intro/outro and separate speaker close-ups for reliable dialogue. If a community multi-character workflow is used, segment every turn and supply separate reference voices.
+
+## 9. Lipdub
+
+Lipdub changes speech while attempting to preserve source identity, body performance and scene timing.
+
+Prompt/preservation contract:
+
+```text
+Preserve the source video’s actor identity, facial structure, hairstyle, wardrobe, body motion, camera motion, lighting and background. Replace only the spoken performance using the supplied [language] audio. Match mouth articulation, jaw motion and facial emphasis to the new voice while maintaining natural blinking and the original emotional intent. Preserve all non-speech ambience unless the workflow replaces the full soundtrack.
+```
+
+For translation, line duration may differ. Adjust translation phrasing or audio timing before generation rather than demanding impossible mouth timing in prose.
+
+## 10. Voice cloning
+
+Voice identity belongs to the TTS/reference-audio system, not the visual prompt. The prompt may state performance character but should not pretend to clone a voice from descriptive adjectives. Use licensed/authorized voice references and preserve consent requirements.
+
+## 11. Foley and ambience
+
+### Add sound to silent video
+
+Identify visible sound sources and their timestamps:
+
+- footsteps by surface,
+- cloth movement,
+- object impacts,
+- doors/mechanisms,
+- wind/water/fire,
+- room/environment tone.
+
+Prompt:
+
+```text
+Preserve the source video exactly. Generate synchronized Foley only: [event 1], [event 2], [event 3]. Add a continuous [environment] ambience with realistic perspective and room response. No dialogue and no music.
+```
+
+### Foley priority
+
+1. Events visibly caused on screen.
+2. Continuous environment.
+3. Off-screen context.
+4. Music last.
+
+Avoid sounds with no visible or narrative source unless intentionally stylized.
+
+## 12. Music video and performance
+
+Use the song as timeline. Build a cue sheet:
+
+| Time | Audio cue | Visual action | Camera/light |
+|---|---|---|---|
+| 0–2s | intro | still anticipation | slow push-in |
+| 2–5s | first phrase | one readable gesture | lateral track |
+| 5–8s | chorus hit | decisive movement | light pulse/orbit |
+| 8–10s | resolve | final pose | stop and hold |
+
+Avoid describing a cut on every beat unless the workflow truly generates or assembles multiple shots.
+
+## 13. Audio-reactive visuals
+
+For LoRA/workflow-based audio reactivity, specify which visual property reacts:
+
+- light intensity,
+- particle scale,
+- camera pulse,
+- material deformation,
+- environment color,
+- dance gesture.
+
+Choose one or two channels. “Everything reacts to every frequency” usually becomes noise.
+
+## 14. Dialogue diagnostics
+
+| Symptom | Prompt fix | Workflow fix |
+|---|---|---|
+| Wrong person speaks | Name/spatial label every turn; one speaker per beat | Prompt Relay, masks, separate speaker render |
+| Both mouths move | Explicit silent listener with mouth closed | Separate audio stems/dual-character workflow |
+| Speech cut off | Shorter line or longer segment | Adjust audio/segment duration |
+| Robotic face | Add blink, breath, restrained gestures, pauses | Better reference, lower motion aggressiveness |
+| Identity drift during speech | Remove redundant face description | ID-LoRA/reference image, lower edit strength |
+| Audio muddy | Reduce competing ambience/music | Mix externally or use clean reference audio |
+| Lip sync off | Align transcript and segment timing | A2V/lipdub/TTS route; retime audio |
+| Accent ignored | State language/accent once, clearly | Provide actual reference voice/TTS |
+| Listener overacts | Specify silent, restrained reaction | Separate reaction shot |
+
+## 15. Ethical and production safeguards
+
+- Do not clone or impersonate a real person's voice without authorization.
+- Label synthetic or dubbed media where platform or jurisdiction requires it.
+- Preserve source licenses for music, voices and footage.
+- Use post-production for final audio mix, exact loudness, subtitles and text.
+
+
+---
+
+## Reference Chapter: Scenario Library
+
+# Scenario Library
+
+Use these as routing recipes. Replace placeholders and adapt duration, aspect ratio, references and audio. Do not copy every adjective blindly.
+
+## 1. Cinematic establishing shot
+
+**Route:** T2V.  
+**Prompt focus:** geography, atmosphere, one environmental action, slow camera.  
+**Pattern:** wide establishing shot → foreground movement → camera reveal → ambience → stable end.
+
+## 2. Character entrance
+
+**Route:** T2V or I2V; FLF when end mark matters.  
+**Pattern:** empty/held opening → subject enters from a named direction → wardrobe secondary motion → camera reframes → footsteps/door Foley → final mark.
+
+## 3. Emotional close-up
+
+**Route:** I2V preferred for identity.  
+**Pattern:** blink/breath → gaze shift → small facial cue → slow push-in → sparse ambience.  
+Avoid dramatic full-face deformation.
+
+## 4. Fashion lookbook
+
+**Route:** I2V + identity reference; Prompt Relay for several poses.  
+**Pattern:** stable full body → quarter turn → fabric reaction → one step → final pose.  
+Use clean studio sound or music; lock face and garment.
+
+## 5. Beauty commercial
+
+**Route:** I2V/T2V + product/face reference.  
+Use macro skin/product details, slow light sweep, controlled turn, no exact text. Reserve negative space for post copy.
+
+## 6. Product hero reveal
+
+**Route:** T2V/I2V + Prompt Relay.  
+Beats: static hero → light sweep → mechanical reveal → orbit → final hold. Add precise Foley and a restrained music sting.
+
+## 7. Unboxing
+
+**Route:** I2V or T2V; hand quality may require controlled framing/retakes.  
+Beats: hands approach → seal breaks → lid opens → product lift → reaction. Keep one hand action per beat.
+
+## 8. Food macro
+
+**Route:** T2V/I2V.  
+Describe viscosity, steam, crumbs, cut/pour motion, macro lens feel and Foley. Avoid combining several impossible food transformations.
+
+## 9. Architectural walkthrough
+
+**Route:** T2V with camera control/depth reference where precision matters.  
+Prompt material, light and parallax; let depth/camera control own geometry. Use continuous footsteps/room tone.
+
+## 10. Automotive commercial
+
+**Route:** T2V/I2V + camera/motion control.  
+One driving maneuver per shot. Lock vehicle design with references. Use tire/engine/wind audio and believable reflections.
+
+## 11. Drone/aerial landscape
+
+**Route:** T2V.  
+Specify altitude, path, reveal direction, weather, water/foliage motion and ambience. Avoid changing geography mid-shot.
+
+## 12. Dance performance
+
+**Route:** A2V/custom audio + pose/motion control.  
+Audio owns tempo, pose signal owns body, prompt owns character, wardrobe, environment, camera and secondary motion.
+
+## 13. Fight/action beat
+
+**Route:** pose/motion reference or Prompt Relay.  
+Break into anticipation → one attack → impact → recovery. Do not request a long choreography with multiple unanchored fighters in one short shot.
+
+## 14. Sports shot
+
+**Route:** I2V/T2V + motion/pose control.  
+Name ball/object trajectory, player action, camera follow, crowd/impact sound and ending. Use slow motion only around a defined moment.
+
+## 15. Horror reveal
+
+**Route:** T2V/I2V + Relay.  
+Establish stillness → subtle off-screen cue → controlled reveal → physical reaction → silence/impact. Avoid generic “scary” without visible cause.
+
+## 16. Sci-fi transformation
+
+**Route:** Prompt Relay + FLF/FML if endpoints matter.  
+Use staged material changes; preserve anatomy/identity; specify where transformation begins and how it propagates.
+
+## 17. Fantasy magic effect
+
+**Route:** T2V/I2V + effect LoRA optional.  
+Tie particles/light to hand or object motion. Limit effect channels; avoid covering the face.
+
+## 18. Anime scene
+
+**Route:** T2V/I2V + style LoRA optional.  
+Specify cel shading, linework, limited/smooth animation style, controlled smears, background parallax and voice style. Avoid mixing photoreal skin terms.
+
+## 19. Stop-motion miniature
+
+**Route:** T2V.  
+Describe tangible materials, incremental motion, miniature depth of field, handcrafted imperfections and small practical sounds.
+
+## 20. Documentary interview
+
+**Route:** I2V/A2V/talking avatar.  
+Stable framing, natural articulation, subtle gestures, room tone, no dramatic camera. Use supplied audio for exact speech.
+
+## 21. News presenter/social explainer
+
+**Route:** talking avatar + TTS/reference audio.  
+Portrait aspect if needed, direct eye contact, restrained gestures, clean background, stable camera. Add graphics/text later.
+
+## 22. Podcast conversation
+
+**Route:** separate speaker close-ups + master two-shot; multi-character workflow only when needed.  
+Use clean TTS/reference stems, listener reaction shots, consistent spatial labels and edit in post.
+
+## 23. Two-person dramatic dialogue
+
+**Route:** Prompt Relay + custom audio or native dialogue.  
+Global two-shot; A line; reaction; B line; final silence. One speaker per segment.
+
+## 24. Group conversation
+
+**Route:** shot/reverse-shot production rather than one overloaded generation.  
+Use a master establishing shot, then individual close-ups. Maintain a continuity ledger for wardrobe, seating and lighting.
+
+## 25. Multilingual dubbing
+
+**Route:** Lipdub.  
+Preserve source performance, replace speech with supplied translated audio, adjust translation duration beforehand, preserve ambience.
+
+## 26. Add voice to silent video
+
+**Route:** Just-Talk/masked V2V or lip-sync workflow.  
+Preserve source clip; target only face/mouth; supply exact audio; prompt natural articulation and no other changes.
+
+## 27. Foley generation
+
+**Route:** V2V Foley/audio workflow.  
+List visible events in order and add one environmental bed. No dialogue/music unless requested.
+
+## 28. Music video
+
+**Route:** custom audio + Prompt Relay/movie-maker.  
+Use waveform/lyric timestamps, one readable visual action per major phrase, planned camera/light evolution, segment export for editing.
+
+## 29. Audio-reactive abstract visual
+
+**Route:** A2V/audio-reactive LoRA.  
+Map bass to one property and treble/vocals to another. Keep camera stable enough to perceive the reaction.
+
+## 30. First-to-last-frame transition
+
+**Route:** FLF.  
+Prompt the continuous bridge: object path, body motion, material morph, camera path, environmental continuity and easing into final frame.
+
+## 31. First-middle-last sequence
+
+**Route:** FML guider.  
+Use when the midpoint is compositionally mandatory. Describe two transitions separately and ensure the middle anchor is reachable.
+
+## 32. Seamless loop
+
+**Route:** loop workflow.  
+Choose cyclical actions: breathing, rotating object, wave, pendulum, walking cycle, light pulse. Final phase must match initial phase.
+
+## 33. Long-video continuation
+
+**Route:** extension.  
+Use last stable frame/latent as new anchor. Prompt only the next action. Maintain identity/style/audio continuity externally and expect drift to accumulate.
+
+## 34. Shot-to-shot transition
+
+**Route:** V2V transition LoRA/workflow.  
+Define visual bridge: whip pan, object wipe, match shape, light flash, foreground occlusion, or material dissolve. Preserve each endpoint outside transition window.
+
+## 35. Viewpoint change
+
+**Route:** cross-view/camera control workflow.  
+State target angle and preserve subject geometry/identity. Use modest angle changes unless strong 3D references exist.
+
+## 36. Outpaint/reframe
+
+**Route:** outpainting IC-LoRA.  
+Preserve central source region; describe newly revealed surroundings, perspective, light continuation and aspect target. Avoid altering the protected subject.
+
+## 37. Add/remove/replace object
+
+**Route:** V2V inpaint/EditAnything with mask.  
+Specify mask target, replacement appearance, motion following, shadows/reflections/occlusion and preserve list.
+
+## 38. Remove person/crowd cleanup
+
+**Route:** masked V2V removal workflow.  
+Describe reconstructed background and temporal texture. Preserve camera and remaining subjects.
+
+## 39. Restyle video
+
+**Route:** V2V + style LoRA.  
+Preserve motion/timing/composition, change medium/material/palette. Avoid asking style change to rewrite the entire scene.
+
+## 40. Day-to-night/colorization/HDR/deblur
+
+**Route:** corresponding effect/restoration LoRA or workflow.  
+Prompt target illumination/color and preserve geometry/timing. Let restoration nodes own technical correction.
+
+## 41. Water/liquid simulation
+
+**Route:** specialized LoRA/workflow when available.  
+Define source, direction, viscosity, gravity, contact surfaces and splash/recovery. Keep one principal fluid event.
+
+## 42. Ingredient/assembly animation
+
+**Route:** Prompt Relay + effect workflow.  
+Stage components entering, aligning and assembling. Use endpoint frame when final product geometry must be exact.
+
+## 43. Meme/comedy short
+
+**Route:** I2V/T2V + Relay.  
+Set up → pause → one visual reversal → reaction. Timing and silence matter more than extra detail.
+
+## 44. Vertical social ad
+
+**Route:** native portrait/I2V/T2V.  
+Keep hero subject centered within safe area; fast readable opening action; one benefit reveal; final hold for post text. Avoid generating small typography.
+
+## 45. Cinematic trailer montage
+
+**Route:** generate separate shots and edit; do not force unrelated montage into one prompt.  
+Create a shot list with a shared style/identity bible. Prompt each shot independently, then assemble with music and transitions.
+
+## 46. Character consistency series
+
+**Route:** character sheet + ID-LoRA/trained LoRA + fixed style bible.  
+Maintain a continuity record: face, hair, wardrobe, age, proportions, props, color palette, voice, environment rules. Each shot prompt includes only relevant reminders.
+
+## 47. Multi-subject reference
+
+**Route:** multi-reference workflow.  
+Assign each reference a stable label and screen position. Start with simple actions and avoid occlusion/crossing until identity is proven.
+
+## 48. Camera-only test
+
+**Route:** I2V + camera control.  
+Subject remains nearly still; test one dolly/pan/orbit/jib path. This isolates camera adherence before adding action/dialogue.
+
+## 49. Motion-only test
+
+**Route:** I2V/pose control.  
+Lock camera and background; test one body/object action. Useful for diagnosing whether failure is motion or camera complexity.
+
+## 50. Prompt A/B evaluation
+
+Keep seed, workflow, checkpoint, resolution, duration, references, audio and controls fixed. Compare only:
+
+- action wording,
+- camera wording,
+- temporal segmentation,
+- speaker labels,
+- preservation constraints.
+
+Score identity, motion, camera, temporal order, audio sync, dialogue ownership, artifacts and overall usefulness separately.
+
+
+---
+
+## Reference Chapter: Troubleshooting And Qa
+
+# Troubleshooting and QA
+
+## 1. Diagnostic order
+
+Diagnose in this order to avoid random parameter changes:
+
+1. Wrong workflow family?
+2. Prompt asks for too much in the duration?
+3. Identity/reference/control conflict?
+4. Temporal order or speaker ownership ambiguous?
+5. Camera instructions conflict?
+6. Audio route contradicts prompt?
+7. Denoise/control/LoRA strength inappropriate?
+8. Checkpoint/quantization/node version limitation?
+9. Upscale/interpolation introduced the artifact?
+
+Change one variable at a time.
+
+## 2. Symptom matrix
+
+| Symptom | Likely prompt cause | Prompt repair | Workflow repair |
+|---|---|---|---|
+| Little or no motion | Verbs vague; I2V only redescribes image | State initial motion, trajectory and end state | Increase compatible motion/denoise carefully; verify frame conditioning |
+| Chaotic motion | Too many actors/actions/camera moves | One principal action per beat | Pose/motion control; split shot |
+| Wrong action order | Non-chronological prose | Use explicit connectors or Relay | Segment timeline |
+| Camera ignored | “dynamic camera” or action dominates | Name one physical move early | Camera-control LoRA/path |
+| Camera jumps | Conflicting moves/cuts | One continuous camera plan | Lower edit strength; use separate shots |
+| Face changes | Repeated/conflicting identity details | Simplify identity language | Reference image, face-ID/ID-LoRA, trained LoRA |
+| Clothes/background change in I2V | Prompt invents new appearance | State preserve contract; prompt motion only | Lower denoise/edit strength; masks |
+| Hands fail | Complex hand/object interaction | Simplify and stage interaction | Pose/hand reference; retake/inpaint |
+| Extra people appear | Crowd/subject count ambiguous | State exact visible subject roles | Mask/reference; shorter shot |
+| Both people speak | Pronouns/turns ambiguous | Spatial labels, one speaker/beat | Prompt Relay, separate audio/masks |
+| Dialogue truncated | Line too long for duration | Shorten line or extend beat | Retimed TTS/reference audio |
+| Lip sync weak | Prompt-only exact timing expected | Add physical speech cues, remove competing actions | A2V/lipdub/talking-avatar workflow |
+| Audio muddy | Too many layers | Prioritize dialogue, sparse ambience | Mix externally; clean stems |
+| Foley unsynced | Events not ordered | List visible events chronologically | Timestamped Foley/custom audio workflow |
+| Prompt Relay bleed | Local prompts overlap; soft boundary | One change per segment | Adjust epsilon/window; separate reaction beat |
+| Relay transition snaps | New scene/style introduced abruptly | Maintain continuity | Soften boundary or generate separate shot |
+| First/last frame not reached | No transition/end easing | Describe bridge and final settling | Increase endpoint conditioning; FML guider |
+| Loop seam visible | End state differs from start | Match pose/camera/light/audio phase | Loop graph, crossfade or latent overlap |
+| Long extension drifts | Every extension reinterprets identity/style | Prompt only next action; continuity ledger | Stable reference/LoRA; shorter shot units |
+| V2V changes everything | No preserve list | Explicit “preserve/change only” contract | Mask, lower strength, retake route |
+| Inpaint boundary flickers | Replacement ignores lighting/occlusion | Describe blend, shadow, perspective | Better mask feather/temporal mask |
+| Style inconsistent | Mixed media terms | One visual grammar | Style LoRA and fixed workflow |
+| Text/logo garbled | Asking diffusion model for typography | Reserve blank area | Composite exact text/logo in post |
+| Output looks oversharpened | Excess quality/detail adjectives or enhancer stack | Remove “ultra sharp” pile | Reduce detail/upscale strength |
+| Flicker after upscale | Base frames unstable | Fix base generation first | Change temporal/spatial upscale path |
+
+## 3. Prompt load test
+
+Count these units:
+
+- subjects,
+- major actions,
+- speaker lines,
+- camera changes,
+- location/style transitions,
+- control requirements.
+
+For a short shot, if more than two categories contain several independent units, split or segment the task.
+
+## 4. Contradiction audit
+
+Flag pairs such as:
+
+- static camera / handheld orbit,
+- slow motion / frantic real-time pacing,
+- bright noon / dark moonlit scene at the same moment,
+- preserve source outfit / transform into new outfit,
+- silent clip / generated dialogue,
+- custom audio exact / different quoted dialogue,
+- single continuous take / rapid hard cuts,
+- keep exact composition / large viewpoint change.
+
+Resolve them chronologically only when the transition is intentional.
+
+## 5. Identity audit
+
+For each named subject, verify:
+
+- stable label,
+- stable left/right/center position if multi-person,
+- consistent clothing/age/hair,
+- no contradictory facial description,
+- reference or LoRA route when exact identity matters,
+- no repeated full re-description in local Relay segments.
+
+## 6. Audio audit
+
+- Is the audio native, supplied, TTS, lipdub or preserved source?
+- Does the prompt add competing speech?
+- Are dialogue lines feasible in the segment duration?
+- Are non-speakers explicitly silent where needed?
+- Are Foley events visibly caused?
+- Is music necessary, and should it duck under speech?
+
+## 7. Endpoint audit
+
+Required for FLF/FML, continuation, transitions and loops:
+
+- final camera position,
+- subject final pose/gaze,
+- object final location,
+- lighting state,
+- motion velocity/easing,
+- audio tail or loop phase.
+
+## 8. A/B test protocol
+
+1. Save workflow JSON and model/LoRA versions.
+2. Fix seed or seed list.
+3. Fix duration, resolution, fps and references.
+4. Generate baseline.
+5. Change one prompt variable.
+6. Score 1–5:
+   - prompt adherence,
+   - identity,
+   - motion physics,
+   - camera,
+   - temporal order,
+   - audio sync,
+   - dialogue ownership,
+   - artifact severity.
+7. Keep the shortest prompt that wins reliably, not the longest prompt that wins once.
+
+## 9. Repair rewrite pattern
+
+When asked to fix a failed prompt, respond with:
+
+```text
+Failure: [observable defect]
+Cause: [one or two highest-probability causes]
+Prompt change: [specific wording change]
+Workflow change: [only if needed]
+Rewritten prompt: [complete prompt]
+```
+
+Do not dump a long generic parameter list when the defect is clearly semantic.
+
+## 10. Lint script
+
+Use:
+
+```bash
+python scripts/ltx_prompt_lint.py prompt.txt --mode t2v --duration 10
+python scripts/ltx_prompt_lint.py relay.txt --mode relay --duration 10 --json
+```
+
+The script is heuristic. A clean report does not guarantee visual success; warnings identify common prompt-structure risks.
+
+
+---
+
+## Reference Chapter: Source Map
+
+# Source Map and Evidence Levels
+
+Last verified: 2026-07-23.
+
+This file records the research basis used to build the skill. Re-check sources before claiming that a rapidly changing community node, workflow or model filename is still current.
+
+## Evidence labels
+
+- **Official:** Lightricks/LTX documentation, model card, repository or research paper.
+- **Maintainer:** repository documentation from the node/workflow maintainer.
+- **Community:** popular workflow collections/tutorials; useful for routing, not a guarantee.
+- **Heuristic:** production recommendation inferred from model behavior and common failure patterns.
+
+## Official LTX sources
+
+1. **LTX-2.3 Prompt Guide — Official**  
+   https://ltx.io/blog/ltx-2-3-prompt-guide  
+   Basis for long/detailed shot descriptions, chronological action, present tense, physical cues, camera language, dialogue/audio construction, T2V/I2V/A2V distinctions, and common prompting mistakes.
+
+2. **LTX-2.3 Model Page — Official**  
+   https://ltx.io/model/ltx-2-3  
+   Basis for improved prompt adherence, image-to-video, camera control, audio-to-video, native portrait/reframing, identity/style customization and LoRA support.
+
+3. **LTX-2.3 Model Card — Official**  
+   https://huggingface.co/Lightricks/LTX-2.3  
+   Basis for joint audio-video architecture and checkpoint families including 22B dev, distilled variants, distilled LoRA and upscalers.
+
+4. **LTX-Video Official Repository — Official**  
+   https://github.com/Lightricks/LTX-Video  
+   Basis for supported families such as synchronized audio/video, image-to-video, multi-keyframes, extension, video-to-video, LoRA/IC-LoRA, controls, upscalers and training tools.
+
+5. **LTX-2 Research Paper — Official research**  
+   https://arxiv.org/abs/2601.03233  
+   Basis for the joint audio-visual foundation model description, dual streams and synchronized semantic/audio behavior.
+
+## Prompt Relay source
+
+6. **ComfyUI-PromptRelay — Maintainer**  
+   https://github.com/kijai/ComfyUI-PromptRelay  
+   Basis for inline `|` syntax, relative weights/ranges, block headers, global/static first segment, local-change-only later segments, timing options and the warning that the project is work in progress.
+
+## Community workflow coverage
+
+7. **RuneXX LTX-2.3 Workflows — Community**  
+   https://huggingface.co/RuneXX/LTX-2.3-Workflows/tree/main  
+   Used to survey active workflow categories: 3-pass, control reference, custom audio, first/last frame, long video, movie maker, multi-reference character sheet, music video, talking avatar/TTS, V2V, Foley, lipdub, retake, outpainting, transitions and editing.
+
+8. **LTX-2.3 Prompt Relay workflow discussion — Community**  
+   https://huggingface.co/Kijai/LTX2.3_comfy/discussions/51  
+   Evidence that creators use Prompt Relay for multi-event temporal control and per-segment prompts/lengths; explicitly described as work in progress.
+
+9. **RunComfy Prompt Relay workflow page — Community commercial catalog**  
+   https://www.runcomfy.com/comfyui-workflows/ltx-2-3-prompt-relay-in-comfyui-image-to-video-workflow  
+   Supporting evidence for segmented I2V, VLM-assisted beat drafting and optional LoRA workflow composition. Do not treat marketing claims as model guarantees.
+
+10. **Multi-character Prompt Relay tutorials — Community**  
+    Community tutorials published in 2026 demonstrate one-speaker-per-segment patterns. This skill adopts that pattern as a heuristic, while recommending custom audio/dual-character workflows for exact lip ownership.
+
+## Codex skill format
+
+11. **OpenAI Skills Catalog and Skill Creator — Official OpenAI**  
+    https://github.com/openai/skills  
+    https://github.com/openai/skills/blob/main/skills/.system/skill-creator/SKILL.md  
+    Basis for the required `SKILL.md`, YAML `name` and `description`, recommended `agents/openai.yaml`, progressive disclosure and optional `references/` and `scripts/` resources.
+
+## Important boundary statements
+
+- Prompt Relay syntax is not a universal native LTX prompt format; it belongs to compatible nodes/workflows.
+- Multi-person exact lip sync is workflow-dependent and remains more fragile than single-speaker generation.
+- “Long video” community workflows usually chain or extend generation; continuity can degrade across repeated extensions.
+- Specialized LoRA workflows can appear, change names or disappear rapidly. Inspect current graph dependencies and licenses.
+- Native model capability, ComfyUI implementation capability and a specific downloaded workflow's capability are not identical.

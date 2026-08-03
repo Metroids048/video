@@ -14,6 +14,7 @@ from rich.table import Table
 
 from avs.cli_timeline import register_commands as _reg_timeline
 from avs.cli_workflow import register_commands as _reg_workflow
+from avs.cli_active import register_commands as _reg_active
 
 console = Console()
 
@@ -109,7 +110,14 @@ def episode() -> None:
     default="douyin,xiaohongshu",
     help="目标平台，逗号分隔（默认 douyin,xiaohongshu）",
 )
-def episode_create(episode_id: str, mode: str, platforms: str) -> None:
+@click.option(
+    "--input-mode",
+    type=click.Choice(["multimodal", "screenshot_intro"], case_sensitive=True),
+    default="multimodal",
+    show_default=True,
+    help="输入路线；screenshot_intro 先生成待审阅截图图文预览",
+)
+def episode_create(episode_id: str, mode: str, platforms: str, input_mode: str) -> None:
     """创建新 Episode，生成规范目录和 episode.json。"""
     from avs.config import Config
     from avs.models.episode import EpisodeModel
@@ -149,7 +157,7 @@ def episode_create(episode_id: str, mode: str, platforms: str) -> None:
 
     # 原子创建：先构造模型再落盘，失败时清理半成品
     try:
-        model = EpisodeModel.create(episode_id, mode=mode, platforms=platform_list)
+        model = EpisodeModel.create(episode_id, mode=mode, platforms=platform_list, input_mode=input_mode)
         ep_dir.mkdir(parents=True, exist_ok=False)
         create_episode_skeleton(ep_dir)
         model.save(ep_json)
@@ -207,6 +215,7 @@ def episode_status(episode_id: str, as_json: bool) -> None:
     console.print(f"\n[bold]Episode {model.id}[/bold]")
     console.print(f"  状态      : [cyan]{model.status}[/cyan]")
     console.print(f"  模式      : {model.mode}")
+    console.print(f"  输入路线  : {model.input_mode}")
     console.print(f"  可发布    : {'是' if model.publishable else '[yellow]否[/yellow]'}")
     console.print(f"  平台      : {', '.join(data.get('platforms', []))}")
     console.print(f"  已完成阶段: {', '.join(model.completed_stages) or '（无）'}")
@@ -351,6 +360,7 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
     from avs.models.episode import EpisodeModel
     from avs.paths import PathError, find_episode_dir, episode_json_path
     from avs.ingest import run_ingest
+    from avs.intake.manifest import InputCompletenessError
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
@@ -370,6 +380,11 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
     ep_json = episode_json_path(ep_dir)
     try:
         model = EpisodeModel.load(ep_json)
+    except InputCompletenessError as exc:
+        console.print(f"[yellow]⚠ ingest 输入不完整: {exc}[/yellow]")
+        model.block(str(exc), waiting_for_input=True)
+        model.save(ep_json)
+        sys.exit(2)
     except Exception as exc:
         console.print(f"[red]✗ 加载 episode.json 失败: {exc}[/red]")
         sys.exit(1)
@@ -404,6 +419,17 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
             "[yellow]⚠ input/ 中没有素材，已生成空清单；状态 → WAITING_FOR_INPUT[/yellow]"
         )
         sys.exit(0)
+
+    unassigned_audio = [
+        asset["asset_id"] for asset in assets
+        if asset.get("kind") == "audio" and asset.get("status") == "ok" and not asset.get("audio_role")
+    ]
+    if unassigned_audio:
+        reason = "音频素材缺少 Manifest audio_role: " + ", ".join(unassigned_audio)
+        model.block(reason, waiting_for_input=True)
+        model.save(ep_json)
+        console.print(f"[yellow]⚠ {reason}[/yellow]")
+        sys.exit(2)
 
     # 状态转换 → INGESTED；不允许静默跳过非法状态
     try:
@@ -851,6 +877,7 @@ def content_approve(episode_id: str) -> None:
 # ── 注册 timeline / subtitles / render / qa / deliver / run 命令 ──
 _reg_timeline(main)
 _reg_workflow(main)
+_reg_active(main)
 
 
 if __name__ == "__main__":

@@ -111,9 +111,9 @@ class TestForceReset:
 
 
 class TestAllStates:
-    def test_all_states_returns_12(self):
+    def test_all_states_returns_13(self):
         states = all_states()
-        assert len(states) == 12, f"期望12个状态，实际 {len(states)}: {states}"
+        assert len(states) == 13, f"期望13个状态，实际 {len(states)}: {states}"
 
     def test_contains_required(self):
         states = set(all_states())
@@ -121,6 +121,6 @@ class TestAllStates:
             "CREATED", "INGESTED", "REFERENCE_READY", "CONTENT_READY",
             "ASSETS_READY", "TIMELINE_READY", "ROUGH_CUT_READY",
             "QA_PASSED", "DELIVERY_READY",
-            "WAITING_FOR_INPUT", "WAITING_FOR_REVIEW", "FAILED",
+            "WAITING_FOR_INPUT", "WAITING_FOR_REVIEW", "BLOCKED", "FAILED",
         }
         assert required == states

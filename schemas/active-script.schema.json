@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "active-script.schema.json",
+  "title": "Evidence-first active script",
+  "type": "object",
+  "required": ["episode_id", "segments", "hook_variant", "reference_pattern_ids"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "hook_variant": {"type": "string", "enum": ["result", "conflict", "pain"]},
+    "reference_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^PAT-[0-9]{3}$"}, "minItems": 1},
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["segment_id", "text", "spoken_text", "purpose", "duration_seconds", "evidence_required", "asset_refs", "reference_pattern_ids"],
+        "additionalProperties": false,
+        "properties": {
+          "segment_id": {"type": "string"},
+          "text": {"type": "string"},
+          "spoken_text": {"type": "string"},
+          "purpose": {"type": "string"},
+          "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+          "evidence_required": {"type": "boolean"},
+          "asset_refs": {"type": "array", "items": {"type": "object"}},
+          "reference_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^PAT-[0-9]{3}$"}, "minItems": 1}
+        }
+      }
+    }
+  }
+}

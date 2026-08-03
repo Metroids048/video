@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "creative-brief.schema.json",
+  "title": "Creative brief",
+  "type": "object",
+  "required": ["episode_id", "platform", "target_audience", "core_pain", "angle", "hook", "duration_seconds", "structure", "must_use_asset_ids", "forbidden_content", "product_visual_ratio"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "platform": {"type": "string", "enum": ["douyin", "xiaohongshu"]},
+    "target_audience": {"type": "string"},
+    "core_pain": {"type": "string"},
+    "angle": {"type": "string"},
+    "hook": {"type": "string"},
+    "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "structure": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "must_use_asset_ids": {"type": "array", "items": {"type": "string"}},
+    "forbidden_content": {"type": "array", "items": {"type": "string"}},
+    "product_visual_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+    "hook_variants": {"type": "array", "items": {"type": "object"}}
+  }
+}

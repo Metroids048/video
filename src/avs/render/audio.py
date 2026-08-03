@@ -4,8 +4,38 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
+
+AUDIO_ROLES = frozenset({"narration", "original_voice", "bgm", "effect", "ambient"})
+
+
+def audio_assets_by_role(manifest: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    """Group usable audio assets by explicit Manifest role.
+
+    The active path intentionally ignores filename prefixes.  Assets without a
+    role remain visible to the caller so the input gate can request a decision.
+    """
+    grouped: dict[str, list[dict[str, Any]]] = {role: [] for role in AUDIO_ROLES}
+    for asset in manifest.get("assets", []):
+        if asset.get("source_type", asset.get("kind")) != "audio" or asset.get("status") != "ok":
+            continue
+        role = asset.get("audio_role")
+        if role in grouped:
+            grouped[role].append(asset)
+    return grouped
+
+
+def validate_audio_roles(manifest: dict[str, Any]) -> list[str]:
+    """Return IDs of audio assets that have no explicit role."""
+    return [
+        str(asset.get("asset_id"))
+        for asset in manifest.get("assets", [])
+        if asset.get("source_type", asset.get("kind")) == "audio"
+        and asset.get("status") == "ok"
+        and asset.get("audio_role") not in AUDIO_ROLES
+    ]
 
 
 def ffmpeg_available() -> bool:
@@ -18,7 +48,7 @@ def mix_audio_filter(
     has_voice: bool = True,
     has_bgm: bool = True,
 ) -> str:
-    """构建 amix/volume 滤镜字符串（amerge 简化版）。
+    """构建旁白优先的混音滤镜字符串。
 
     返回适用于 FFmpeg -filter_complex 的音频滤镜片段。
     不直接执行，由 ffmpeg.py 调用。
@@ -26,12 +56,11 @@ def mix_audio_filter(
     parts: list[str] = []
 
     if has_voice and has_bgm:
-        # 旁白 + BGM ducking：BGM 在有旁白时降低音量
-        # 使用 sidechaincompress 实现 ducking
         parts = [
-            f"[voice_in]volume={voice_volume}[voice_vol]",
+            f"[voice_in]volume={voice_volume},asplit=2[voice_vol][voice_sidechain]",
             f"[bgm_in]volume={bgm_volume}[bgm_vol]",
-            "[voice_vol][bgm_vol]amix=inputs=2:duration=first:dropout_transition=2[audio_out]",
+            "[bgm_vol][voice_sidechain]sidechaincompress=threshold=0.04:ratio=10:attack=20:release=450[bgm_ducked]",
+            "[voice_vol][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2,alimiter=limit=0.95[audio_out]",
         ]
         return "; ".join(parts)
     elif has_voice:

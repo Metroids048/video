@@ -1,7 +1,7 @@
 # Video third-party skills vendor manifest
 # Consumed by scripts/vendor_video_skills.py and scripts/ensure_video_plugins.py
 version: 1
-updated_at: "2026-08-02"
+updated_at: "2026-08-03"
 
 defaults:
   repos_dir: vendor/repos
@@ -127,3 +127,135 @@ packages:
     license: AGPL-3.0
     usage: production_allowed
     note: "Sparse clone only; curated entry skill points at vendor/repos/openmontage."
+
+  pixelle-video:
+    kind: git_skills
+    source_repository: https://github.com/AIDC-AI/Pixelle-Video
+    commit: "848b054e4fae40dabc62ec58e960b573e83793ac"
+    sparse_paths:
+      - README.md
+      - README_EN.md
+      - LICENSE
+      - NOTICE
+      - config.example.yaml
+      - pyproject.toml
+      - docs
+    skill_source: curated_entry
+    skill_dir_name: pixelle-video
+    license: Apache-2.0
+    usage: production_allowed
+    note: "Sparse docs/config only; curated entry skill. Do not full-clone ComfyUI monorepo into third_party_skills."
+
+  # --- Batch 2026-08-03: high-star video skills (coexist with cut-skill) ---
+
+  jianying-editor:
+    kind: git_skills
+    source_repository: https://github.com/luoluoluo22/jianying-editor-skill
+    commit: "f421c8a036f4fda888a83b38fc90bb9c00d6faa9"
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: jianying-editor
+    license: MIT
+    usage: production_allowed
+    note: "JyWrapper 剪映自动化；与 cut-skill / capcut-david 场景分流并存。"
+
+  ffmpeg:
+    kind: git_skills
+    source_repository: https://github.com/ychoi-kr/claude-ffmpeg-skill
+    commit: "b88cb5ce08337ab55c66c67674100b8de29cf232"
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: ffmpeg
+    license: MIT
+    usage: production_allowed
+    note: "Local FFmpeg CLI skill; not cloud FFmpeg APIs."
+
+  azure-speech:
+    kind: git_skills
+    source_repository: https://github.com/MicrosoftDocs/Agent-Skills
+    commit: "118821d787cc3f7f192aa9fb9c391731dfd35b98"
+    sparse_paths:
+      - skills/azure-speech
+    skill_source: skills/azure-speech
+    skill_dir_name: azure-speech
+    license: CC-BY-4.0
+    usage: production_allowed
+    note: "Official Azure Speech knowledge skill (TTS/STT). Requires Azure credentials in .env."
+
+  elevenlabs:
+    kind: git_skills
+    source_repository: https://github.com/elevenlabs/skills
+    commit: "37c0f2a682a8953cb9f09b152a0e1624d234193e"
+    sparse_paths: []
+    skill_source: multi_named
+    skill_dir_name: elevenlabs
+    skill_names:
+      - text-to-speech
+      - music
+      - sound-effects
+      - setup-api-key
+    primary_skill: text-to-speech
+    license: MIT
+    usage: production_allowed
+    note: "Official ElevenLabs skills; primary copy as elevenlabs from text-to-speech."
+
+  ai-video-shot-prompt:
+    kind: git_skills
+    source_repository: https://github.com/Wayhhow/ai-video-shot-prompt-skill
+    commit: "d7153aa1b5b4864a6322cc0ecdb2e7ac0adca9a9"
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: ai-video-shot-prompt
+    license: unknown
+    usage: production_allowed
+    note: "镜头脚本 / 分镜提示词（Shots 主路径）。"
+
+  ltx-prompt-director:
+    kind: git_skills
+    source_repository: https://github.com/AI-KSK/ltx-2-3-prompt-director
+    commit: "c9487b13178cf3c0c109ce55c49828df8909a7c0"
+    sparse_paths: []
+    skill_source: auto
+    skill_dir_name: ltx-prompt-director
+    license: unknown
+    usage: production_allowed
+    note: "LTX-2.3 production prompt director (Shots by LTX companion)."
+
+  epidemic-sound:
+    kind: curated_skill
+    source_repository: https://www.epidemicsound.com/a/mcp-service/mcp
+    skill_dir_name: epidemic-sound
+    license: proprietary
+    usage: production_allowed
+    note: "No public SKILL.md repo; curated entry points at official Epidemic Sound MCP."
+
+  moneyprinterturbo:
+    kind: git_skills
+    source_repository: https://github.com/harry0703/MoneyPrinterTurbo
+    commit: "254cd028906ee657eab844dc94087cdbea2a7aa8"
+    sparse_paths:
+      - docs/skill
+    skill_source: docs/skill
+    skill_dir_name: moneyprinterturbo
+    license: MIT
+    usage: production_allowed
+    note: "Sparse docs/skill only — do not full-clone the monorepo into third_party_skills."
+
+  video-shotcraft:
+    kind: git_skills
+    source_repository: https://github.com/Vincentwei1021/video-shotcraft
+    commit: "d4915443232e89527fdc9d7e79f132ba411fc440"
+    sparse_paths: []
+    skill_source: .
+    skill_dir_name: video-shotcraft
+    license: Apache-2.0
+    usage: reference_only
+    remotion_primary_renderer: false
+    note: "Shot vocabulary / pacing / sound-design reference only; Remotion demos do not replace AVS timeline.json + FFmpeg + HyperFrames."
+
+  seedance-free:
+    kind: local_skill
+    skill_dir_name: seedance-free
+    license: project
+    usage: production_allowed
+    note: "Project-authored free Seedance substitute (FFmpeg Ken Burns); not cloned from GitHub."

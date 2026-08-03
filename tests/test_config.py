@@ -27,6 +27,8 @@ def test_video_shotcraft_is_pinned_as_reference_only_skill() -> None:
     assert skill["usage"] == "reference_only"
     # video-shotcraft 自身仍不作主渲染器；Remotion 正式渲染见 remotion 条目 / ADR-0006
     assert skill["remotion_primary_renderer"] is False
+    assert skill["status"] == "vendored"
+    assert "third_party_skills/video-shotcraft" in skill.get("destinations", [])
 
 
 def test_remotion_is_vendored_as_production_renderer() -> None:
@@ -54,10 +56,29 @@ def test_video_third_party_skills_are_vendored() -> None:
         "cut-skill",
         "ip-strategist",
         "openmontage",
+        "video-shotcraft",
+        "seedance-free",
+        "jianying-editor",
+        "ffmpeg",
+        "azure-speech",
+        "elevenlabs",
+        "ai-video-shot-prompt",
+        "ltx-prompt-director",
+        "epidemic-sound",
+        "moneyprinterturbo",
     ]
     for name in required:
         entry = lock["third_party_skills"][name]
-        assert entry["status"] in {"vendored", "installed", "installed_offline_bundle"}
+        assert entry["status"] in {
+            "vendored",
+            "installed",
+            "installed_offline_bundle",
+            "local",
+        }
         assert entry.get("usage") in {"production_allowed", "reference_only", None} or name == "hyperframes"
+        skill_dir = root / "third_party_skills" / name
+        assert skill_dir.is_dir(), name
+        assert any(skill_dir.rglob("SKILL.md")), name
+    assert (root / "third_party_skills" / "text-to-speech" / "SKILL.md").is_file()
     assert (root / "docs" / "video-plugin-routing.md").is_file()
     assert (root / "docs" / "decisions" / "0006-video-third-party-renderers.md").is_file()

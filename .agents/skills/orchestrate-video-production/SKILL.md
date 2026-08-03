@@ -65,6 +65,15 @@ python -m avs content validate <ID>
 python -m avs content approve <ID>
 ```
 
+分镜与镜头语法可参考（不替代主链）：
+
+- `docs/video-plugin-routing.md` 场景表；
+- `video-shotcraft`（`reference_only`：节奏/镜头卡/声音设计，不用其 Remotion 主渲染）；
+- `ai-video-shot-prompt` / `ltx-prompt-director`（镜头提示词旁路）。
+
+旁路渲染（Remotion / ChatCut / CapCut / jianying-editor / MoneyPrinterTurbo /
+OpenMontage 等）产物必须回挂 Episode `work/` 或 `output/`，不得伪造 `QA_PASSED`。
+
 不得把参考原文案、案例、标题或封面复制进 `REFERENCE_ADAPT` 成片。无法核实的事实必须标记为待确认。
 
 ## 人工关口

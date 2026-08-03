@@ -49,10 +49,11 @@ not fetch or download third-party platform video.  A browser-reviewed reference
 registry records the resolved page, evidence level, and transferable,
 non-copyrightable workflow ideas for all 18 supplied references.
 
-The audited Apache-2.0 `video-shotcraft` Skill is pinned and installed globally as
-a reference library.  AVS may reuse its shot vocabulary, pacing, and sound-design
-guidance, but does not adopt its Remotion renderer.  `timeline.json`, FFmpeg, and
-HyperFrames remain the canonical V1 rendering path.
+The audited Apache-2.0 `video-shotcraft` Skill is pinned and project-vendored under
+`third_party_skills/video-shotcraft` as a reference library (`usage: reference_only`).
+AVS may reuse its shot vocabulary, pacing, and sound-design guidance, but does not
+adopt its Remotion renderer.  `timeline.json`, FFmpeg, and HyperFrames remain the
+canonical V1 rendering path.
 
 ## Consequences
 

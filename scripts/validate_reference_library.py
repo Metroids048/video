@@ -6,7 +6,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root / "src"))
 
-from avs.reference.library import validate_library
+from avs.reference.library import validate_library  # noqa: E402
 
 
 def main() -> int:

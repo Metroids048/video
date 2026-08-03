@@ -29,6 +29,11 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Private IP strategy state (do not commit creator data or contracts)
+ip-dossier.md
+ip-dossier.md.bak
+ip-contracts/
 htmlcov/
 .coverage
 coverage.xml

@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "recording-analysis.schema.json",
+  "title": "Recording analysis",
+  "type": "object",
+  "required": ["episode_id", "recordings"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "recordings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "original_width", "original_height", "page_changes", "steps", "cursor", "usable_segments", "regions"],
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {"type": "string"},
+          "original_width": {"type": ["integer", "null"]},
+          "original_height": {"type": ["integer", "null"]},
+          "page_changes": {"type": "array", "items": {"type": "object"}},
+          "steps": {"type": "array", "items": {"type": "object"}},
+          "cursor": {"type": "array", "items": {"type": "object"}},
+          "usable_segments": {"type": "array", "items": {"type": "object"}},
+          "regions": {"type": "array", "items": {"type": "object"}}
+          ,"analysis_status": {"type": "string"}
+        }
+      }
+    }
+  }
+}

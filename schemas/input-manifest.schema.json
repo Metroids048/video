@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "input-manifest.schema.json",
+  "title": "Episode input manifest",
+  "type": "object",
+  "required": ["episode_id", "generated_at", "assets"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "source_path", "source_type", "must_use", "sha256", "audio_role"],
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {"type": "string", "minLength": 1},
+          "source_path": {"type": "string", "minLength": 1},
+          "working_path": {"type": ["string", "null"]},
+          "source_type": {"type": "string", "enum": ["screenshot", "recording", "video", "audio", "document", "text", "link", "unknown"]},
+          "user_note": {"type": ["string", "null"]},
+          "must_use": {"type": "boolean"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "audio_role": {"type": ["string", "null"], "enum": ["narration", "original_voice", "bgm", "effect", "ambient", null]},
+          "original_width": {"type": ["integer", "null"]},
+          "original_height": {"type": ["integer", "null"]},
+          "duration": {"type": ["number", "null"]},
+          "proxy_path": {"type": ["string", "null"]},
+          "proxy_width": {"type": ["integer", "null"]},
+          "proxy_height": {"type": ["integer", "null"]},
+          "status": {"type": "string", "enum": ["ok", "missing", "corrupt", "unsupported"]},
+          "missing_reason": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

@@ -39,7 +39,7 @@
 - 云端分布式渲染
 - 自动下载第三方平台视频
 
-已放宽（ADR-0006）：Remotion、CapCut/剪映草稿工具、ChatCut、video-use、Seedance、OpenMontage、IP Strategist 可进入正式链路，**必须**按 [video-plugin-routing.md](video-plugin-routing.md) 路由调用。
+已放宽（ADR-0006）：Remotion、CapCut/剪映草稿工具、ChatCut、video-use、Seedance、OpenMontage、Pixelle-Video、IP Strategist，以及 JianyingEditor / FFmpeg / Azure Speech / ElevenLabs / 镜头脚本 / Epidemic Sound / MoneyPrinterTurbo 可进入正式链路，**必须**按 [video-plugin-routing.md](video-plugin-routing.md) 路由调用。
 
 ---
 

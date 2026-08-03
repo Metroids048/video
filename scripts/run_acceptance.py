@@ -192,19 +192,25 @@ print("\n── 验收 7: 相对路径 ──")
 try:
     doc = load_manifest(ep_target)
     abs_paths = [
-        a["source_path"] for a in doc["assets"] if Path(a["source_path"]).is_absolute()
-    ] + [
-        a["working_path"] for a in doc["assets"] if Path(a["working_path"]).is_absolute()
+        value
+        for a in doc["assets"]
+        for value in (a.get("source_path"), a.get("working_path"))
+        if value and Path(value).is_absolute()
     ]
     check("所有路径均为相对路径", not abs_paths,
           f"绝对路径: {abs_paths}" if abs_paths else "")
     ok7_wp = True
     for a in doc["assets"]:
         if a["status"] == "ok":
-            wp = ep_target / a["working_path"]
+            working_path = a.get("working_path")
+            if not working_path:
+                ok7_wp = False
+                print(f"    missing working_path: {a.get('asset_id', '<unknown>')}")
+                continue
+            wp = ep_target / working_path
             if not wp.exists():
                 ok7_wp = False
-                print(f"    missing: {a['working_path']}")
+                print(f"    missing: {working_path}")
     check("ok 素材工作副本均存在", ok7_wp)
 except Exception as exc:
     check("assets validate", False, str(exc))

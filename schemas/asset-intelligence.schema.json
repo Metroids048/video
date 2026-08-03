@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "asset-intelligence.schema.json",
+  "title": "Asset intelligence",
+  "type": "object",
+  "required": ["episode_id", "provider", "assets"],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {"type": "string"},
+    "provider": {"type": "string"},
+    "blocked": {"type": "boolean"},
+    "blocking_reason": {"type": ["string", "null"]},
+    "requires_provider_review": {"type": "boolean"},
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "summary", "product_area", "visible_facts", "regions", "recommended_uses"],
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {"type": "string"},
+          "summary": {"type": "string"},
+          "product_area": {"type": "string"},
+          "visible_facts": {"type": "array", "items": {"type": "string"}},
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["region_id", "box", "meaning", "priority"],
+              "additionalProperties": false,
+              "properties": {
+                "region_id": {"type": "string"},
+                "box": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                "meaning": {"type": "string"},
+                "priority": {"type": "number", "minimum": 0, "maximum": 1}
+              }
+            }
+          },
+          "recommended_uses": {"type": "array", "items": {"type": "string"}}
+          ,"metadata": {"type": "object"}
+        }
+      }
+    }
+  }
+}

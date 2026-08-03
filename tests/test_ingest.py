@@ -245,7 +245,7 @@ class TestRunIngest:
             if "photo.png" in a["source_path"]:
                 assert a["sha256"] == png_asset_before["sha256"]   # hash 不变
 
-    def test_landscape_video_proxy_is_vertical(self, ep_dir: Path) -> None:
+    def test_landscape_video_proxy_preserves_original_aspect(self, ep_dir: Path) -> None:
         if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
             pytest.skip("ffmpeg/ffprobe required")
         source = ep_dir / "input" / "screen" / "landscape.mp4"
@@ -264,7 +264,14 @@ class TestRunIngest:
             "ffprobe", "-v", "error", "-select_streams", "v:0",
             "-show_entries", "stream=width,height", "-of", "csv=p=0:s=x", str(proxy),
         ], check=True, capture_output=True, text=True)
-        assert probe.stdout.strip() == "540x960"
+        proxy_width, proxy_height = (int(value) for value in probe.stdout.strip().split("x"))
+        assert proxy_width <= 540
+        assert proxy_height < 960
+        assert abs((proxy_width / proxy_height) - (320 / 180)) < 0.02
+        assert record["original_width"] == 320
+        assert record["original_height"] == 180
+        assert record["proxy_width"] == proxy_width
+        assert record["proxy_height"] == proxy_height
 
 
 def test_empty_input_cli_waits_for_input(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

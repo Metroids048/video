@@ -71,6 +71,10 @@ class EpisodeModel:
         return self._data["mode"]
 
     @property
+    def input_mode(self) -> str:
+        return str(self._data.get("input_mode", "multimodal"))
+
+    @property
     def publishable(self) -> bool:
         return bool(self._data["publishable"])
 
@@ -95,6 +99,7 @@ class EpisodeModel:
         *,
         mode: str = "REFERENCE_ADAPT",
         platforms: list[str] | None = None,
+        input_mode: str = "multimodal",
     ) -> "EpisodeModel":
         """构建全新 Episode 数据（不写磁盘）。"""
         if platforms is None:
@@ -106,11 +111,13 @@ class EpisodeModel:
         data: dict[str, Any] = {
             "id": episode_id,
             "mode": mode,
+            "input_mode": input_mode,
             "publishable": publishable,
             "status": EpisodeStatus.CREATED,
             "platforms": platforms,
             "completed_stages": [],
             "last_error": None,
+            "blocked": False,
             "artifacts": {},
             "title": None,
             "created_at": now,
@@ -151,6 +158,7 @@ class EpisodeModel:
         assert_transition(self.status, target, force=force)
         self._data["status"] = target
         self._data["last_error"] = None  # 清除上次错误
+        self._data["blocked"] = False
         self._data["updated_at"] = _now_iso()
 
     def ensure_stage(self, stage: str, target: str) -> bool:
@@ -174,6 +182,18 @@ class EpisodeModel:
         if self.status != EpisodeStatus.FAILED:
             assert_transition(self.status, EpisodeStatus.FAILED)
             self._data["status"] = EpisodeStatus.FAILED
+        self._data["last_error"] = reason
+        self._data["updated_at"] = _now_iso()
+
+    def block(self, reason: str, *, waiting_for_input: bool = False) -> None:
+        """Stop the active path without pretending the episode is complete."""
+        self._data["blocked"] = True
+        self._data["last_error"] = reason
+        del waiting_for_input
+        target = "BLOCKED"
+        if self.status not in {target, "FAILED"}:
+            self.transition(target)
+        self._data["blocked"] = True
         self._data["last_error"] = reason
         self._data["updated_at"] = _now_iso()
 

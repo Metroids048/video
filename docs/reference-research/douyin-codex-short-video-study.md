@@ -1,6 +1,6 @@
 # 抖音 Codex 短视频流程研究台账
 
-更新时间：2026-07-31
+更新时间：2026-08-03
 
 本台账记录本次会话通过用户 Chrome 打开的 18 条参考页面。研究只提炼流程、镜头语法和工程取舍，不复制原文案、素材、观点、封面或发布内容，也不由项目自动下载第三方视频。
 
@@ -57,7 +57,7 @@
 | Skill | 来源与固定版本 | 处理结果 | 原因 |
 |---|---|---|---|
 | HyperFrames | npm `hyperframes@0.7.68` 官方内置 Skills | 已安装并纳入 doctor/lint/check/render 验收 | V1 的标题、信息卡和结尾卡动效层 |
-| video-shotcraft | `Vincentwei1021/video-shotcraft@d4915443232e89527fdc9d7e79f132ba411fc440`，Apache-2.0 | 已安装到 Codex 全局 Skills；`skills.lock.json` 已固定 | 仅作镜头语法、节奏和声音设计参考，Remotion 不进入核心管线 |
+| video-shotcraft | `Vincentwei1021/video-shotcraft@d4915443232e89527fdc9d7e79f132ba411fc440`，Apache-2.0 | 项目 vendor 至 `third_party_skills/video-shotcraft`（`usage: reference_only`）；`skills.lock.json` 已固定 | 仅作镜头语法、节奏和声音设计参考，Remotion 不进入核心管线 |
 | 子昂自有剪辑 Skill | 页面仅指向作者主页 | 未安装 | 无公开可审计来源、版本和许可，现有项目能力已覆盖 |
 | dy-note 研究辅助 | `Rimagination/dy-note@9a65f0d`，MIT | 未安装 | 核心依赖 `web-access` 在当前环境不存在；本轮已通过 Chrome 完成页面取证，避免制造半可用安装 |
 
@@ -74,3 +74,47 @@
   -> 确定性 QA + 人工视觉复核
   -> 可编辑 delivery/，人工发布
 ```
+
+## 2026-08-03 A+1 查漏
+
+本轮只做缺口对齐与可审计 Skill 入仓，不重爬抖音原片，不把旁路渲染器接到 Episode 完成态，不安装无公开仓的社交 Skill。
+
+参考改编仍只迁移结构、节奏、镜头语法和动效逻辑；不复制原文案、素材、观点、封面；不把抖音短链视频批量写入 `input/`。
+
+### 已 vendor（本轮 `--check` 确认）
+
+| Skill | 本地路径 | 备注 |
+|---|---|---|
+| HyperFrames / hyperframes-cli | `third_party_skills/hyperframes*` | 生产动效层 |
+| Remotion skills | `third_party_skills/remotion*` | 代码驱动成片旁路 |
+| video-use | `third_party_skills/video-use` | 转写/粗剪旁路 |
+| seedance | `third_party_skills/seedance` | 提示词 / 付费路径可选 |
+| ChatCut | `third_party_skills/chatcut/` | MCP 登录本机完成 |
+| capcut-david / cut-skill | `third_party_skills/capcut-david`、`cut-skill` | 剪映草稿旁路 |
+| ip-strategist | `third_party_skills/ip-strategist` | 选题口播，不碰剪辑 |
+| openmontage | `third_party_skills/openmontage` | AGPL；sparse vendor |
+| jianying-editor | `third_party_skills/jianying-editor` | 与 cut-skill 并存分流 |
+| ffmpeg | `third_party_skills/ffmpeg` | 本地 FFmpeg CLI skill |
+| azure-speech | `third_party_skills/azure-speech` | 可选；默认免费 TTS/STT |
+| elevenlabs（+ text-to-speech） | `third_party_skills/elevenlabs` | 可选高清晰配音 |
+| ai-video-shot-prompt | `third_party_skills/ai-video-shot-prompt` | 镜头脚本提示词 |
+| ltx-prompt-director | `third_party_skills/ltx-prompt-director` | LTX 生产提示词 |
+| epidemic-sound | `third_party_skills/epidemic-sound` | curated MCP 入口 |
+| moneyprinterturbo | `third_party_skills/moneyprinterturbo` | 仅 sparse docs/skill |
+
+### 本轮补装 / 对齐
+
+| Skill | 处理 |
+|---|---|
+| video-shotcraft | 从仅全局 `~/.codex/skills` 改为项目 `third_party_skills/video-shotcraft`，pin `d491544`，`reference_only`；已写入 routing / doctor / ensure |
+| seedance-free | 项目自有平替；登记 lock 为 `status: local`，不伪造 GitHub 上游 |
+
+### 明确拒绝（不下载）
+
+| 项 | 原因 |
+|---|---|
+| 子昂 Codex 智能剪辑 / 封面 Skill | 无公开可审计仓库与许可 |
+| dy-note 研究辅助 | 依赖当前环境缺失的 `web-access` |
+| Hermes 全自动发布 / 热搜爬取流水线 | 违反「不自动发布」；角色分工已由 content/media/reviewer 覆盖 |
+| 抖音短链原视频批量入库 | 项目禁止自动下载第三方平台视频 |
+| 宗雷页面中无可审计来源的命名插件 | 不盲装；已有可审计同名能力走现有 vendor |

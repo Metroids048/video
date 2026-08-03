@@ -33,7 +33,7 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 
 - Remotion 代码驱动渲染；
 - CapCut/剪映草稿工具（`capcut-david` / `cut-skill`，原 cut-motion 继任）；
-- ChatCut、video-use、Seedance、OpenMontage、IP Strategist。
+- ChatCut、video-use、Seedance、OpenMontage、Pixelle-Video、IP Strategist。
 
 ## 3. 制作模式
 
@@ -80,6 +80,8 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 ## 5.1 视频任务强制 Skills
 
 **任何视频相关任务开始前，必须先读 `docs/video-plugin-routing.md`，并按场景加载对应第三方 Skill。** 不得跳过路由表。旁路渲染器不得伪造状态机完成态。
+
+路由表覆盖（含本批强制接入）：HyperFrames、Remotion、video-use、Seedance / seedance-free、ChatCut、CapCut（`capcut-david` + `cut-skill`）、**jianying-editor**（与 cut-skill 并存分流）、**ffmpeg**、**azure-speech**、**elevenlabs**、**ai-video-shot-prompt**、**ltx-prompt-director**、**epidemic-sound**、**moneyprinterturbo**、**pixelle-video**、IP Strategist、OpenMontage。
 
 ## 6. 标准流程
 
@@ -157,7 +159,7 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 - V1 最少实现 HookTitle、InfoCard、EndCard。
 - HyperFrames 失败时必须保留 FFmpeg 基础粗剪。
 - 不得把整个业务流程写进 HyperFrames HTML。
-- Remotion / ChatCut / CapCut / video-use / OpenMontage 按 `docs/video-plugin-routing.md` 启用；失败不得静默冒充成功（见 ADR-0006）。
+- Remotion / ChatCut / CapCut / JianyingEditor / video-use / OpenMontage / Pixelle-Video / MoneyPrinterTurbo / FFmpeg·Azure·ElevenLabs·Epidemic Sound·镜头脚本 Skills 按 `docs/video-plugin-routing.md` 启用；失败不得静默冒充成功（见 ADR-0006）。
 
 ## 11. 完成报告
 

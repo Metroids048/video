@@ -20,10 +20,14 @@
           "duration": {"type": "number", "exclusiveMinimum": 0},
           "visual_type": {"type": "string", "enum": ["screen_recording", "image", "video", "b_roll", "motion_graphic", "placeholder"]},
           "asset_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "asset_refs": {"type": "array", "items": {"type": "object"}},
           "caption": {"type": "string"},
           "motion_template": {"type": ["string", "null"], "enum": ["HookTitle", "InfoCard", "EndCard", null]},
           "missing_assets": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-          "notes": {"type": ["string", "null"]}
+          "notes": {"type": ["string", "null"]},
+          "primitive": {"type": ["string", "null"]},
+          "reference_pattern_ids": {"type": "array", "items": {"type": "string"}},
+          "keyframes": {"type": "array", "items": {"type": "object"}}
         }
       },
       "minItems": 1

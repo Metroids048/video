@@ -19,7 +19,7 @@
           "asset_id": {"type": "string"},
           "source_path": {"type": "string"},
           "working_path": {"type": ["string", "null"]},
-          "kind": {"type": "string", "enum": ["video", "audio", "image", "text", "link", "unknown"]},
+          "kind": {"type": "string", "enum": ["video", "audio", "image", "document", "text", "link", "unknown"]},
           "mime_type": {"type": "string"},
           "duration": {"type": ["number", "null"]},
           "width": {"type": ["integer", "null"]},

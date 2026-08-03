@@ -214,6 +214,161 @@ OpenMontage 为 AGPL-3.0。用于正式交付前确认合规。
         shutil.copy2(guide, dest / "AGENT_GUIDE.md")
 
 
+def _write_pixelle_video_entry(dest: Path, repo: Path) -> None:
+    """Curated entry — Pixelle-Video has no upstream SKILL.md; sparse docs only."""
+    dest.mkdir(parents=True, exist_ok=True)
+    rel = repo.relative_to(ROOT).as_posix()
+    guide_note = (
+        f"Sparse checkout at `{rel}` (README / docs / config.example)."
+        if repo.exists()
+        else "Run `npm run skills:vendor` to materialize vendor/repos/pixelle-video."
+    )
+    skill = f"""---
+name: pixelle-video
+description: >
+  【Pixelle-Video】AI 全自动短视频引擎入口。
+  主题一键：文案 → AI 配图/视频 → TTS → BGM → 成片。
+  基于 ComfyUI / RunningHub / 直连 API；产物必须回挂 Episode。
+trigger: Pixelle、Pixelle-Video、主题一键短视频、ComfyUI 短视频引擎
+inputs: []
+read_only:
+  - input/
+outputs: []
+run: "参阅 vendor/repos/pixelle-video/README.md 与 docs/；按官方方式生成后回挂 Episode"
+verify: "确认 MP4 落入 Episode work/ 或 output/，且未伪造 QA_PASSED"
+stop_when: "缺 LLM/ComfyUI/API 凭证或用户停止"
+on_missing_input: "列出服务/密钥缺口并停止，不伪造成片"
+report_format: "命令、退出码、产物路径、已知限制"
+---
+
+# Pixelle-Video 入口
+
+{guide_note}
+
+上游：https://github.com/AIDC-AI/Pixelle-Video
+
+文档站：https://aidc-ai.github.io/Pixelle-Video/zh
+
+## 必读
+
+1. `{rel}/README.md`（或 `README_EN.md`）
+2. `{rel}/docs/`（安装、工作流、API）
+3. `{rel}/config.example.yaml`（本机配置模板；真实密钥只进 `.env` / 本机配置，永不入库）
+
+## 硬规则
+
+1. **禁止**把完整 ComfyUI 模型仓或整仓 Python 包复制进 `third_party_skills/`。
+2. 旁路生成的成片必须落到对应 Episode 的 `work/` 或 `output/`。
+3. 不得跳过 AVS 状态机或伪造 `QA_PASSED`。
+4. LLM / RunningHub / DashScope 等密钥只放本机 `.env`，不写入仓库。
+
+## 与 AVS 的关系
+
+- Episode 状态机仍由 `python -m avs` 管理。
+- Pixelle-Video 是主题一键短视频旁路（与 `moneyprinterturbo` 类似），不是默认主链替代。
+- 共享协议仍是 `timeline.json`；旁路产物在交付说明中标明来源。
+
+## Agent 操作（摘要）
+
+1. 确认用户要「主题 → 成片」且同意走 Pixelle 旁路。
+2. 检查本机是否已按官方文档安装（Windows 整合包或源码 + uv）。
+3. 缺凭证时一次性列出缺口；有凭证则按 README/API 生成竖屏短视频。
+4. 将最终 MP4 复制/挂载到当前 Episode 工作目录并报告路径。
+"""
+    (dest / "SKILL.md").write_text(skill, encoding="utf-8")
+    readme = repo / "README.md"
+    if readme.is_file():
+        shutil.copy2(readme, dest / "README.md")
+
+
+def _write_epidemic_sound_entry(dest: Path, pkg: dict) -> None:
+    """Curated thin skill — Epidemic Sound has MCP, not a public SKILL.md repo."""
+    dest.mkdir(parents=True, exist_ok=True)
+    mcp_url = pkg.get("source_repository") or "https://www.epidemicsound.com/a/mcp-service/mcp"
+    skill = f"""---
+name: epidemic-sound
+description: >
+  【Epidemic Sound】版权音乐 / SFX 素材检索入口。
+  官方提供 MCP（无公开 GitHub SKILL.md 仓）。用于短视频 BGM、音效匹配；
+  无账号时标记素材缺口，不硬凑无关音频。
+trigger: 版权音乐、Epidemic Sound、BGM 检索、配乐素材
+inputs: []
+read_only:
+  - input/
+outputs: []
+run: "通过官方 MCP 检索曲目；下载到 Episode work/ 工作副本"
+verify: "记录曲目 ID/许可范围与本地音频路径"
+stop_when: "无账号/MCP 不可用或用户停止"
+on_missing_input: "标记音乐缺口并停止，不伪造授权"
+report_format: "命令、退出码、产物路径、已知限制"
+---
+
+# Epidemic Sound（版权音乐）入口
+
+上游 MCP：{mcp_url}
+
+GitHub org（无 Agent Skill 仓）：https://github.com/epidemicsound
+
+## 硬规则
+
+1. 不将 API Key / Cookie / Token 写入仓库；仅用本机 `.env` 或 MCP 登录态。
+2. 无账号或 MCP 失败时：在素材缺口清单中标记，**禁止**用明显无关音频硬凑。
+3. 下载的音频只进 Episode `work/` 工作副本，不得写入 `input/`。
+4. 旁路配乐不得伪造 Episode 状态机完成态。
+
+## 与 AVS 的关系
+
+- Episode 状态机仍由 `python -m avs` 管理。
+- 选中曲目路径应可被 `timeline.json` 音频轨引用或在交付说明中标明。
+- 默认仍可用本地/免版税平替；Epidemic Sound 为版权曲库升级路径。
+
+## Agent 操作
+
+1. 确认 MCP `epidemic-sound`（或等价）已配置。
+2. 按情绪/时长/BPM 检索，记录 track id 与许可范围。
+3. 将预览或授权下载落到 `work/audio/`。
+"""
+    (dest / "SKILL.md").write_text(skill, encoding="utf-8")
+
+
+def _vendor_curated_skill(name: str, pkg: dict, skills_dir: Path) -> dict:
+    out_name = pkg.get("skill_dir_name", name)
+    out_dir = skills_dir / out_name
+    if name == "epidemic-sound" or out_name == "epidemic-sound":
+        _write_epidemic_sound_entry(out_dir, pkg)
+    else:
+        raise RuntimeError(f"[{name}] unknown curated_skill template")
+    return {
+        "source_repository": pkg.get("source_repository", ""),
+        "commit": "",
+        "license": pkg.get("license", "unknown"),
+        "usage": pkg.get("usage", "production_allowed"),
+        "status": "vendored",
+        "install_method": "curated_skill",
+        "repo_path": "",
+        "destinations": [out_dir.relative_to(ROOT).as_posix()],
+        "source_sha256": _tree_hash(out_dir),
+        "remotion_primary_renderer": False,
+        "note": pkg.get("note", ""),
+    }
+
+
+def _copy_named_skills(repo: Path, skills_dir: Path, pkg: dict, out_dir: Path) -> None:
+    """Copy listed top-level skill dirs; primary_skill also copied to skill_dir_name."""
+    names = list(pkg.get("skill_names") or [])
+    primary = pkg.get("primary_skill") or (names[0] if names else "")
+    if not names:
+        raise RuntimeError("multi_named requires skill_names")
+    for child_name in names:
+        src = repo / child_name
+        if not src.is_dir() or not (src / "SKILL.md").is_file():
+            raise RuntimeError(f"missing skill dir {child_name} under {repo}")
+        _copy_tree(src, skills_dir / child_name)
+    if primary:
+        primary_src = repo / primary
+        _copy_tree(primary_src, out_dir)
+
+
 def _vendor_npm_hyperframes(pkg: dict, skills_dir: Path) -> dict:
     names = pkg.get("skill_names") or ["hyperframes", "hyperframes-cli"]
     source_root = ROOT / "node_modules" / "hyperframes" / "dist" / "skills"
@@ -246,6 +401,28 @@ def _vendor_npm_hyperframes(pkg: dict, skills_dir: Path) -> dict:
     }
 
 
+def _vendor_local_skill(name: str, pkg: dict, skills_dir: Path) -> dict:
+    """Register an in-repo skill (no git clone)."""
+    out_name = pkg.get("skill_dir_name", name)
+    out_dir = skills_dir / out_name
+    if not (out_dir / "SKILL.md").is_file():
+        raise RuntimeError(
+            f"[{name}] local skill missing: {out_dir.relative_to(ROOT).as_posix()}/SKILL.md"
+        )
+    return {
+        "source_repository": None,
+        "commit": None,
+        "license": pkg.get("license", "project"),
+        "usage": pkg.get("usage", "production_allowed"),
+        "status": "local",
+        "install_method": "local_skill",
+        "destinations": [out_dir.relative_to(ROOT).as_posix()],
+        "source_sha256": _tree_hash(out_dir),
+        "remotion_primary_renderer": bool(pkg.get("remotion_primary_renderer", False)),
+        "note": pkg.get("note", ""),
+    }
+
+
 def _vendor_git_package(name: str, pkg: dict, repos_dir: Path, skills_dir: Path) -> dict:
     url = pkg["source_repository"]
     dest = repos_dir / name
@@ -259,7 +436,12 @@ def _vendor_git_package(name: str, pkg: dict, repos_dir: Path, skills_dir: Path)
     out_dir = skills_dir / out_name
 
     if skill_hint == "curated_entry":
-        _write_openmontage_entry(out_dir, dest)
+        if name in {"pixelle-video", "pixelle_video"} or out_name == "pixelle-video":
+            _write_pixelle_video_entry(out_dir, dest)
+        else:
+            _write_openmontage_entry(out_dir, dest)
+    elif skill_hint == "multi_named":
+        _copy_named_skills(dest, skills_dir, pkg, out_dir)
     else:
         skill_root = _find_skill_root(dest, skill_hint)
         if skill_root is None:
@@ -304,7 +486,6 @@ def _vendor_git_package(name: str, pkg: dict, repos_dir: Path, skills_dir: Path)
                 # Copy all sibling skill packages
                 for child in parent.iterdir():
                     if child.is_dir() and (child / "SKILL.md").is_file():
-                        target_name = child.name if child.name != out_name else out_name
                         # For chatcut, nest under chatcut/ or flatten
                         if name == "chatcut":
                             nest = skills_dir / "chatcut" / child.name
@@ -323,6 +504,12 @@ def _vendor_git_package(name: str, pkg: dict, repos_dir: Path, skills_dir: Path)
         # Ensure lock destination exists
         raise RuntimeError(f"[{name}] failed to produce {out_dir}")
 
+    destinations = [out_dir.relative_to(ROOT).as_posix()]
+    for extra in pkg.get("skill_names") or []:
+        extra_path = skills_dir / extra
+        if extra_path.is_dir() and extra_path != out_dir:
+            destinations.append(extra_path.relative_to(ROOT).as_posix())
+
     return {
         "source_repository": url,
         "commit": head or commit or "",
@@ -331,7 +518,7 @@ def _vendor_git_package(name: str, pkg: dict, repos_dir: Path, skills_dir: Path)
         "status": "vendored",
         "install_method": "git_sparse_or_shallow",
         "repo_path": dest.relative_to(ROOT).as_posix(),
-        "destinations": [out_dir.relative_to(ROOT).as_posix()],
+        "destinations": destinations,
         "source_sha256": _tree_hash(out_dir),
         "remotion_primary_renderer": bool(pkg.get("remotion_primary_renderer", False)),
         "note": pkg.get("note", ""),
@@ -374,11 +561,28 @@ def _update_lock(entries: dict[str, dict], check_only: bool) -> list[str]:
     for name, details in entries.items():
         current = third.get(name, {})
         if check_only:
-            if current.get("status") not in {"vendored", "installed", "installed_offline_bundle"}:
+            if current.get("status") not in {
+                "vendored",
+                "installed",
+                "installed_offline_bundle",
+                "local",
+            }:
                 errors.append(f"lock missing/invalid for {name}")
                 continue
-            if details.get("source_sha256") and current.get("source_sha256") != details["source_sha256"]:
-                errors.append(f"lock hash mismatch for {name}")
+            # Overlay / npm install_skills may mutate these trees after pin.
+            mutable = {"hyperframes", "video-use", "seedance-free"}
+            if (
+                details.get("source_sha256")
+                and current.get("source_sha256") != details["source_sha256"]
+            ):
+                if name in mutable:
+                    print(
+                        f"[WARN] lock hash drift for {name} "
+                        "(expected after overlays / install_skills)",
+                        file=sys.stderr,
+                    )
+                else:
+                    errors.append(f"lock hash mismatch for {name}")
             continue
         merged = {**current, **details, "installed_at": now}
         if json.dumps(current, sort_keys=True) != json.dumps(merged, sort_keys=True):
@@ -450,10 +654,11 @@ def main() -> int:
                 if not path.is_dir():
                     failures.append(f"missing third_party_skills/{out_name}")
                     continue
+                status = "local" if kind == "local_skill" else "vendored"
                 entries[name] = {
                     "source_repository": pkg.get("source_repository"),
                     "source_sha256": _tree_hash(path),
-                    "status": "vendored",
+                    "status": status,
                     "usage": pkg.get("usage"),
                     "license": pkg.get("license"),
                     "remotion_primary_renderer": bool(pkg.get("remotion_primary_renderer", False)),
@@ -465,6 +670,10 @@ def main() -> int:
                 entries["hyperframes"] = _vendor_npm_hyperframes(pkg, skills_dir)
             elif kind == "git_skills":
                 entries[name] = _vendor_git_package(name, pkg, repos_dir, skills_dir)
+            elif kind == "local_skill":
+                entries[name] = _vendor_local_skill(name, pkg, skills_dir)
+            elif kind == "curated_skill":
+                entries[name] = _vendor_curated_skill(name, pkg, skills_dir)
             else:
                 failures.append(f"unknown kind for {name}: {kind}")
         except Exception as exc:  # noqa: BLE001
@@ -496,6 +705,19 @@ def main() -> int:
         for item in failures:
             print(f"  - {item}", file=sys.stderr)
         return 1
+
+    if not args.check and not args.skip_git:
+        # Free-provider overlays mutate video-use / seedance-free; refresh lock hashes.
+        overlay = ROOT / "scripts" / "apply_free_provider_overlays.py"
+        if overlay.is_file():
+            ov = _run([sys.executable, str(overlay)], cwd=ROOT)
+            if ov.returncode != 0:
+                print(ov.stdout or "", end="")
+                print(ov.stderr or "", file=sys.stderr)
+                print("[FAIL] apply_free_provider_overlays failed", file=sys.stderr)
+                return 1
+            if ov.stdout:
+                print(ov.stdout.strip())
 
     print(f"[OK] vendored {len(entries)} third-party skill packages")
     return 0

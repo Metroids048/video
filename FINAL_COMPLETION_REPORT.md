@@ -1,4 +1,6 @@
-# 🎬 AI量化交易视频制作 - 最终完成报告
+# AI 量化交易视频制作历史报告（已被真实验收结果取代）
+
+> 本文的“最终完成”措辞不再有效。请以当前 Episode 的 `episode.json`、`work/qa/visual-review.json` 和新鲜验证命令为准。当前 `EP-QUANT-ACCOUNT-INTRO-20260803` 仍为 `BLOCKED`，不能进入 `QA_PASSED`、`DELIVERY_READY` 或人工发布。
 
 **项目**: EP-20260801-QUANT-INTRO  
 **完成时间**: 2026-08-01 14:00  

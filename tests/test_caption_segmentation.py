@@ -1,8 +1,6 @@
 """Tests for semantic caption segmentation."""
 from __future__ import annotations
 
-import pytest
-
 from avs.render.caption_segmentation import (
     CaptionCue,
     check_caption_quality,
@@ -74,6 +72,8 @@ def test_format_cue_lines_splits_long_text() -> None:
         # Allow overflow indicator
         char_count = len([c for c in line.replace("...", "") if "一" <= c <= "鿿"])
         assert char_count <= 15
+    assert result.replace("\n", "") == text
+    assert "..." not in result
 
 
 def test_format_cue_lines_respects_max_lines() -> None:

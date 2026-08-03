@@ -1,8 +1,6 @@
 """Tests for reference library loader and validator."""
 from __future__ import annotations
 
-import pytest
-
 from avs.reference.library import (
     find_patterns_by_category,
     find_patterns_by_source,

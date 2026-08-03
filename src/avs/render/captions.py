@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from avs.timeline.models import Timeline
+from avs.render.caption_segmentation import format_cue_lines, segment_caption
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,19 @@ def build_srt(timeline: Timeline, output_path: Path) -> int:
 
     total_dur = timeline.total_duration or timeline.compute_duration()
     entries: list[tuple[float, float, str]] = []
+    graphic_track = next((track for track in timeline.tracks if track.kind == "graphic"), None)
+    graphic_clips = graphic_track.clips if graphic_track else []
 
     for clip in sorted(caption_track.clips, key=lambda c: c.start):
         text = clip.text or ""
         if not text.strip():
+            continue
+        if any(
+            abs(graphic.start - clip.start) < 0.01
+            and abs(graphic.duration - clip.duration) < 0.01
+            and (graphic.text or "").strip() == text.strip()
+            for graphic in graphic_clips
+        ):
             continue
         start = clip.start
         end = clip.end
@@ -54,19 +64,15 @@ def build_srt(timeline: Timeline, output_path: Path) -> int:
 
         if end <= start:
             continue
-        entries.append((start, end, text))
+        for cue in segment_caption(text, start, end):
+            entries.append((cue.start, cue.end, format_cue_lines(cue.text)))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []
     for i, (s, e, text) in enumerate(entries, start=1):
         lines.append(str(i))
         lines.append(f"{_seconds_to_srt_time(s)} --> {_seconds_to_srt_time(e)}")
-        # 清理文本，限制每行60字
-        clean = text.replace("\n", " ").strip()
-        if len(clean) > 60:
-            # 按60字折行
-            words = [clean[j:j+60] for j in range(0, len(clean), 60)]
-            clean = "\n".join(words)
+        clean = text.strip()
         lines.append(clean)
         lines.append("")
 

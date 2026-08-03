@@ -17,7 +17,10 @@ providers:
       device: "cpu"
 
   tts:
-    default: "none"      # V1 默认不使用 TTS；用户提供音频
+    default: "edge_tts"
+    edge_tts:
+      voice: "zh-CN-YunxiNeural"
+      rate: "+8%"
 
   vision:
     default: "anthropic"

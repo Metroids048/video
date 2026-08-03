@@ -40,14 +40,14 @@ globs:
 
 ## 多渲染器（ADR-0006）
 
-- Remotion / ChatCut / CapCut / video-use / OpenMontage 允许进入正式链路
+- Remotion / ChatCut / CapCut / video-use / OpenMontage / Pixelle-Video 允许进入正式链路
 - 开始前读 `docs/video-plugin-routing.md` 并加载对应 Skill
 - 旁路产物必须回挂 Episode `work/` 或 `output/`；失败不得静默成功
 
 ## 其它视频插件（强制路由）
 
 处理剪辑/成片/提示词/策略前，按 `docs/video-plugin-routing.md` 加载：
-Remotion、video-use、Seedance、ChatCut、capcut-david、cut-skill、ip-strategist、openmontage。
+Remotion、video-use、Seedance、ChatCut、capcut-david、cut-skill、ip-strategist、openmontage、pixelle-video、moneyprinterturbo。
 禁止伪造 QA 状态。
 
 ## 音频

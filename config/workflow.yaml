@@ -6,33 +6,41 @@ workflow:
     CREATED:
       - INGESTED
       - WAITING_FOR_INPUT
+      - BLOCKED
       - FAILED
     INGESTED:
       - REFERENCE_READY
       - CONTENT_READY      # 无参考视频时跳过
       - WAITING_FOR_INPUT
+      - BLOCKED
       - FAILED
     REFERENCE_READY:
       - CONTENT_READY
       - WAITING_FOR_REVIEW
+      - BLOCKED
       - FAILED
     CONTENT_READY:
       - ASSETS_READY
       - WAITING_FOR_REVIEW
+      - BLOCKED
       - FAILED
     ASSETS_READY:
       - TIMELINE_READY
       - WAITING_FOR_INPUT
+      - BLOCKED
       - FAILED
     TIMELINE_READY:
       - ROUGH_CUT_READY
       - FAILED
+      - BLOCKED
     ROUGH_CUT_READY:
       - QA_PASSED
       - WAITING_FOR_REVIEW
+      - BLOCKED
       - FAILED
     QA_PASSED:
       - DELIVERY_READY
+      - BLOCKED
       - FAILED
     DELIVERY_READY: []       # 终态；只有 --force reset 可离开
     WAITING_FOR_INPUT:
@@ -44,6 +52,7 @@ workflow:
       - ASSETS_READY
       - QA_PASSED
       - FAILED
+    BLOCKED: []
     FAILED:
       - CREATED              # 通过 reset --to CREATED --force 重试
 
@@ -56,6 +65,12 @@ workflow:
   # 阶段名称（用于 completed_stages 追踪）
   stages:
     - ingest
+    - analyze
+    - plan
+    - preview
+    - visual-review
+    - final-render
+    - approve
     - reference
     - content
     - assets
@@ -63,3 +78,4 @@ workflow:
     - rough_cut
     - qa
     - delivery
+    - export
