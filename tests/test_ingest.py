@@ -292,3 +292,48 @@ def test_empty_input_cli_waits_for_input(tmp_path: Path, monkeypatch: pytest.Mon
     assert model.blocked_stage == "ingest"
     assert "ingest" not in model.completed_stages
     assert load_manifest(ep_dir)["assets"] == []
+
+
+def test_missing_must_use_input_stays_resumable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path
+    real_root = Path(__file__).resolve().parents[1]
+    shutil.copytree(real_root / "config", root / "config")
+    (root / "AGENTS.md").write_text("# test", encoding="utf-8")
+    ep_dir = root / "episodes" / "active" / "EP-MISSING"
+    ep_dir.mkdir(parents=True)
+    create_episode_skeleton(ep_dir)
+    EpisodeModel.create("EP-MISSING").save(ep_dir / "episode.json")
+    (ep_dir / "input" / "input-manifest.json").write_text(
+        '{"assets":[{"asset_id":"required","source_path":"input/images/required.png","must_use":true}]}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("avs.cli._find_project_root", lambda: root)
+
+    result = CliRunner().invoke(main, ["ingest", "EP-MISSING"])
+
+    model = EpisodeModel.load(ep_dir / "episode.json")
+    assert result.exit_code == 2, result.output
+    assert model.status == "WAITING_FOR_INPUT"
+    assert model.blocked_stage == "ingest"
+    assert "ingest" not in model.completed_stages
+
+
+def test_unassigned_audio_role_stays_resumable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path
+    real_root = Path(__file__).resolve().parents[1]
+    shutil.copytree(real_root / "config", root / "config")
+    (root / "AGENTS.md").write_text("# test", encoding="utf-8")
+    ep_dir = root / "episodes" / "active" / "EP-AUDIO"
+    ep_dir.mkdir(parents=True)
+    create_episode_skeleton(ep_dir)
+    EpisodeModel.create("EP-AUDIO").save(ep_dir / "episode.json")
+    _make_wav(ep_dir / "input" / "audio" / "narration.wav")
+    monkeypatch.setattr("avs.cli._find_project_root", lambda: root)
+
+    result = CliRunner().invoke(main, ["ingest", "EP-AUDIO"])
+
+    model = EpisodeModel.load(ep_dir / "episode.json")
+    assert result.exit_code == 2, result.output
+    assert model.status == "WAITING_FOR_INPUT"
+    assert model.blocked_stage == "ingest"
+    assert "ingest" not in model.completed_stages

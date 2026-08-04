@@ -380,11 +380,6 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
     ep_json = episode_json_path(ep_dir)
     try:
         model = EpisodeModel.load(ep_json)
-    except InputCompletenessError as exc:
-        console.print(f"[yellow]⚠ ingest 输入不完整: {exc}[/yellow]")
-        model.block(str(exc), waiting_for_input=True)
-        model.save(ep_json)
-        sys.exit(2)
     except Exception as exc:
         console.print(f"[red]✗ 加载 episode.json 失败: {exc}[/red]")
         sys.exit(1)
@@ -401,6 +396,11 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
                 "video_crf": proxy.get("crf", 28),
             },
         )
+    except InputCompletenessError as exc:
+        model.block(str(exc), stage="ingest", waiting_for_input=True)
+        model.save(ep_json)
+        console.print(f"[yellow]⚠ ingest 输入不完整: {exc}[/yellow]")
+        raise click.exceptions.Exit(2)
     except Exception as exc:
         console.print(f"[red]✗ ingest 失败: {exc}[/red]")
         model.fail(str(exc))
@@ -409,8 +409,7 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
 
     if not assets:
         try:
-            if model.status != "WAITING_FOR_INPUT":
-                model.transition("WAITING_FOR_INPUT")
+            model.block("input/ 中没有素材", stage="ingest", waiting_for_input=True)
             model.save(ep_json)
         except Exception as exc:
             console.print(f"[red]✗ 状态转换失败: {exc}[/red]")
@@ -418,7 +417,7 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
         console.print(
             "[yellow]⚠ input/ 中没有素材，已生成空清单；状态 → WAITING_FOR_INPUT[/yellow]"
         )
-        sys.exit(0)
+        raise click.exceptions.Exit(2)
 
     unassigned_audio = [
         asset["asset_id"] for asset in assets
@@ -426,13 +425,14 @@ def ingest_cmd(episode_id: str, force: bool) -> None:
     ]
     if unassigned_audio:
         reason = "音频素材缺少 Manifest audio_role: " + ", ".join(unassigned_audio)
-        model.block(reason, waiting_for_input=True)
+        model.block(reason, stage="ingest", waiting_for_input=True)
         model.save(ep_json)
         console.print(f"[yellow]⚠ {reason}[/yellow]")
-        sys.exit(2)
+        raise click.exceptions.Exit(2)
 
     # 状态转换 → INGESTED；不允许静默跳过非法状态
     try:
+        model.clear_block(stage="ingest")
         model.ensure_stage("ingest", "INGESTED")
         model.complete_stage("ingest")
         model.save(ep_json)
