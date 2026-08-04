@@ -286,7 +286,9 @@ def test_empty_input_cli_waits_for_input(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.setattr("avs.cli._find_project_root", lambda: root)
 
     result = CliRunner().invoke(main, ["ingest", "EP-EMPTY"])
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 2, result.output
     model = EpisodeModel.load(ep_dir / "episode.json")
     assert model.status == "WAITING_FOR_INPUT"
+    assert model.blocked_stage == "ingest"
+    assert "ingest" not in model.completed_stages
     assert load_manifest(ep_dir)["assets"] == []

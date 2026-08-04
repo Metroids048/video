@@ -13,7 +13,9 @@ from click.testing import CliRunner
 from avs.content import init_content_workspace
 from avs.cli import main
 from avs.models.episode import EpisodeModel
-from avs.workflow import action_for_episode, run_automatic_steps
+import pytest
+
+from avs.workflow import WorkflowExecutionError, action_for_episode, run_automatic_steps
 
 
 def _episode(tmp_path: Path, status: str = "CREATED") -> tuple[Path, EpisodeModel]:
@@ -134,3 +136,41 @@ def test_workflow_next_is_registered_on_canonical_cli(tmp_path: Path, monkeypatc
     payload = json.loads(result.output)
     assert payload["status"] == "CREATED"
     assert payload["next_action"]["command"] == ["ingest"]
+
+
+def test_waiting_for_input_wins_over_active_manifest(tmp_path: Path) -> None:
+    ep_dir, model = _episode(tmp_path)
+    (ep_dir / "work").mkdir(exist_ok=True)
+    (ep_dir / "work" / "input-manifest.json").write_text(
+        '{"episode_id":"WF-TEST","assets":[]}', encoding="utf-8"
+    )
+    model.block("缺素材", stage="ingest", waiting_for_input=True)
+    model.save(ep_dir / "episode.json")
+
+    action = action_for_episode(ep_dir, model)
+
+    assert action.kind == "input"
+    assert action.stage == "ingest"
+    assert action.command == ("ingest",)
+
+
+def test_resume_treats_exit_two_as_controlled_pause(tmp_path: Path) -> None:
+    ep_dir, model = _episode(tmp_path)
+    model.block("缺素材", stage="ingest", waiting_for_input=True)
+    model.save(ep_dir / "episode.json")
+
+    result = run_automatic_steps(
+        ep_dir,
+        command_runner=lambda command, force: 2,
+    )
+
+    assert result.controlled_pause is True
+    assert result.last_exit_code == 2
+    assert result.action.stage == "ingest"
+
+
+def test_resume_raises_for_exit_one(tmp_path: Path) -> None:
+    ep_dir, _ = _episode(tmp_path)
+
+    with pytest.raises(WorkflowExecutionError):
+        run_automatic_steps(ep_dir, command_runner=lambda command, force: 1)

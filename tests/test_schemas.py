@@ -49,6 +49,7 @@ class TestEpisodeSchema:
             "status": "CREATED",
             "platforms": ["douyin"],
             "completed_stages": [],
+            "blocked_stage": None,
             "last_error": None,
             "artifacts": {},
             "title": None,
@@ -56,6 +57,23 @@ class TestEpisodeSchema:
             "updated_at": "2026-07-20T13:00:00+00:00",
         }
         jsonschema.validate(data, schema)  # 不应抛异常
+
+    def test_valid_blocked_stage(self, schema: dict):
+        data = {
+            "id": "EP-0001",
+            "mode": "REFERENCE_ADAPT",
+            "publishable": True,
+            "status": "INGESTED",
+            "platforms": ["douyin"],
+            "completed_stages": ["ingest"],
+            "blocked": True,
+            "blocked_stage": "analyze",
+            "last_error": "缺 Provider",
+            "artifacts": {},
+            "created_at": "2026-07-20T13:00:00+00:00",
+            "updated_at": "2026-07-20T13:00:00+00:00",
+        }
+        jsonschema.validate(data, schema)
 
     def test_missing_required_field(self, schema: dict):
         data = {"id": "EP-0001"}

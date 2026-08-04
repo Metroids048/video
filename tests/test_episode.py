@@ -201,6 +201,31 @@ class TestEpisodeModel:
         m.transition(EpisodeStatus.CONTENT_READY)
         assert m.ensure_stage("ingest", EpisodeStatus.INGESTED) is False
 
+    def test_waiting_block_preserves_retry_stage(self):
+        model = EpisodeModel.create("EP-0001")
+
+        model.block("缺素材", stage="ingest", waiting_for_input=True)
+
+        assert model.status == EpisodeStatus.WAITING_FOR_INPUT
+        assert model.to_dict()["blocked"] is True
+        assert model.blocked_stage == "ingest"
+
+    def test_provider_block_preserves_lifecycle_status(self):
+        model = EpisodeModel.create("EP-0001")
+        model.transition(EpisodeStatus.INGESTED)
+
+        model.block("缺 Provider", stage="analyze")
+
+        assert model.status == EpisodeStatus.INGESTED
+        assert model.blocked_stage == "analyze"
+
+    def test_blocked_model_cannot_complete_stage(self):
+        model = EpisodeModel.create("EP-0001")
+        model.block("缺 Provider", stage="analyze")
+
+        with pytest.raises(EpisodeValidationError):
+            model.complete_stage("analyze")
+
 
 # ── REFERENCE_CLONE publishable 规则 ─────────────────────────────────
 
