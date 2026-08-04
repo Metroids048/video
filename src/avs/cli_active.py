@@ -89,14 +89,18 @@ def register_commands(main_group: click.Group) -> None:
             shot_plan = json.loads((ep_dir / "work/content/shot-plan.json").read_text(encoding="utf-8"))
             intelligence = json.loads((ep_dir / "work/analysis/asset-intelligence.json").read_text(encoding="utf-8"))
             selection = json.loads((ep_dir / "work/content/reference-selection.json").read_text(encoding="utf-8"))
+            retry_force = force or model.blocked_stage == "visual-review"
             report = review_video(
                 ep_dir, script=script, evidence_map=evidence, shot_plan=shot_plan,
-                intelligence=intelligence, selection=selection, force=force,
+                intelligence=intelligence, selection=selection, force=retry_force,
             )
-            model.complete_stage("visual-review")
             if not report["passed"]:
-                model.block("视觉审核未通过或被 Provider 阻塞")
-            model.save(ep_dir / "episode.json")
+                model.block("视觉审核未通过或被 Provider 阻塞", stage="visual-review")
+                model.save(ep_dir / "episode.json")
+            else:
+                model.clear_block(stage="visual-review")
+                model.complete_stage("visual-review")
+                model.save(ep_dir / "episode.json")
         except Exception as exc:
             console.print(f"[red]✗ visual-review 失败: {exc}[/red]")
             raise click.exceptions.Exit(2)

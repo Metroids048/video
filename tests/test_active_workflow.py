@@ -9,8 +9,10 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+from click.testing import CliRunner
 
 from avs.active import active_analyze, active_final_render, active_preview
+from avs.cli import main
 from avs.ingest import run_ingest
 from avs.models.episode import EpisodeModel
 from avs.paths import create_episode_skeleton
@@ -97,6 +99,84 @@ def test_analyze_retries_blocked_provider_result_with_force(tmp_path: Path) -> N
     assert "analyze" in resumed.completed_stages
     assert resumed.blocked is False
     assert resumed.blocked_stage is None
+
+
+def _visual_review_episode(tmp_path: Path, episode_id: str) -> tuple[Path, EpisodeModel]:
+    ep_dir = tmp_path / episode_id
+    ep_dir.mkdir()
+    create_episode_skeleton(ep_dir)
+    for relative in (
+        "work/content/script.json",
+        "work/content/evidence-map.json",
+        "work/content/shot-plan.json",
+        "work/content/reference-selection.json",
+        "work/analysis/asset-intelligence.json",
+    ):
+        path = ep_dir / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}", encoding="utf-8")
+    model = EpisodeModel.create(episode_id)
+    for status in ("INGESTED", "CONTENT_READY", "ASSETS_READY", "TIMELINE_READY"):
+        model.transition(status)
+    model.save(ep_dir / "episode.json")
+    return ep_dir, model
+
+
+def test_visual_review_provider_block_is_not_completed_and_retries(tmp_path: Path, monkeypatch) -> None:
+    ep_dir, model = _visual_review_episode(tmp_path, "EP-VISION")
+    provider_blocked = {
+        "passed": False,
+        "blocked": True,
+        "failures": [{"failure_code": "VISION_PROVIDER_UNAVAILABLE"}],
+    }
+    monkeypatch.setattr("avs.cli_active._episode", lambda _episode_id: (ep_dir, model))
+
+    with patch("avs.qa.visual_reviewer.review_video", return_value=provider_blocked):
+        result = CliRunner().invoke(main, ["visual-review", "EP-VISION"])
+
+    paused = EpisodeModel.load(ep_dir / "episode.json")
+    assert result.exit_code == 2, result.output
+    assert "visual-review" not in paused.completed_stages
+    assert paused.blocked_stage == "visual-review"
+    assert action_for_episode(ep_dir, paused).command == ("visual-review",)
+
+    passed = {"passed": True, "blocked": False, "failures": []}
+    monkeypatch.setattr("avs.cli_active._episode", lambda _episode_id: (ep_dir, paused))
+    with patch("avs.qa.visual_reviewer.review_video", return_value=passed) as review_video:
+        result = CliRunner().invoke(main, ["visual-review", "EP-VISION"])
+
+    resumed = EpisodeModel.load(ep_dir / "episode.json")
+    assert result.exit_code == 0, result.output
+    assert review_video.call_args.kwargs["force"] is True
+    assert "visual-review" in resumed.completed_stages
+    assert resumed.blocked_stage is None
+
+
+def test_visual_review_semantic_failure_requires_human_reset(tmp_path: Path, monkeypatch) -> None:
+    ep_dir, model = _visual_review_episode(tmp_path, "EP-SEMANTIC")
+    semantic_failure = {
+        "passed": False,
+        "blocked": True,
+        "failures": [{"failure_code": "SEMANTIC_MISMATCH"}],
+    }
+    monkeypatch.setattr("avs.cli_active._episode", lambda _episode_id: (ep_dir, model))
+
+    def write_semantic_failure(*args, **kwargs):
+        report_path = ep_dir / "work" / "qa" / "visual-review.json"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(semantic_failure), encoding="utf-8")
+        return semantic_failure
+
+    with patch("avs.qa.visual_reviewer.review_video", side_effect=write_semantic_failure):
+        result = CliRunner().invoke(main, ["visual-review", "EP-SEMANTIC"])
+
+    paused = EpisodeModel.load(ep_dir / "episode.json")
+    action = action_for_episode(ep_dir, paused)
+    assert result.exit_code == 2, result.output
+    assert "visual-review" not in paused.completed_stages
+    assert action.kind == "human"
+    assert action.command is None
+    assert "CONTENT_READY" in action.summary
 
 
 def test_screenshot_intro_uses_explicit_notes_for_preview_but_marks_provider_review_pending(tmp_path: Path, monkeypatch) -> None:
