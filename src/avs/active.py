@@ -46,6 +46,7 @@ def _sha256(path: Path) -> str:
 
 def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
     manifest = _read(ep_dir / "work" / "input-manifest.json")
+    retry_force = force or model.blocked_stage == "analyze"
     # screenshot_intro 只允许依据用户明确备注生成“待 Provider 复核”的预览
     # 分析；最终 visual-review 仍会要求真实 Vision Provider。
     intelligence = analyze_assets(
@@ -53,12 +54,11 @@ def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
         manifest=manifest,
         require_provider=model.input_mode != "screenshot_intro",
         allow_manual_notes=model.input_mode == "screenshot_intro",
-        force=force,
+        force=retry_force,
     )
-    recording = analyze_recordings(ep_dir, manifest=manifest, force=force)
+    recording = analyze_recordings(ep_dir, manifest=manifest, force=retry_force)
     documents = analyze_documents(ep_dir, manifest)
     transcription = transcribe_audio_assets(ep_dir, manifest)
-    model.complete_stage("analyze")
     model.to_dict().setdefault("artifacts", {})
     reasons = [
         str(item.get("blocking_reason") or "分析被阻塞")
@@ -68,7 +68,11 @@ def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
     if documents.get("blocked"):
         reasons.append("必须使用的文档无法提取")
     if reasons:
-        model.block("; ".join(reasons))
+        model.block("; ".join(reasons), stage="analyze")
+        model.save(ep_dir / "episode.json")
+        return {"asset_intelligence": intelligence, "recording_analysis": recording, "document_analysis": documents, "transcription": transcription}
+    model.clear_block(stage="analyze")
+    model.complete_stage("analyze")
     model.save(ep_dir / "episode.json")
     return {"asset_intelligence": intelligence, "recording_analysis": recording, "document_analysis": documents, "transcription": transcription}
 

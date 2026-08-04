@@ -48,7 +48,55 @@ def test_ingest_writes_active_manifest_and_analyze_blocks_without_provider(tmp_p
     assert result["asset_intelligence"]["blocked"] is True
     reloaded = EpisodeModel.load(ep_dir / "episode.json")
     assert reloaded.to_dict()["blocked"] is True
-    assert action_for_episode(ep_dir, reloaded).stage == "blocked"
+    assert action_for_episode(ep_dir, reloaded).stage == "analyze"
+
+
+def test_analyze_retries_blocked_provider_result_with_force(tmp_path: Path) -> None:
+    ep_dir = tmp_path / "EP-RETRY"
+    ep_dir.mkdir()
+    create_episode_skeleton(ep_dir)
+    (ep_dir / "work" / "input-manifest.json").write_text(
+        json.dumps({"episode_id": "EP-RETRY", "assets": []}), encoding="utf-8"
+    )
+    model = EpisodeModel.create("EP-RETRY")
+    model.transition("INGESTED")
+    model.complete_stage("ingest")
+    model.save(ep_dir / "episode.json")
+    blocked_intelligence = {
+        "blocked": True,
+        "blocking_reason": "缺 Provider",
+        "provider": "none",
+        "assets": [],
+    }
+    ready_intelligence = {**blocked_intelligence, "blocked": False, "blocking_reason": None, "provider": "openai"}
+    ready = {"blocked": False}
+
+    with (
+        patch("avs.active.analyze_assets", return_value=blocked_intelligence) as analyze_assets,
+        patch("avs.active.analyze_recordings", return_value={}),
+        patch("avs.active.analyze_documents", return_value=ready),
+        patch("avs.active.transcribe_audio_assets", return_value=ready),
+    ):
+        active_analyze(ep_dir, model)
+
+    paused = EpisodeModel.load(ep_dir / "episode.json")
+    assert analyze_assets.call_args.kwargs["force"] is False
+    assert "analyze" not in paused.completed_stages
+    assert paused.blocked_stage == "analyze"
+
+    with (
+        patch("avs.active.analyze_assets", return_value=ready_intelligence) as analyze_assets,
+        patch("avs.active.analyze_recordings", return_value={}),
+        patch("avs.active.analyze_documents", return_value=ready),
+        patch("avs.active.transcribe_audio_assets", return_value=ready),
+    ):
+        active_analyze(ep_dir, paused)
+
+    resumed = EpisodeModel.load(ep_dir / "episode.json")
+    assert analyze_assets.call_args.kwargs["force"] is True
+    assert "analyze" in resumed.completed_stages
+    assert resumed.blocked is False
+    assert resumed.blocked_stage is None
 
 
 def test_screenshot_intro_uses_explicit_notes_for_preview_but_marks_provider_review_pending(tmp_path: Path, monkeypatch) -> None:
