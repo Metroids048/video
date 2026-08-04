@@ -29,6 +29,23 @@ _PIPELINE_ORDER = {
         EpisodeStatus.DELIVERY_READY,
     ))
 }
+_ACTIVE_STAGE_ORDER = (
+    "ingest", "analyze", "plan", "preview", "visual-review",
+    "final-render", "qa", "approve", "delivery", "export",
+)
+_BLOCKED_STAGES = frozenset(_ACTIVE_STAGE_ORDER)
+_LEGACY_STAGE_STATUS = {
+    "ingest": EpisodeStatus.CREATED,
+    "analyze": EpisodeStatus.INGESTED,
+    "plan": EpisodeStatus.INGESTED,
+    "preview": EpisodeStatus.CONTENT_READY,
+    "visual-review": EpisodeStatus.TIMELINE_READY,
+    "final-render": EpisodeStatus.TIMELINE_READY,
+    "qa": EpisodeStatus.ROUGH_CUT_READY,
+    "approve": EpisodeStatus.QA_PASSED,
+    "delivery": EpisodeStatus.QA_PASSED,
+    "export": EpisodeStatus.DELIVERY_READY,
+}
 
 
 def _now_iso() -> str:
@@ -83,6 +100,15 @@ class EpisodeModel:
         return self._data.get("last_error")
 
     @property
+    def blocked(self) -> bool:
+        return bool(self._data.get("blocked", False))
+
+    @property
+    def blocked_stage(self) -> str | None:
+        value = self._data.get("blocked_stage")
+        return str(value) if value is not None else None
+
+    @property
     def completed_stages(self) -> list[str]:
         return list(self._data.get("completed_stages", []))
 
@@ -118,6 +144,7 @@ class EpisodeModel:
             "completed_stages": [],
             "last_error": None,
             "blocked": False,
+            "blocked_stage": None,
             "artifacts": {},
             "title": None,
             "created_at": now,
@@ -157,8 +184,6 @@ class EpisodeModel:
         """执行状态转换；非法时抛出 TransitionError。"""
         assert_transition(self.status, target, force=force)
         self._data["status"] = target
-        self._data["last_error"] = None  # 清除上次错误
-        self._data["blocked"] = False
         self._data["updated_at"] = _now_iso()
 
     def ensure_stage(self, stage: str, target: str) -> bool:
@@ -185,24 +210,59 @@ class EpisodeModel:
         self._data["last_error"] = reason
         self._data["updated_at"] = _now_iso()
 
-    def block(self, reason: str, *, waiting_for_input: bool = False) -> None:
-        """Stop the active path without pretending the episode is complete."""
+    def block(self, reason: str, *, stage: str, waiting_for_input: bool = False) -> None:
+        """Record a recoverable pause without committing the blocked stage."""
+        if stage not in _BLOCKED_STAGES:
+            raise EpisodeValidationError(f"未知的可恢复阶段: {stage}")
+        if waiting_for_input and self.status != EpisodeStatus.WAITING_FOR_INPUT:
+            self.transition(EpisodeStatus.WAITING_FOR_INPUT)
         self._data["blocked"] = True
+        self._data["blocked_stage"] = stage
         self._data["last_error"] = reason
-        del waiting_for_input
-        target = "BLOCKED"
-        if self.status not in {target, "FAILED"}:
-            self.transition(target)
-        self._data["blocked"] = True
-        self._data["last_error"] = reason
+        self._data["updated_at"] = _now_iso()
+
+    def clear_block(self, *, stage: str) -> None:
+        """Clear a matching recoverable pause after that stage has succeeded."""
+        if self.blocked_stage not in {None, stage}:
+            raise EpisodeValidationError(
+                f"无法清除 {stage!r} 的暂停；当前暂停阶段是 {self.blocked_stage!r}"
+            )
+        self._data["blocked"] = False
+        self._data["blocked_stage"] = None
+        self._data["last_error"] = None
         self._data["updated_at"] = _now_iso()
 
     def complete_stage(self, stage: str) -> None:
         """标记一个阶段完成（幂等）。"""
+        if self.blocked:
+            raise EpisodeValidationError("暂停状态不得提交阶段完成")
         stages = self._data.setdefault("completed_stages", [])
         if stage not in stages:
             stages.append(stage)
         self._data["updated_at"] = _now_iso()
+
+    def retain_completed_stages(self, allowed: set[str]) -> None:
+        """Keep only successful stages explicitly allowed by a reset target."""
+        self._data["completed_stages"] = [
+            stage for stage in self.completed_stages if stage in allowed
+        ]
+        self._data["updated_at"] = _now_iso()
+
+    def migrate_legacy_block(self) -> bool:
+        """Normalize a pre-blocked_stage Episode in memory for resumable recovery."""
+        if self.status != EpisodeStatus.BLOCKED or self.blocked_stage is not None:
+            return False
+        stage = next(
+            (candidate for candidate in _ACTIVE_STAGE_ORDER if candidate not in self.completed_stages),
+            None,
+        )
+        if stage is None:
+            return False
+        self._data["status"] = _LEGACY_STAGE_STATUS[stage]
+        self._data["blocked"] = True
+        self._data["blocked_stage"] = stage
+        self._data["updated_at"] = _now_iso()
+        return True
 
     # ── Schema 校验 ───────────────────────────────────────────────────
 

@@ -66,6 +66,23 @@
       "type": "boolean",
       "description": "主动阻塞标记；需要人工修复后才能继续"
     },
+    "blocked_stage": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "ingest",
+        "analyze",
+        "plan",
+        "preview",
+        "visual-review",
+        "final-render",
+        "qa",
+        "approve",
+        "delivery",
+        "export"
+      ],
+      "description": "当前暂停且必须重新执行的 Active 阶段；null 表示没有阶段级暂停"
+    },
     "artifacts": {
       "type": "object",
       "description": "已生成产物路径表（键为产物名，值为相对路径）",
