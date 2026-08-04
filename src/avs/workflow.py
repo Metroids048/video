@@ -13,7 +13,7 @@ from typing import Callable, Literal
 from avs.models.episode import EpisodeModel
 
 ActionKind = Literal["command", "agent", "human", "input", "recovery", "complete"]
-CommandRunner = Callable[[tuple[str, ...], bool], None]
+CommandRunner = Callable[[tuple[str, ...], bool], int]
 
 _REFERENCE_VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".mkv", ".webm", ".m4v", ".avi"})
 
@@ -44,6 +44,8 @@ class WorkflowRunResult:
 
     action: WorkflowAction
     executed_commands: list[tuple[str, ...]]
+    controlled_pause: bool = False
+    last_exit_code: int = 0
 
 
 class WorkflowExecutionError(RuntimeError):
@@ -62,19 +64,83 @@ def _content_workspace_initialized(ep_dir: Path) -> bool:
     return (ep_dir / "work" / "content" / "brief.md").is_file()
 
 
+_RETRY_COMMANDS: dict[str, tuple[str, ...]] = {
+    "ingest": ("ingest",),
+    "analyze": ("analyze",),
+    "preview": ("preview",),
+    "visual-review": ("visual-review",),
+    "final-render": ("final-render",),
+    "qa": ("qa",),
+    "delivery": ("deliver",),
+    "export": ("export",),
+}
+_VISION_RECOVERY_CODES = frozenset({"VISION_PROVIDER_UNAVAILABLE", "VISION_REVIEW_FAILED"})
+
+
+def _visual_review_needs_human(ep_dir: Path) -> bool:
+    report_path = ep_dir / "work" / "qa" / "visual-review.json"
+    if not report_path.is_file():
+        return False
+    try:
+        import json
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return True
+    failures = report.get("failures", [])
+    codes = {
+        str(item.get("failure_code"))
+        for item in failures
+        if isinstance(item, dict) and item.get("failure_code")
+    }
+    return bool(codes - _VISION_RECOVERY_CODES)
+
+
+def _blocked_action(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
+    stage = model.blocked_stage
+    if stage == "ingest" or model.status == "WAITING_FOR_INPUT":
+        return WorkflowAction(
+            kind="input",
+            stage="ingest",
+            command=("ingest",),
+            summary=model.last_error or "补充 input/ 中缺失的素材或文本后重新执行 ingest。",
+        )
+    if stage == "visual-review" and _visual_review_needs_human(ep_dir):
+        return WorkflowAction(
+            kind="human",
+            stage="visual-review",
+            summary="视觉审核发现内容或画面缺陷；修复上游后执行 episode reset --to CONTENT_READY --force。",
+        )
+    command = _RETRY_COMMANDS.get(stage or "")
+    if command is not None:
+        return WorkflowAction(
+            kind="recovery",
+            stage=stage or "recovery",
+            command=command,
+            summary=model.last_error or f"修复条件后重新执行 {stage}。",
+        )
+    return WorkflowAction(
+        kind="human",
+        stage="recovery",
+        summary=model.last_error or "Active workflow 已阻塞，需要人工修复。",
+    )
+
+
 def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
     """Return the next action without mutating state or creating files."""
     status = model.status
     active_manifest = ep_dir / "work" / "input-manifest.json"
     stages = set(model.completed_stages)
 
-    if model.to_dict().get("blocked"):
-        kind: ActionKind = "input" if "输入" in (model.last_error or "") or "素材" in (model.last_error or "") else "human"
+    if status == "WAITING_FOR_INPUT":
+        return _blocked_action(ep_dir, model)
+    if status == "FAILED":
         return WorkflowAction(
-            kind=kind,
-            stage="blocked",
-            summary=model.last_error or "Active workflow 已阻塞，需要人工修复。",
+            kind="recovery",
+            stage="recovery",
+            summary="先阅读 episode.json 的 last_error，修复原因后选择允许的 reset 目标重试。",
         )
+    if model.blocked:
+        return _blocked_action(ep_dir, model)
 
     # The multimodal manifest switches publishable Episodes onto the only
     # active delivery path. Legacy actions below remain internal compatibility.
@@ -151,23 +217,11 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
             command=("run",),
             summary="运行时间线、字幕、FFmpeg、HyperFrames、QA 和可编辑交付包。",
         )
-    if status == "WAITING_FOR_INPUT":
-        return WorkflowAction(
-            kind="input",
-            stage="input",
-            summary="补充 input/ 中缺失的素材或文本后重新执行 ingest。",
-        )
     if status == "WAITING_FOR_REVIEW":
         return WorkflowAction(
             kind="human",
             stage="review",
             summary="完成所需内容或成片复核，再使用对应 approve/qa 命令推进。",
-        )
-    if status == "FAILED":
-        return WorkflowAction(
-            kind="recovery",
-            stage="recovery",
-            summary="先阅读 episode.json 的 last_error，修复原因后选择允许的 reset 目标重试。",
         )
     if status == "DELIVERY_READY":
         return WorkflowAction(
@@ -195,8 +249,10 @@ def run_automatic_steps(
 
     for _ in range(16):
         model = EpisodeModel.load(ep_json)
+        if model.migrate_legacy_block():
+            model.save(ep_json)
         action = action_for_episode(ep_dir, model)
-        if action.kind != "command" or action.command is None:
+        if action.kind not in {"command", "input", "recovery"} or action.command is None:
             return WorkflowRunResult(action=action, executed_commands=executed)
 
         fingerprint = (model.status, action.command)
@@ -205,7 +261,33 @@ def run_automatic_steps(
                 f"命令 {' '.join(action.command)} 没有推进 Episode，请检查其产物或使用 --force。"
             )
         seen.add(fingerprint)
-        command_runner(action.command, force)
+        before = (model.status, tuple(model.completed_stages), model.blocked, model.blocked_stage)
+        exit_code = command_runner(
+            action.command,
+            force or (model.blocked and action.kind == "recovery"),
+        )
         executed.append(action.command)
+
+        current = EpisodeModel.load(ep_json)
+        if current.migrate_legacy_block():
+            current.save(ep_json)
+        if exit_code == 2:
+            return WorkflowRunResult(
+                action=action_for_episode(ep_dir, current),
+                executed_commands=executed,
+                controlled_pause=True,
+                last_exit_code=2,
+            )
+        if exit_code != 0:
+            raise WorkflowExecutionError(
+                f"命令 {' '.join(action.command)} 失败（exit {exit_code}）"
+            )
+
+        after = (current.status, tuple(current.completed_stages), current.blocked, current.blocked_stage)
+        next_action = action_for_episode(ep_dir, current)
+        if before == after and action == next_action:
+            raise WorkflowExecutionError(
+                f"命令 {' '.join(action.command)} 没有推进 Episode，请检查其产物或使用 --force。"
+            )
 
     raise WorkflowExecutionError("自动步骤超过安全上限，请检查 Episode 状态和产物。")

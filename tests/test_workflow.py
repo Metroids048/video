@@ -108,7 +108,7 @@ def test_resume_executes_only_safe_steps_until_agent_gate(tmp_path: Path) -> Non
     ep_dir, _ = _episode(tmp_path)
     commands: list[tuple[str, ...]] = []
 
-    def fake_runner(command: tuple[str, ...], force: bool) -> None:
+    def fake_runner(command: tuple[str, ...], force: bool) -> int:
         commands.append(command)
         current = EpisodeModel.load(ep_dir / "episode.json")
         if command == ("ingest",):
@@ -118,6 +118,7 @@ def test_resume_executes_only_safe_steps_until_agent_gate(tmp_path: Path) -> Non
             init_content_workspace(ep_dir)
         else:  # pragma: no cover - protects the test's fake execution contract
             raise AssertionError(f"unexpected command: {command}")
+        return 0
 
     result = run_automatic_steps(ep_dir, command_runner=fake_runner)
 
@@ -172,5 +173,27 @@ def test_resume_treats_exit_two_as_controlled_pause(tmp_path: Path) -> None:
 def test_resume_raises_for_exit_one(tmp_path: Path) -> None:
     ep_dir, _ = _episode(tmp_path)
 
-    with pytest.raises(WorkflowExecutionError):
+    with pytest.raises(WorkflowExecutionError, match="exit 1"):
         run_automatic_steps(ep_dir, command_runner=lambda command, force: 1)
+
+
+def test_resume_migrates_legacy_blocked_episode_before_retry(tmp_path: Path) -> None:
+    ep_dir, model = _episode(tmp_path, "INGESTED")
+    model.complete_stage("ingest")
+    model._data.update({
+        "status": "BLOCKED",
+        "blocked": True,
+        "last_error": "缺 Provider",
+    })
+    model.save(ep_dir / "episode.json")
+
+    result = run_automatic_steps(
+        ep_dir,
+        command_runner=lambda command, force: 2,
+    )
+
+    migrated = EpisodeModel.load(ep_dir / "episode.json")
+    assert result.controlled_pause is True
+    assert result.action.command == ("analyze",)
+    assert migrated.status == "INGESTED"
+    assert migrated.blocked_stage == "analyze"

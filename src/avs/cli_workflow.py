@@ -94,17 +94,14 @@ def register_commands(main_group: click.Group) -> None:
         ep_dir, model = _load_episode(episode_id)
         root = _find_project_root()
 
-        def runner(command: tuple[str, ...], run_force: bool) -> None:
+        def runner(command: tuple[str, ...], run_force: bool) -> int:
             args = [sys.executable, "-m", "avs", *command, episode_id]
             if run_force and command != ("content", "init"):
                 args.append("--force")
             env = os.environ.copy()
             env.setdefault("PYTHONPATH", str(root / "src"))
             result = subprocess.run(args, cwd=str(root), env=env)
-            if result.returncode != 0:
-                raise WorkflowExecutionError(
-                    f"命令 {' '.join(command)} 失败（exit {result.returncode}）"
-                )
+            return result.returncode
 
         try:
             result = run_automatic_steps(ep_dir, command_runner=runner, force=force)
@@ -117,11 +114,15 @@ def register_commands(main_group: click.Group) -> None:
             "status": current.status,
             "executed_commands": [list(command) for command in result.executed_commands],
             "next_action": result.action.to_dict(),
+            "controlled_pause": result.controlled_pause,
+            "last_exit_code": result.last_exit_code,
         }
         if as_json:
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             return
-        if result.executed_commands:
+        if result.controlled_pause:
+            console.print("[yellow]工作流已安全暂停，等待条件补齐后再次运行。[/yellow]")
+        elif result.executed_commands:
             console.print("[green]✓ 已执行确定性步骤：[/green]" + ", ".join(" ".join(item) for item in result.executed_commands))
         else:
             console.print("[yellow]未执行确定性步骤；当前位于人工或 Agent 关口。[/yellow]")
