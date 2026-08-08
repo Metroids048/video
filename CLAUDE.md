@@ -53,4 +53,3 @@ Windows 环境由 npm 包装脚本统一调用 `AGENT_PYTHON`，不要创建或�
 5. HyperFrames 失败时必须有 FFmpeg 降级路径
 6. 只有 `--force` 可重新生成可再生成产物
 7. **视频任务必须按 `docs/video-plugin-routing.md` 调用第三方 Skills**（HyperFrames / Remotion / video-use / Seedance / ChatCut / CapCut / jianying-editor / ffmpeg / azure-speech / elevenlabs / ai-video-shot-prompt / ltx-prompt-director / epidemic-sound / moneyprinterturbo / pixelle-video / IP Strategist / OpenMontage）
-8. **Git 只使用 `main`**：禁止创建/推送任何其他分支（含 `codex/*`）；所有提交必须在 `main` 上完成

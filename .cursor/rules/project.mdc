@@ -55,11 +55,6 @@ CREATED → INGESTED → REFERENCE_READY → CONTENT_READY
 → QA_PASSED → DELIVERY_READY
 ```
 
-## Git 分支（硬约束）
-
-- 本仓库只使用 `main`，禁止创建/推送任何其他分支（含 `codex/*`）。
-- 所有 Agent（Codex / Claude / Cursor）必须在 `main` 上提交并推送。
-
 ## 禁止
 
 - 提前实现后续模块
@@ -67,4 +62,3 @@ CREATED → INGESTED → REFERENCE_READY → CONTENT_READY
 - 覆盖或移动用户原始媒体
 - 把整个业务流程写进 HyperFrames HTML
 - 跳过视频插件路由表
-- 创建或推送非 `main` 分支

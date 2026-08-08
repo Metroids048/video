@@ -167,8 +167,10 @@ def register_commands(main_group: click.Group) -> None:
             console.print("[red]✗ timeline.json 不存在，请先运行 avs timeline build[/red]")
             sys.exit(1)
 
-        if srt_path.exists() and not force:
-            console.print("[green]✓ captions.srt 已存在（use --force 重建）[/green]")
+        from avs.freshness import is_stale
+
+        if srt_path.exists() and not force and not is_stale(srt_path, [timeline_path]):
+            console.print("[green]✓ captions.srt 已是最新（use --force 重建）[/green]")
             sys.exit(0)
 
         try:

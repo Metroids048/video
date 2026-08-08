@@ -135,28 +135,24 @@
         "Claude Code global skills",
         "Cursor global skills"
       ],
-      "status": "installed_offline_bundle",
-      "installed_at": "2026-08-03T13:59:51.553Z",
+      "status": "vendored",
+      "installed_at": "2026-08-07T06:28:01.810372+00:00",
       "version": "0.7.90",
       "implemented_in_module": 1,
       "note": "Copy from installed npm package; do not clone monorepo.",
       "source": "node_modules/hyperframes/dist/skills",
       "destinations": [
-        "~/.codex/skills/hyperframes",
-        "~/.claude/skills/hyperframes",
-        "~/.cursor/skills/hyperframes",
-        "~/.codex/skills/hyperframes-cli",
-        "~/.claude/skills/hyperframes-cli",
-        "~/.cursor/skills/hyperframes-cli"
+        "third_party_skills/hyperframes",
+        "third_party_skills/hyperframes-cli"
       ],
-      "source_sha256": "7c954ec8c034a53a2272afb501772302b572d76479ffc82e21084d4a279eaf99",
+      "source_sha256": "c11e0378381be325a4471f63b9fbd7ee903dd16ffbafba0451ce5221ac490a36",
       "source_repository": "https://github.com/heygen-com/hyperframes",
       "license": "MIT",
       "usage": "production_allowed",
       "install_method": "npm_bundle_copy",
       "skill_hashes": {
-        "hyperframes": "c44ac74d8cc637eac3bc21d6565801faaebf50a5fed030129f709ece44171f7a",
-        "hyperframes-cli": "2b6d5d853aed51a48ac5839f92f6d5129397fe1d9ab63baeac9cc54a446259ce"
+        "hyperframes": "c11e0378381be325a4471f63b9fbd7ee903dd16ffbafba0451ce5221ac490a36",
+        "hyperframes-cli": "eac9db1a38e21cbe9f047318eb7c3fe0fc13bfc85d530d9e760fae019f47bfa9"
       }
     },
     "video-shotcraft": {
@@ -164,7 +160,7 @@
       "commit": "d4915443232e89527fdc9d7e79f132ba411fc440",
       "license": "Apache-2.0",
       "status": "vendored",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00",
+      "installed_at": "2026-08-07T06:28:01.755326+00:00",
       "install_method": "git_sparse_or_shallow",
       "destinations": [
         "third_party_skills/video-shotcraft"
@@ -190,7 +186,7 @@
       "source_sha256": "9f6c6fb61cfb8b69ee4934d37cf8326d5832364e5ecdc5639fbce1a56f6c6449",
       "remotion_primary_renderer": true,
       "note": "Official Remotion agent skills; framework via npm separately.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "video-use": {
       "source_repository": "https://github.com/browser-use/video-use",
@@ -206,7 +202,7 @@
       "source_sha256": "e3f8b2cab01d2aade7d32b820458837ad8037a30a61157e6f45006ddaf6abd0c",
       "remotion_primary_renderer": false,
       "note": "",
-      "installed_at": "2026-08-03T10:46:34.943900+00:00"
+      "installed_at": "2026-08-07T06:28:01.810372+00:00"
     },
     "seedance": {
       "source_repository": "https://github.com/automatorsplus/seedance-skill",
@@ -222,7 +218,7 @@
       "source_sha256": "115bc5fe144d8e576f7042e1a22f6d36350307b796092fba87f449c9a6bdfeb0",
       "remotion_primary_renderer": false,
       "note": "",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "chatcut": {
       "source_repository": "https://github.com/ChatCut-Inc/agent-plugin",
@@ -238,7 +234,7 @@
       "source_sha256": "51fd9b983bd8eb33ef28bfa1a6e30c7970bb6006c60e8b5d43eaa4d67e717d09",
       "remotion_primary_renderer": false,
       "note": "MCP login required on host; skills only vendored here.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "capcut-david": {
       "source_repository": "https://github.com/Davidb-2107/capcut-cli-david",
@@ -254,7 +250,7 @@
       "source_sha256": "e636d272f869f75c71121e020e40e6d461eb54e27545fa7173e98f803d2f2b69",
       "remotion_primary_renderer": false,
       "note": "Supersedes legacy cut-motion / cut-draft skills.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "cut-skill": {
       "source_repository": "https://github.com/ygtec/cut.skill",
@@ -270,7 +266,7 @@
       "source_sha256": "e65343961b55944aa7fa9554351a0a0709a71a39d9af9cb9fc5fc4a0410a3eb0",
       "remotion_primary_renderer": false,
       "note": "",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "ip-strategist": {
       "source_repository": "https://github.com/erduo1998-cell/ip-strategist",
@@ -286,7 +282,7 @@
       "source_sha256": "178973f78f7b2cf33ab7a56d0efd1fc2afdf8f9bc0c0310160d6b04ab6e5ba96",
       "remotion_primary_renderer": false,
       "note": "",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "openmontage": {
       "source_repository": "https://github.com/calesthio/OpenMontage",
@@ -302,7 +298,7 @@
       "source_sha256": "b4788cdf4f571fd9ce3ce53d0bc064db983408c2cc5a5d8ac7ab1df3c207b5ec",
       "remotion_primary_renderer": false,
       "note": "Sparse clone only; curated entry skill points at vendor/repos/openmontage.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "jianying-editor": {
       "source_repository": "https://github.com/luoluoluo22/jianying-editor-skill",
@@ -318,7 +314,7 @@
       "source_sha256": "c4261736b93a7e108cefd8c37e7b39c8e19e5eb273bc93ed30a5b123cc5dd398",
       "remotion_primary_renderer": false,
       "note": "JyWrapper 剪映自动化；与 cut-skill / capcut-david 场景分流并存。",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "ffmpeg": {
       "source_repository": "https://github.com/ychoi-kr/claude-ffmpeg-skill",
@@ -334,7 +330,7 @@
       "source_sha256": "c281a0058e8f8c5eaff843f1240a467a8e5afc71277a6c9bac1bee5fe498cbbb",
       "remotion_primary_renderer": false,
       "note": "Local FFmpeg CLI skill; not cloud FFmpeg APIs.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "azure-speech": {
       "source_repository": "https://github.com/MicrosoftDocs/Agent-Skills",
@@ -350,7 +346,7 @@
       "source_sha256": "12d55b8a051ab99482a0a5449fafe0377ecfbaace4cffca7095dc80659fbd2c9",
       "remotion_primary_renderer": false,
       "note": "Official Azure Speech knowledge skill (TTS/STT). Requires Azure credentials in .env.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "elevenlabs": {
       "source_repository": "https://github.com/elevenlabs/skills",
@@ -370,7 +366,7 @@
       "source_sha256": "33fc1da43aa32e33619935e65f9033132a55c9d9cb34a137e1836a9b6997668e",
       "remotion_primary_renderer": false,
       "note": "Official ElevenLabs skills; primary copy as elevenlabs from text-to-speech.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "ai-video-shot-prompt": {
       "source_repository": "https://github.com/Wayhhow/ai-video-shot-prompt-skill",
@@ -386,7 +382,7 @@
       "source_sha256": "ca597c830c6561ddf05d1191e48853f5151dbcc5be835d9147e28960eae0011b",
       "remotion_primary_renderer": false,
       "note": "镜头脚本 / 分镜提示词（Shots 主路径）。",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "ltx-prompt-director": {
       "source_repository": "https://github.com/AI-KSK/ltx-2-3-prompt-director",
@@ -402,7 +398,7 @@
       "source_sha256": "60bbbc7040ff0cf2b8d0388043201ea465d5ba4ef76ea56afd9cf01736e1c477",
       "remotion_primary_renderer": false,
       "note": "LTX-2.3 production prompt director (Shots by LTX companion).",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "moneyprinterturbo": {
       "source_repository": "https://github.com/harry0703/MoneyPrinterTurbo",
@@ -418,7 +414,7 @@
       "source_sha256": "d93c4136281e88b7d767f453f032b5232eb8cc99b75f9b5a4a6949ffec9dde68",
       "remotion_primary_renderer": false,
       "note": "Sparse docs/skill only — do not full-clone the monorepo into third_party_skills.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "seedance-free": {
       "source_repository": null,
@@ -433,7 +429,7 @@
       "source_sha256": "b0de5ce3e9cbab2811dbb8a9a6bff2e863cb3d0f3c23a569bbdc3cdb96ab0859",
       "remotion_primary_renderer": false,
       "note": "Project-authored free Seedance substitute (FFmpeg Ken Burns); not cloned from GitHub.",
-      "installed_at": "2026-08-03T10:46:34.943900+00:00"
+      "installed_at": "2026-08-07T06:28:01.810372+00:00"
     },
     "epidemic-sound": {
       "source_repository": "https://www.epidemicsound.com/a/mcp-service/mcp",
@@ -449,7 +445,7 @@
       "source_sha256": "f47a7e9b3564bd4b96f6d3f6d3fdb9057d65400fcb7e0f94a782bcdfb009c49c",
       "remotion_primary_renderer": false,
       "note": "No public SKILL.md repo; curated entry points at official Epidemic Sound MCP.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     },
     "pixelle-video": {
       "source_repository": "https://github.com/AIDC-AI/Pixelle-Video",
@@ -465,7 +461,7 @@
       "source_sha256": "e256c3ade6f1e17d87a8194b018a1b7ba901eb24ffce4e7e09b492f0a46493c8",
       "remotion_primary_renderer": false,
       "note": "Sparse docs/config only; curated entry skill. Do not full-clone ComfyUI monorepo into third_party_skills.",
-      "installed_at": "2026-08-03T10:46:34.777006+00:00"
+      "installed_at": "2026-08-07T06:28:01.755326+00:00"
     }
   }
 }

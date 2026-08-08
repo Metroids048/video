@@ -119,15 +119,28 @@ class Timeline:
         }
 
     def save(self, path: Path) -> None:
-        """原子写入 timeline.json。"""
-        tmp = path.with_suffix(".json.tmp")
+        """原子写入 timeline.json；实质内容未变时保持文件与 mtime 不动。
+
+        渲染层以 mtime 判定时间线是否有更新。若每次运行都无条件重写内容相同的
+        timeline.json，渲染缓存会永久失效，退化为每次全量重渲染。
+
+        比较时必须剔除 `generated_at`：它每次调用都取当前时间，逐字节比较会让
+        "内容未变"永不成立，mtime 稳定性也就无从谈起。
+        """
+        from avs.freshness import write_text_if_changed
+
+        payload = self.to_dict()
         try:
-            with tmp.open("w", encoding="utf-8") as fh:
-                json.dump(self.to_dict(), fh, ensure_ascii=False, indent=2)
-            tmp.replace(path)
-        except Exception:
-            tmp.unlink(missing_ok=True)
-            raise
+            with path.open(encoding="utf-8") as fh:
+                existing = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            existing = None
+        if existing is not None:
+            if {k: v for k, v in existing.items() if k != "generated_at"} == {
+                k: v for k, v in payload.items() if k != "generated_at"
+            }:
+                return
+        write_text_if_changed(path, json.dumps(payload, ensure_ascii=False, indent=2))
 
     @classmethod
     def load(cls, path: Path) -> "Timeline":

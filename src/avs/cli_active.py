@@ -51,16 +51,77 @@ def register_commands(main_group: click.Group) -> None:
     @click.option("--platform", type=click.Choice(["douyin", "xiaohongshu"]), default="douyin")
     @click.option("--hook", "hook_variant", type=click.Choice(["result", "conflict", "pain"]), default="conflict")
     @click.option("--pattern", "pattern_ids", multiple=True)
-    def plan_cmd(episode_id: str, platform: str, hook_variant: str, pattern_ids: tuple[str, ...]) -> None:
-        """生成 Brief、Script、Evidence Map 和 Shot Plan。"""
+    @click.option(
+        "--regenerate-script", is_flag=True,
+        help="丢弃 Agent 撰写的脚本，改用确定性规划器重新生成（会覆盖创作内容）",
+    )
+    def plan_cmd(
+        episode_id: str, platform: str, hook_variant: str,
+        pattern_ids: tuple[str, ...], regenerate_script: bool,
+    ) -> None:
+        """生成 Brief、Script、Evidence Map 和 Shot Plan。
+
+        已存在通过校验的 Agent 脚本时优先采用，不覆盖。
+        """
         from avs.active import active_plan
+        from avs.creative import script_summary
         try:
             ep_dir, model = _episode(episode_id)
-            result = active_plan(ep_dir, model, platform=platform, hook_variant=hook_variant, pattern_ids=list(pattern_ids) or None)
+            result = active_plan(
+                ep_dir, model, platform=platform, hook_variant=hook_variant,
+                pattern_ids=list(pattern_ids) or None, regenerate_script=regenerate_script,
+            )
         except Exception as exc:
             console.print(f"[red]✗ plan 阻塞: {exc}[/red]")
             raise click.exceptions.Exit(2)
-        console.print(f"[green]✓ plan 完成[/green]  segments={len(result['script'].get('segments', []))} shots={len(result['shot_plan'].get('shots', []))}")
+        summary = script_summary(result["script"])
+        source = "Agent 撰写" if summary["authored_by"] == "agent" else "确定性规划器"
+        console.print(
+            f"[green]✓ plan 完成[/green]  脚本来源={source}"
+            f"  segments={len(result['script'].get('segments', []))}"
+            f"  shots={len(result['shot_plan'].get('shots', []))}"
+            f"  总时长={summary['total_duration']}s"
+        )
+
+    @main_group.command("validate-script")
+    @click.argument("episode_id")
+    def validate_script_cmd(episode_id: str) -> None:
+        """校验 Agent 撰写的发布脚本是否可信。"""
+        from avs.creative import script_summary, validate_agent_script
+        from avs.creative.agent_script import load_agent_script
+        try:
+            ep_dir, model = _episode(episode_id)
+            script = load_agent_script(ep_dir)
+            if script is None:
+                console.print(
+                    "[yellow]未找到 Agent 脚本[/yellow]  "
+                    "需要 work/content/script.json 且 authored_by=agent"
+                )
+                raise click.exceptions.Exit(2)
+            manifest = json.loads((ep_dir / "work/input-manifest.json").read_text(encoding="utf-8"))
+            intelligence = json.loads(
+                (ep_dir / "work/analysis/asset-intelligence.json").read_text(encoding="utf-8")
+            )
+            errors = validate_agent_script(
+                script, manifest=manifest, intelligence=intelligence, episode_id=model.id,
+            )
+        except click.exceptions.Exit:
+            raise
+        except Exception as exc:
+            console.print(f"[red]✗ validate-script 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        summary = script_summary(script)
+        console.print(
+            f"作者={summary['author_id']}  段落={summary['segment_count']}"
+            f"  总时长={summary['total_duration']}s  证据段={summary['evidence_segments']}"
+            f"  Narrative Beat={'有' if summary['has_narrative_beats'] else '无'}"
+            f"  Visual Goal={'有' if summary['has_visual_goals'] else '无'}"
+        )
+        if errors:
+            for item in errors:
+                console.print(f"  [red]✗[/red] {item}")
+            raise click.exceptions.Exit(2)
+        console.print("[green]✓ Agent 脚本通过校验，可进入 plan[/green]")
 
     @main_group.command("preview")
     @click.argument("episode_id")
@@ -107,6 +168,141 @@ def register_commands(main_group: click.Group) -> None:
         console.print(json.dumps(report, ensure_ascii=False, indent=2))
         if not report["passed"]:
             raise click.exceptions.Exit(2)
+
+    @main_group.group("creative")
+    def creative_group() -> None:
+        """成片创作质量审核：度量、评分、基线对比。"""
+
+    @creative_group.command("review")
+    @click.argument("episode_id")
+    @click.option("--video", "video", type=click.Path(path_type=Path), default=None, help="指定被审视频，默认自动选择最新成片")
+    @click.option("--force", is_flag=True, help="重新抽帧并重建审片包")
+    def creative_review_cmd(episode_id: str, video: Path | None, force: bool) -> None:
+        """度量成片并生成审片包（不评分）。"""
+        from avs.qa.creative_review import build_review
+        try:
+            ep_dir, model = _episode(episode_id)
+            review = build_review(ep_dir, model.id, video_path=video, force=force)
+        except Exception as exc:
+            console.print(f"[red]✗ creative review 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        metrics = review["metrics"]
+        console.print(f"[green]✓ 审片包已生成[/green]  {review['video_path']}")
+        console.print(
+            f"  时长={metrics['duration_seconds']}s  镜头={metrics['shot_count']}"
+            f"  时长档位={metrics['shot_duration_distinct_values']}"
+            f"  最长静态={metrics['longest_static_run_seconds']}s"
+            f"  Hook静态={metrics['hook_static_seconds']}s"
+        )
+        for sheet in review["review_package"]["contact_sheets"]:
+            console.print(f"  拼图 {sheet['label']}: {sheet['path']} ({sheet['width']}px)")
+        for item in review["findings"]:
+            console.print(f"  [yellow]{item['severity']:8s}[/yellow] {item['dimension']:14s} {item['observation']}")
+        console.print("[yellow]scores 为 null — 需由看过成片的审片人写入评分后才能过闸。[/yellow]")
+
+    @creative_group.command("score")
+    @click.argument("episode_id")
+    @click.option("--scores", "scores_json", required=True, help="JSON 对象或 .json 文件路径，含 10 个维度评分")
+    @click.option("--reviewer-kind", type=click.Choice(["agent", "provider"]), default="agent")
+    @click.option("--reviewer-id", default=None, help="审片人标识，例如 claude-opus-5")
+    @click.option("--findings", "findings_json", default=None, help="JSON 数组或 .json 文件路径，补充主观失败点")
+    @click.option("--repair-round", type=int, default=None, help="当前 Repair 轮次")
+    def creative_score_cmd(
+        episode_id: str, scores_json: str, reviewer_kind: str,
+        reviewer_id: str | None, findings_json: str | None, repair_round: int | None,
+    ) -> None:
+        """写入审片评分并重新判定闸门。"""
+        from avs.qa.creative_review import record_scores
+
+        def _payload(raw: str) -> object:
+            candidate = Path(raw)
+            if candidate.is_file():
+                return json.loads(candidate.read_text(encoding="utf-8"))
+            return json.loads(raw)
+
+        try:
+            ep_dir, _ = _episode(episode_id)
+            scores = _payload(scores_json)
+            if not isinstance(scores, dict):
+                raise ValueError("--scores 必须是 JSON 对象")
+            extra = _payload(findings_json) if findings_json else None
+            if extra is not None and not isinstance(extra, list):
+                raise ValueError("--findings 必须是 JSON 数组")
+            review = record_scores(
+                ep_dir, scores, reviewer_kind=reviewer_kind,
+                reviewer_id=reviewer_id, findings=extra, repair_round=repair_round,
+            )
+        except Exception as exc:
+            console.print(f"[red]✗ creative score 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        gate = review["gate"]
+        overall = review["scores"]["overall"]
+        console.print(f"[green]✓ 评分已记录[/green]  Overall={overall}  阈值={gate['overall_threshold']}")
+        console.print(f"  技术闸门={'PASS' if gate['technical_passed'] else 'FAIL'}  创作闸门={'PASS' if gate['creative_passed'] else 'FAIL'}")
+        if gate["failed_dimensions"]:
+            console.print(f"  [red]低于 {gate['dimension_floor']} 的核心维度: {', '.join(gate['failed_dimensions'])}[/red]")
+        if not gate["creative_passed"]:
+            console.print(f"  Repair 允许={gate['repair_allowed']}  当前轮次={gate['repair_round']}")
+
+    @creative_group.command("baseline")
+    @click.argument("episode_id")
+    def creative_baseline_cmd(episode_id: str) -> None:
+        """将当前已评分审核固定为对比基线。"""
+        from avs.qa.creative_review import promote_baseline
+        try:
+            ep_dir, _ = _episode(episode_id)
+            path = promote_baseline(ep_dir)
+        except Exception as exc:
+            console.print(f"[red]✗ 固定基线失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        console.print(f"[green]✓ 基线已固定[/green]  {path}")
+
+    @creative_group.command("compare")
+    @click.argument("episode_id")
+    @click.option("--json", "as_json", is_flag=True, help="以 JSON 输出")
+    def creative_compare_cmd(episode_id: str, as_json: bool) -> None:
+        """输出 Baseline vs Current 对比表。"""
+        from avs.qa.creative_review import compare_to_baseline
+        try:
+            ep_dir, _ = _episode(episode_id)
+            result = compare_to_baseline(ep_dir)
+        except Exception as exc:
+            console.print(f"[red]✗ 对比失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        if as_json:
+            click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+            return
+        if not result["has_baseline"]:
+            console.print("[yellow]尚无基线；当前审核可用 creative baseline 固定为基线。[/yellow]")
+        from rich.table import Table
+        table = Table(title=f"Creative Score — {result['episode_id']}")
+        table.add_column("维度", style="bold cyan")
+        table.add_column("Baseline", justify="right")
+        table.add_column("Current", justify="right")
+        table.add_column("Delta", justify="right")
+        for row in result["rows"]:
+            delta = row["delta"]
+            colour = "green" if delta is not None and delta > 0 else ("red" if delta is not None and delta < 0 else "white")
+            table.add_row(
+                row["dimension"],
+                "—" if row["baseline"] is None else f"{row['baseline']:.2f}",
+                "—" if row["current"] is None else f"{row['current']:.2f}",
+                "—" if delta is None else f"[{colour}]{delta:+.2f}[/{colour}]",
+            )
+        console.print(table)
+        metric_table = Table(title="确定性指标")
+        metric_table.add_column("指标", style="bold cyan")
+        metric_table.add_column("Baseline", justify="right")
+        metric_table.add_column("Current", justify="right")
+        metric_table.add_column("Delta", justify="right")
+        for row in result["metric_deltas"]:
+            metric_table.add_row(
+                row["metric"],
+                "—" if row["baseline"] is None else str(row["baseline"]),
+                "—" if row["current"] is None else str(row["current"]),
+                "—" if row["delta"] is None else f"{row['delta']:+g}",
+            )
+        console.print(metric_table)
 
     @main_group.command("final-render")
     @click.argument("episode_id")

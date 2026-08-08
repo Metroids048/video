@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from avs.freshness import write_text_if_changed
 from avs.timeline.models import Timeline
 from avs.render.caption_segmentation import format_cue_lines, segment_caption
 
@@ -33,8 +34,7 @@ def build_srt(timeline: Timeline, output_path: Path) -> int:
     if caption_track is None or not caption_track.clips:
         # 无字幕轨：从脚本生成草稿（仅在无旁白时）
         logger.info("无 caption 轨道，SRT 为空")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text("", encoding="utf-8")
+        write_text_if_changed(output_path, "")
         return 0
 
     total_dur = timeline.total_duration or timeline.compute_duration()
@@ -67,7 +67,6 @@ def build_srt(timeline: Timeline, output_path: Path) -> int:
         for cue in segment_caption(text, start, end):
             entries.append((cue.start, cue.end, format_cue_lines(cue.text)))
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []
     for i, (s, e, text) in enumerate(entries, start=1):
         lines.append(str(i))
@@ -76,8 +75,11 @@ def build_srt(timeline: Timeline, output_path: Path) -> int:
         lines.append(clean)
         lines.append("")
 
-    output_path.write_text("\n".join(lines), encoding="utf-8")
-    logger.info("SRT 已生成: %s  %d 条字幕", output_path, len(entries))
+    # 内容未变时不刷新 mtime，否则字幕烧录层会每次都判定为过期。
+    changed = write_text_if_changed(output_path, "\n".join(lines))
+    logger.info(
+        "SRT %s: %s  %d 条字幕", "已更新" if changed else "无变化", output_path, len(entries),
+    )
     return len(entries)
 
 

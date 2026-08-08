@@ -13,6 +13,7 @@ from typing import Any
 
 import jsonschema
 
+from avs.freshness import is_stale
 from avs.timeline.models import Clip, Timeline
 
 logger = logging.getLogger(__name__)
@@ -249,6 +250,7 @@ def render_motion_graphics(
     output_dir = ep_dir / "delivery" / "motion-graphics"
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = ep_dir / "work" / "motion-manifest.json"
+    timeline_path = ep_dir / "work" / "timeline.json"
     result = MotionRenderResult(output_path=None, manifest_path=manifest_path)
     graphic_track = timeline.get_track("graphic")
     entries: list[dict[str, Any]] = []
@@ -270,7 +272,8 @@ def render_motion_graphics(
         props = _component_variables(template, clip)
         status = "rendered"
         warning: str | None = None
-        if force or not _valid_video(output):
+        # 时间线更新后必须重渲：clip 的文案/时长变了，旧 mp4 依然"可解码"。
+        if force or is_stale(output, [timeline_path]) or not _valid_video(output):
             success, warning = try_render_hyperframes(
                 project_root,
                 project_root / "renderers" / "hyperframes" / "components" / template,
@@ -297,7 +300,11 @@ def render_motion_graphics(
     selected_base = base_video or ep_dir / "renders" / "preview-with-captions.mp4"
     if composed and selected_base.is_file():
         motion_output = output_path or ep_dir / "renders" / "preview-with-motion.mp4"
-        if force or not _valid_video(motion_output, require_audio=True):
+        # 合成产物同时依赖底片与全部动效片段，任一更新都必须重新合成。
+        composite_sources = [selected_base, timeline_path, *(path for _, path in composed)]
+        if force or is_stale(motion_output, composite_sources) or not _valid_video(
+            motion_output, require_audio=True,
+        ):
             _compose_motion(selected_base, composed, motion_output)
         result.output_path = motion_output
     elif composed:

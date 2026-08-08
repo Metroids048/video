@@ -16,13 +16,15 @@ import jsonschema
 
 from avs.analysis import analyze_assets, analyze_documents, analyze_recordings, transcribe_audio_assets
 from avs.creative import (
+    assert_agent_script,
     build_creative_brief,
     build_evidence_map,
+    load_agent_script,
     plan_script,
     plan_shots,
     select_reference_patterns,
 )
-from avs.creative.brief import save_creative_brief
+from avs.creative.brief import HOOKS, save_creative_brief
 from avs.creative.reference_matcher import save_reference_selection
 from avs.models.episode import EpisodeModel
 from avs.render.captions import build_srt
@@ -77,15 +79,50 @@ def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
     return {"asset_intelligence": intelligence, "recording_analysis": recording, "document_analysis": documents, "transcription": transcription}
 
 
-def active_plan(ep_dir: Path, model: EpisodeModel, *, platform: str = "douyin", hook_variant: str = "conflict", pattern_ids: list[str] | None = None) -> dict[str, Any]:
+def active_plan(
+    ep_dir: Path,
+    model: EpisodeModel,
+    *,
+    platform: str = "douyin",
+    hook_variant: str = "conflict",
+    pattern_ids: list[str] | None = None,
+    regenerate_script: bool = False,
+) -> dict[str, Any]:
     intelligence = _read(ep_dir / "work" / "analysis" / "asset-intelligence.json")
     if intelligence.get("blocked"):
         raise RuntimeError(str(intelligence.get("blocking_reason") or "asset intelligence blocked"))
     manifest = _read(ep_dir / "work" / "input-manifest.json")
     must_use = [asset["asset_id"] for asset in manifest.get("assets", []) if asset.get("must_use")]
-    brief = build_creative_brief(model.id, platform=platform, must_use_asset_ids=must_use, hook_variant=hook_variant)
     selection = select_reference_patterns(model.id, platform=platform, pattern_ids=pattern_ids)
-    script = plan_script(brief, intelligence, selection, hook_variant=hook_variant)
+
+    # An Agent-authored script is the publishable route; the deterministic planner
+    # is the fallback.  Overwriting a validated Agent script would silently trade
+    # real writing for a fact-join, which is exactly how good content got lost
+    # before: the Agent wrote it, then `plan` regenerated over the top of it.
+    agent_script = None if regenerate_script else load_agent_script(ep_dir)
+    if agent_script is not None:
+        assert_agent_script(
+            agent_script, manifest=manifest, intelligence=intelligence, episode_id=model.id,
+        )
+        script = agent_script
+        script["reference_pattern_ids"] = [
+            item["pattern_id"] for item in selection.get("selections", [])
+        ] or script.get("reference_pattern_ids", [])
+        hook_variant = str(script.get("hook_variant") or hook_variant)
+        brief = build_creative_brief(
+            model.id, platform=platform, must_use_asset_ids=must_use,
+            hook_variant=hook_variant if hook_variant in HOOKS else "conflict",
+        )
+        if script.get("angle"):
+            brief["angle"] = str(script["angle"])
+        if script.get("audience"):
+            brief["target_audience"] = str(script["audience"])
+        brief["hook"] = str(script["segments"][0].get("spoken_text") or brief["hook"])
+    else:
+        brief = build_creative_brief(
+            model.id, platform=platform, must_use_asset_ids=must_use, hook_variant=hook_variant,
+        )
+        script = plan_script(brief, intelligence, selection, hook_variant=hook_variant)
     referenced = {
         ref.get("asset_id")
         for segment in script.get("segments", [])
@@ -136,7 +173,11 @@ def active_plan(ep_dir: Path, model: EpisodeModel, *, platform: str = "douyin", 
         "episode_id": model.id,
         "selected": hook_variant,
         "hook": brief["hook"],
-        "confirmed_by": "cli-user",
+        "confirmed_by": (
+            f"agent:{script.get('author_id') or 'unknown'}"
+            if agent_script is not None
+            else "cli-user"
+        ),
     })
     _write(ep_dir / "work" / "content" / "script.json", script)
     _write(ep_dir / "work" / "content" / "evidence-map.json", evidence)

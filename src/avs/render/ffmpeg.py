@@ -5,7 +5,8 @@
 2. concat 所有段生成无字幕 preview-clean.mp4
 3. 混合音频（旁白 + BGM ducking）
 4. burn SRT 生成 preview-with-captions.mp4
-5. 幂等：若产物已存在且 force=False 跳过
+5. 幂等：产物存在、技术合规、且不早于上游（timeline / captions / prepared）时跳过；
+   任一上游更新即自动重建（见 avs.freshness）
 """
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from avs.freshness import stale_reason
 from avs.render.filters import scale_pad_filter
 from avs.render.layouts import choose_layout
 from avs.render.primitives import PRIMITIVES, apply_redactions, primitive_filter
@@ -408,15 +410,26 @@ def render_rough_cut(
     clean_out = renders_dir / "preview-clean.mp4"
     captions_out = renders_dir / "preview-with-captions.mp4"
 
-    # 幂等检查
+    # 幂等检查：产物必须既技术合规、又不早于上游来源。
+    # 仅检查存在性会让改过的时间线继续输出旧视频——上游全是新的，唯独 MP4 是旧的。
+    srt_candidates = [ep_dir / "work" / "captions.srt", ep_dir / "delivery" / "captions.srt"]
+    upstream = [
+        ep_dir / "work" / "timeline.json",
+        ep_dir / "work" / "prepared",
+        *srt_candidates,
+    ]
     if clean_out.exists() and captions_out.exists() and not force:
-        try:
-            _validate_render_output(clean_out)
-            _validate_render_output(captions_out)
-            logger.info("粗剪产物已验证，跳过渲染（use --force 重建）")
-            return {"preview_clean": clean_out, "preview_with_captions": captions_out}
-        except RenderError:
-            logger.warning("已有粗剪产物无效，自动重建")
+        reason = stale_reason(clean_out, upstream) or stale_reason(captions_out, upstream)
+        if reason:
+            logger.info("上游产物已更新（%s），自动重建粗剪", reason)
+        else:
+            try:
+                _validate_render_output(clean_out)
+                _validate_render_output(captions_out)
+                logger.info("粗剪产物已验证且不早于上游，跳过渲染（use --force 重建）")
+                return {"preview_clean": clean_out, "preview_with_captions": captions_out}
+            except RenderError:
+                logger.warning("已有粗剪产物无效，自动重建")
 
     # ── 阶段1：逐 clip 渲染标准化段 ────────────────────────────────────
     video_track = None

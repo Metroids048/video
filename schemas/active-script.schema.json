@@ -2,12 +2,22 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "active-script.schema.json",
   "title": "Evidence-first active script",
+  "description": "发布主链脚本。authored_by 区分来源：deterministic 由 plan_script 生成，agent 由 Creative Runtime Agent 撰写。两者共用同一份合同，避免出现第二套脚本格式。",
   "type": "object",
   "required": ["episode_id", "segments", "hook_variant", "reference_pattern_ids"],
   "additionalProperties": false,
   "properties": {
     "episode_id": {"type": "string"},
-    "hook_variant": {"type": "string", "enum": ["result", "conflict", "pain"]},
+    "authored_by": {
+      "type": "string",
+      "enum": ["deterministic", "agent"],
+      "description": "缺省视为 deterministic。为 agent 时 active_plan 不得覆盖本文件。"
+    },
+    "author_id": {"type": ["string", "null"], "description": "撰写者标识，例如 claude-opus-5"},
+    "hook_variant": {"type": "string", "enum": ["result", "conflict", "pain", "custom"]},
+    "angle": {"type": "string", "description": "Agent 选定的创作角度及其理由"},
+    "audience": {"type": "string"},
+    "viewer_promise": {"type": "string", "description": "观众看完能得到什么；用于回答每句话是否必要"},
     "reference_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^PAT-[0-9]{3}$"}, "minItems": 1},
     "segments": {
       "type": "array",
@@ -24,7 +34,26 @@
           "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
           "evidence_required": {"type": "boolean"},
           "asset_refs": {"type": "array", "items": {"type": "object"}},
-          "reference_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^PAT-[0-9]{3}$"}, "minItems": 1}
+          "reference_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^PAT-[0-9]{3}$"}, "minItems": 1},
+          "narrative_beat": {
+            "type": "string",
+            "description": "本段的叙事作用（制造反差 / 揭示结果 / 解释机制 / 闭合矛盾 等），不是段落编号"
+          },
+          "visual_goal": {
+            "type": "string",
+            "description": "这一秒观众最应该看到什么，供 Storyboard Director 决定实现方式"
+          },
+          "emphasis": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "需要重读的关键词或数字，供 Audio Director 使用"
+          },
+          "pause_after_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2.0,
+            "description": "本段结束后的停顿，供 Audio Director 使用"
+          }
         }
       }
     }

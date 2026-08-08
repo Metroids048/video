@@ -6,7 +6,9 @@ Agent Video Studio 是一个通用短视频辅助制作系统。
 
 用户可能只提供文本、图片、参考视频、录屏、音频和链接。系统应将这些输入整理为参考分析、内容简报、脚本、分镜、素材清单、时间线、字幕、视频粗稿、质量报告和可人工编辑的交付包。
 
-V1 的目标不是无人审核的最终成片，而是一个可以继续在剪映等软件中修改的可靠粗稿。
+目标是无人值守产出可直接发布的成片：用户只提供想法和素材，Agent 完成研究、选题、脚本、分镜、素材、配音、剪辑、审片和返工。
+
+「生成了 MP4」不等于交付。交付的判定标准是 Creative Gate（见第 11.1 节），不是 pytest 通过、Schema 合法或 FFmpeg 退出码为 0。需要用户再进剪映重剪的成片一律视为未完成。
 
 ## 2. V1 边界
 
@@ -94,8 +96,9 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 7. FFmpeg 生成基础粗剪。
 8. HyperFrames 生成必要动效并合成。
 9. 运行确定性 QA 和视觉 QA。
-10. 生成可编辑交付包。
-11. 等待用户人工修改和发布。
+10. 运行 Creative Review 并判定 Creative Gate；未过闸则定位最小责任层返工后重新渲染。
+11. 生成交付包。
+12. 等待用户发布（不自动发布）。
 
 ## 7. 状态机
 
@@ -128,13 +131,6 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 3. 检查 Git 状态。
 4. 检查前置模块是否通过。
 5. 先输出本模块实施计划，不执行下一模块。
-
-### Git 分支（硬约束）
-
-- 本仓库**只使用 `main` 一个分支**。
-- 禁止创建、检出或推送任何其他分支（含 `codex/*`、`feature/*`、临时分支）。
-- Codex / Claude / Cursor / 任何 Agent：所有提交与推送必须在 `main` 上完成；发现自己不在 `main` 时立即切回，不得另开分支「凑合」。
-- 远程出现非 `main` 分支时，合并进 `main` 后删除该远程分支。
 
 开发时：
 
@@ -183,3 +179,32 @@ V1 的目标不是无人审核的最终成片，而是一个可以继续在剪�
 - 是否满足本模块验收。
 
 只要验收项未全部通过，就必须明确标记为“未完成”，不得进入下一个模块。
+
+## 11.1 Creative Gate
+
+技术审核与创作审核分离，两者都必须过。
+
+技术闸门（`work/qa/qa-report.json` + `creative-review.json` 的 `metrics`）：可解码、分辨率、音轨、字幕、黑边、证据存在。
+
+创作闸门（`work/qa/creative-review.json` 的 `scores`）：
+
+- Overall ≥ 8.0（权重见 `avs.qa.creative_review.SCORE_WEIGHTS`）；
+- 核心维度 hook / narrative / pacing / visual_design / human_tone / audio 均 ≥ 7.0。
+
+命令：
+
+```bash
+python -m avs creative review <ID>     # 度量成片、生成审片包，不评分
+python -m avs creative score <ID> --scores <json>   # 由看过成片的审片人写入评分
+python -m avs creative baseline <ID>   # 固定已评分审核为对比基线
+python -m avs creative compare <ID>    # Baseline vs Current 逐维度对比
+```
+
+规则：
+
+1. `scores` 为 `null` 时创作闸门恒为 FAIL，不得视为通过。
+2. 评分只能来自真正看过成片的审片人（`reviewer_kind` = `agent` 或 `provider`），不得由代码推算或由确定性指标折算。
+3. 确定性指标只提供可证伪的证据，不构成评分。
+4. 未过闸时按 `findings[].repair_target` 定位最小责任层返工，不得整体重做。
+5. 单条视频最多 3 轮 Repair；连续两轮 Overall 改善 < 0.3 时停止微调，重新做根因诊断。
+6. 无 Vision API Key 的环境下由 Creative Runtime Agent 读取 `review_package.contact_sheets` 审片；拼图宽度不得低于 `min_sheet_width`，否则部分 Agent 传输层会丢弃图像而使审片静默失效。

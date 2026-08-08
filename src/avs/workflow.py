@@ -64,6 +64,35 @@ def _content_workspace_initialized(ep_dir: Path) -> bool:
     return (ep_dir / "work" / "content" / "brief.md").is_file()
 
 
+def _agent_script_ready(ep_dir: Path) -> bool:
+    """True when a trustworthy Agent-authored script is already in place.
+
+    Deriving the next action must stay side-effect free, so this only reads the
+    files that already belong to the episode.  A script that fails validation is
+    treated as absent: the Agent gate stays up rather than letting a bad script
+    through as if it were deterministic.
+    """
+    import json
+
+    manifest_path = ep_dir / "work" / "input-manifest.json"
+    intelligence_path = ep_dir / "work" / "analysis" / "asset-intelligence.json"
+    if not manifest_path.is_file() or not intelligence_path.is_file():
+        return False
+    from avs.creative.agent_script import load_agent_script, validate_agent_script
+
+    script = load_agent_script(ep_dir)
+    if script is None:
+        return False
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        intelligence = json.loads(intelligence_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return not validate_agent_script(
+        script, manifest=manifest, intelligence=intelligence, episode_id=ep_dir.name,
+    )
+
+
 _RETRY_COMMANDS: dict[str, tuple[str, ...]] = {
     "ingest": ("ingest",),
     "analyze": ("analyze",),
@@ -148,10 +177,25 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
         if "analyze" not in stages:
             return WorkflowAction("command", "analyze", "理解全部输入并生成素材语义索引。", ("analyze",))
         if "plan" not in stages:
+            # A validated Agent script makes `plan` deterministic, so resume can
+            # run straight through instead of stopping for a human hook choice.
+            if _agent_script_ready(ep_dir):
+                return WorkflowAction(
+                    "command", "plan",
+                    "采用 Agent 撰写的脚本生成 Brief、Evidence Map 和 Shot Plan。",
+                    ("plan",),
+                    required_artifacts=("work/content/script.json",),
+                )
             return WorkflowAction(
-                "human", "hook-review",
-                "从 result/conflict/pain 三个 Hook 中确认一个，再执行 avs plan --hook。",
-                required_artifacts=("work/analysis/asset-intelligence.json",),
+                "agent", "content",
+                "由 Creative Runtime Agent 撰写发布脚本："
+                "写入 work/content/script.json，authored_by=agent，"
+                "每段含 narrative_beat 与 visual_goal，"
+                "再运行 avs creative validate-script <ID> 自检。",
+                required_artifacts=(
+                    "work/analysis/asset-intelligence.json",
+                    "work/content/script.json",
+                ),
             )
         if "preview" not in stages:
             return WorkflowAction("command", "preview", "生成原子镜头时间线和低清预览。", ("preview",))

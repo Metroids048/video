@@ -58,6 +58,23 @@ def _resolve_asset(
     return None, True, "contain"
 
 
+def _timeline_is_stale(timeline_path: Path, sources: list[Path]) -> bool:
+    """True when any source artifact is newer than the built timeline.
+
+    Plain existence-based idempotence is not safe here: ``timeline.json`` is
+    derived from the storyboard, so a rebuilt storyboard with different shot
+    durations would keep serving the previous timeline.  The pipeline then
+    reports success while rendering the old cut — the change looks applied
+    everywhere except in the actual video.
+
+    Thin wrapper over :func:`avs.freshness.is_stale` so the render and audio
+    layers share one definition of "current".
+    """
+    from avs.freshness import is_stale
+
+    return is_stale(timeline_path, sources)
+
+
 def build_timeline(
     ep_dir: Path,
     episode_id: str,
@@ -66,15 +83,23 @@ def build_timeline(
 ) -> Timeline:
     """从 episode 目录中的 storyboard + asset-manifest 构建 Timeline。
 
-    幂等：若 timeline.json 已存在且 force=False，直接加载并返回。
-    force=True 时无论如何重新构建。
+    幂等：若 timeline.json 已存在、且不比上游产物旧，则直接加载并返回。
+    上游 storyboard/manifest 更新后会自动重建；force=True 时无条件重建。
     """
     from avs.timeline.models import Timeline as TL
     timeline_path = ep_dir / "work" / "timeline.json"
 
+    _upstream = [
+        ep_dir / "work" / "content" / "storyboard.json",
+        ep_dir / "work" / "storyboard.json",
+        ep_dir / "work" / "asset-manifest.json",
+        ep_dir / "work" / "input-manifest.json",
+    ]
     if timeline_path.exists() and not force:
-        logger.info("timeline.json 已存在，跳过（use --force 重建）")
-        return TL.load(timeline_path)
+        if not _timeline_is_stale(timeline_path, _upstream):
+            logger.info("timeline.json 已存在且不早于上游产物，跳过（use --force 重建）")
+            return TL.load(timeline_path)
+        logger.info("上游产物比 timeline.json 新，自动重建时间线")
 
     # ── 加载前置产物 ──────────────────────────────────────────────────────
 

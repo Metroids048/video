@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "creative-review.schema.json",
+  "title": "CreativeReview",
+  "description": "成片创作质量审核记录。技术检查与创作评分分离；scores 为 null 表示审片包已就绪但尚未评分。",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "video_path",
+    "video_sha256",
+    "reviewed_at",
+    "reviewer_kind",
+    "metrics",
+    "scores",
+    "findings",
+    "gate",
+    "review_package"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": { "type": "string", "minLength": 1 },
+    "video_path": { "type": "string", "minLength": 1 },
+    "video_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "reviewed_at": { "type": "string", "minLength": 1 },
+    "reviewer_kind": {
+      "type": "string",
+      "enum": ["pending", "agent", "provider"],
+      "description": "pending=审片包已生成待评分；agent=由 Creative Runtime Agent 评分；provider=由外部 Vision API 评分"
+    },
+    "reviewer_id": { "type": ["string", "null"] },
+    "baseline_ref": {
+      "type": ["string", "null"],
+      "description": "对比基线的 video_sha256；null 表示本次即为基线"
+    },
+    "metrics": { "$ref": "#/definitions/metrics" },
+    "scores": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/definitions/scores" }]
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/finding" }
+    },
+    "gate": { "$ref": "#/definitions/gate" },
+    "review_package": { "$ref": "#/definitions/reviewPackage" }
+  },
+  "definitions": {
+    "metrics": {
+      "type": "object",
+      "description": "确定性指标，不含任何主观判断",
+      "required": [
+        "duration_seconds",
+        "shot_count",
+        "shot_duration_distinct_values",
+        "shot_duration_min",
+        "shot_duration_max",
+        "longest_static_run_seconds",
+        "static_frame_ratio",
+        "hook_static_seconds",
+        "visual_change_rate",
+        "max_black_border_ratio",
+        "has_bgm",
+        "has_sfx",
+        "voice_providers",
+        "evidence_scale_factors"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "duration_seconds": { "type": "number", "minimum": 0 },
+        "shot_count": { "type": "integer", "minimum": 0 },
+        "shot_duration_distinct_values": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "不同镜头时长的取值个数；接近 1 说明节奏是方波"
+        },
+        "shot_duration_min": { "type": "number", "minimum": 0 },
+        "shot_duration_max": { "type": "number", "minimum": 0 },
+        "shot_duration_mean": { "type": "number", "minimum": 0 },
+        "longest_static_run_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "帧间差异低于阈值的最长连续时长"
+        },
+        "static_frame_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "被判定为静态的相邻帧对占比"
+        },
+        "hook_static_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "开场前 5 秒内的静态连续时长"
+        },
+        "visual_change_rate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "相邻采样帧的平均像素差均值"
+        },
+        "max_black_border_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "has_bgm": { "type": "boolean" },
+        "has_sfx": { "type": "boolean" },
+        "voice_providers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "配音轨使用的 provider；单一值说明无语气变化设计"
+        },
+        "evidence_scale_factors": {
+          "type": "array",
+          "description": "每个视觉证据素材在画布中的缩放比与清晰带占比",
+          "items": {
+            "type": "object",
+            "required": ["asset_ref", "scale_factor", "sharp_band_ratio"],
+            "additionalProperties": false,
+            "properties": {
+              "asset_ref": { "type": "string" },
+              "source_width": { "type": ["integer", "null"] },
+              "source_height": { "type": ["integer", "null"] },
+              "scale_factor": {
+                "type": "number",
+                "minimum": 0,
+                "description": "画布宽 / 源宽；0.42 意味着源 13px 文字只剩 5.5px"
+              },
+              "sharp_band_ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "清晰内容带高度占画布高度的比例"
+              }
+            }
+          }
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "description": "0-10 分。权重见 avs.qa.creative_review.SCORE_WEIGHTS",
+      "required": [
+        "hook",
+        "narrative",
+        "pacing",
+        "visual_design",
+        "human_tone",
+        "audio",
+        "caption",
+        "evidence_trust",
+        "platform_fit",
+        "memorability",
+        "overall"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "hook": { "$ref": "#/definitions/score" },
+        "narrative": { "$ref": "#/definitions/score" },
+        "pacing": { "$ref": "#/definitions/score" },
+        "visual_design": { "$ref": "#/definitions/score" },
+        "human_tone": { "$ref": "#/definitions/score" },
+        "audio": { "$ref": "#/definitions/score" },
+        "caption": { "$ref": "#/definitions/score" },
+        "evidence_trust": { "$ref": "#/definitions/score" },
+        "platform_fit": { "$ref": "#/definitions/score" },
+        "memorability": { "$ref": "#/definitions/score" },
+        "overall": { "$ref": "#/definitions/score" }
+      }
+    },
+    "score": { "type": "number", "minimum": 0, "maximum": 10 },
+    "finding": {
+      "type": "object",
+      "required": [
+        "timestamp",
+        "dimension",
+        "severity",
+        "observation",
+        "why_it_hurts",
+        "repair_target",
+        "recommended_action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "timestamp": { "type": "number", "minimum": 0 },
+        "dimension": {
+          "type": "string",
+          "enum": [
+            "HOOK",
+            "NARRATIVE",
+            "PACING",
+            "VISUAL_DESIGN",
+            "HUMAN_TONE",
+            "AUDIO",
+            "CAPTION",
+            "EVIDENCE_TRUST",
+            "PLATFORM_FIT",
+            "MEMORABILITY",
+            "TECHNICAL"
+          ]
+        },
+        "severity": { "type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+        "observation": { "type": "string", "minLength": 1 },
+        "why_it_hurts": { "type": "string", "minLength": 1 },
+        "repair_target": {
+          "type": "string",
+          "enum": ["angle", "hook", "script", "storyboard", "asset", "edit", "audio", "caption", "render"],
+          "description": "最小责任层，供 Repair Planner 定位"
+        },
+        "recommended_action": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "enum": ["deterministic", "agent", "provider"] }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "required": ["technical_passed", "creative_passed", "overall_threshold", "dimension_floor", "failed_dimensions"],
+      "additionalProperties": false,
+      "properties": {
+        "technical_passed": { "type": "boolean" },
+        "creative_passed": { "type": "boolean" },
+        "overall_threshold": { "type": "number" },
+        "dimension_floor": { "type": "number" },
+        "failed_dimensions": { "type": "array", "items": { "type": "string" } },
+        "technical_failures": { "type": "array", "items": { "type": "string" } },
+        "repair_round": { "type": "integer", "minimum": 0 },
+        "repair_allowed": { "type": "boolean" }
+      }
+    },
+    "reviewPackage": {
+      "type": "object",
+      "description": "交给 Creative Runtime Agent 的审片材料清单",
+      "required": ["contact_sheets", "sample_plan", "frame_count"],
+      "additionalProperties": false,
+      "properties": {
+        "contact_sheets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "label", "width", "timestamps"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "label": { "type": "string" },
+              "width": { "type": "integer", "minimum": 1 },
+              "timestamps": { "type": "array", "items": { "type": "number" } }
+            }
+          }
+        },
+        "sample_plan": {
+          "type": "array",
+          "description": "采样时间点及其理由",
+          "items": {
+            "type": "object",
+            "required": ["timestamp", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "timestamp": { "type": "number", "minimum": 0 },
+              "reason": {
+                "type": "string",
+                "enum": ["hook_dense", "shot_before", "shot_at", "shot_after", "interval", "tail"]
+              }
+            }
+          }
+        },
+        "frame_count": { "type": "integer", "minimum": 0 },
+        "transcript_path": { "type": ["string", "null"] },
+        "min_sheet_width": {
+          "type": "integer",
+          "description": "回传门槛宽度；低于此值的拼图在部分 Agent 环境中无法读取"
+        }
+      }
+    }
+  }
+}

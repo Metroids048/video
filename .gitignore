@@ -94,3 +94,6 @@ desktop.ini
 *.bak
 *.orig
 scratch/
+
+# Creative Loop 临时状态（每轮覆盖，不入库）
+.avs-loop/
