@@ -1,7 +1,7 @@
 # Creator OS V2 — project contract
 project:
   name: "Creator OS"
-  version: "2.2"
+  version: "2.3"
   product_contract: "creator_os_v2"
   execution_engine: "avs"
   episodes_root: "episodes"
@@ -20,6 +20,8 @@ project:
   release_gate_fail_closed: true
   delivery_requires_current_video_release_review: true
   release_review_must_match_current_sha256: true
+  release_review_must_match_current_source_sha256s: true
+  release_review_requires_source_to_final_fidelity: true
 
 canvas:
   width: 1080
@@ -31,16 +33,27 @@ canvas:
 
 principles:
   evidence_first: true
+  source_fidelity_before_canvas_fill: true
+  full_frame_context_before_roi: true
+  preserve_spatial_continuity: true
+  preserve_temporal_continuity: true
+  landscape_screen_recording_default: "fit_full_frame"
+  destructive_crop_requires_explicit_authorization: true
   format_agnostic: true
   plugins_are_capabilities_not_workflow_owners: true
   manual_reedit_is_not_complete: true
   continuous_video_review_before_delivery: true
   actual_rendered_media_is_quality_source_of_truth: true
+  original_source_artifacts_are_fidelity_source_of_truth: true
   known_critical_video_issue_blocks_delivery: true
   contact_sheet_or_metadata_cannot_prove_publish_quality: true
   no_self_authored_pass_without_actual_playback: true
+  user_opinion_cannot_override_release_evidence: true
   repair_before_delivery_when_any_hard_fail_exists: true
   rerender_invalidates_previous_release_review: true
+  source_change_invalidates_previous_release_review: true
+  mobile_preview_is_qa_only: true
+  formal_video_delivery_is_single_1080x1920_master: true
   max_default_repair_rounds: 3
 
 episode_id_pattern: "^[A-Z0-9][A-Z0-9_-]{1,63}$"
