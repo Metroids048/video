@@ -22,7 +22,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture
 def mock_episode_dir(tmp_path: Path) -> Path:
-    """Create a mock episode directory with approval + release-review schemas."""
     project = tmp_path
     ep_dir = project / "episodes" / "active" / "EP-TEST"
     ep_dir.mkdir(parents=True, exist_ok=True)
@@ -34,7 +33,7 @@ def mock_episode_dir(tmp_path: Path) -> Path:
     return ep_dir
 
 
-def _release_payload(ep_dir: Path, video: Path) -> dict:
+def _release_payload(ep_dir: Path, video: Path, source: Path) -> dict:
     return {
         "reviewed_video": video.relative_to(ep_dir).as_posix(),
         "reviewer": {
@@ -42,6 +41,27 @@ def _release_payload(ep_dir: Path, video: Path) -> dict:
             "reviewer_id": "test-independent-reviewer",
             "inspected_pixels": True,
             "listened_audio": True,
+        },
+        "source_fidelity_review": {
+            "compared_source_to_final": True,
+            "full_frame_integrity_checked": True,
+            "spatial_continuity_checked": True,
+            "temporal_continuity_checked": True,
+            "opening_context_checked": True,
+            "all_crop_events_explicitly_authorized": True,
+            "unauthorized_destructive_crop_detected": False,
+            "source_context_loss_detected": False,
+            "spatial_continuity_broken": False,
+            "temporal_continuity_broken": False,
+            "opening_mid_action_or_partial_frame": False,
+            "source_fidelity_findings": [],
+            "source_artifacts": [
+                {
+                    "path": source.relative_to(ep_dir).as_posix(),
+                    "sha256": sha256_file(source),
+                    "role": "primary_screen_recording",
+                }
+            ],
         },
         "continuous_playback_review": {
             "watched_start_to_end_1x": True,
@@ -76,14 +96,16 @@ def _release_payload(ep_dir: Path, video: Path) -> dict:
 
 @pytest.fixture
 def mock_video(mock_episode_dir: Path) -> Path:
-    """Create a mock video and a valid release review for the exact hash."""
     renders_dir = mock_episode_dir / "renders"
     renders_dir.mkdir(parents=True, exist_ok=True)
+    source = mock_episode_dir / "work" / "prepared" / "source-screen.mp4"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"full source screen content")
     video = renders_dir / "preview-with-motion.mp4"
     video.write_bytes(b"fake video content")
     save_video_release_review(
         mock_episode_dir,
-        _release_payload(mock_episode_dir, video),
+        _release_payload(mock_episode_dir, video, source),
         expected_video=video,
     )
     return video
