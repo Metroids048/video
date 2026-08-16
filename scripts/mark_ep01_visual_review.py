@@ -21,6 +21,20 @@ REQUIRED_SCORE_KEYS = {
     "reference_fidelity",
     "overall",
 }
+REQUIRED_CONTINUOUS_TRUE_KEYS = {
+    "watched_start_to_end_1x",
+    "first_pass_without_pause_for_comprehension",
+    "key_evidence_readable_without_pause",
+    "audio_listened_end_to_end",
+    "mobile_360x640_reviewed",
+    "transition_scan_completed",
+}
+REQUIRED_CONTINUOUS_FALSE_KEYS = {
+    "slideshow_like",
+    "static_screenshot_motion_dominant",
+    "rapid_dark_light_switching",
+    "unmotivated_abrupt_cuts",
+}
 
 
 def _resolve_inside_episode(ep: Path, relative: str) -> Path:
@@ -56,6 +70,32 @@ def _probe_duration(video: Path) -> float:
         raise ValueError(f"invalid reviewed video duration: {result.stdout!r}") from exc
 
 
+def _validate_continuous_playback(payload: dict[str, Any]) -> None:
+    review = payload.get("continuous_playback_review")
+    if not isinstance(review, dict):
+        raise ValueError(
+            "continuous_playback_review is required; contact sheets/keyframes/metadata cannot replace a full 1x watch"
+        )
+
+    missing_true = sorted(key for key in REQUIRED_CONTINUOUS_TRUE_KEYS if review.get(key) is not True)
+    if missing_true:
+        raise ValueError(f"continuous playback requirements not confirmed: {missing_true}")
+
+    active_failures = sorted(key for key in REQUIRED_CONTINUOUS_FALSE_KEYS if review.get(key) is not False)
+    if active_failures:
+        raise ValueError(f"continuous playback hard-fail flags must be false: {active_failures}")
+
+    critical = review.get("critical_findings")
+    if not isinstance(critical, list):
+        raise ValueError("continuous_playback_review.critical_findings must be a list")
+    if critical:
+        raise ValueError(f"critical viewer-facing findings remain: {critical}")
+
+    findings = payload.get("timestamped_findings")
+    if not isinstance(findings, list):
+        raise ValueError("timestamped_findings is required for actual artifact review")
+
+
 def _validate_review(ep: Path, payload: dict[str, Any]) -> dict[str, Any]:
     reviewer = payload.get("reviewer")
     if not isinstance(reviewer, dict):
@@ -80,6 +120,8 @@ def _validate_review(ep: Path, payload: dict[str, Any]) -> dict[str, Any]:
     for raw in reviewed_artifacts:
         if not isinstance(raw, str) or not _resolve_inside_episode(ep, raw).is_file():
             raise ValueError(f"review artifact does not exist: {raw}")
+
+    _validate_continuous_playback(payload)
 
     scores = payload.get("scores")
     if not isinstance(scores, dict) or not REQUIRED_SCORE_KEYS.issubset(scores):
