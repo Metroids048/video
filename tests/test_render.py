@@ -1,11 +1,10 @@
-"""tests/test_render.py — 模块6 渲染单元测试（FFmpeg 可选）。"""
+"""tests/test_render.py — 媒体渲染单元测试（FFmpeg 可选）。"""
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
 from unittest.mock import patch
 import json
-import importlib.util
 
 import pytest
 from click.testing import CliRunner
@@ -71,18 +70,16 @@ class TestBuildSrt:
         assert "Alignment=2" in graph
 
     def test_overflow_truncated(self, tmp_path):
-        # 字幕超出 total_duration 应被截断
         tl = Timeline("EP-X", tracks=[
             Track("video-main", "video", [Clip("v1", 0.0, 5.0)]),
             Track("captions-main", "caption", [
-                Clip("c1", 4.0, 3.0, text="越界字幕"),  # end=7.0 > 5.0
+                Clip("c1", 4.0, 3.0, text="越界字幕"),
             ]),
         ], total_duration=5.0)
         srt_path = tmp_path / "captions.srt"
         count = build_srt(tl, srt_path)
-        assert count == 1  # 截断后仍有字幕
+        assert count == 1
         content = srt_path.read_text()
-        # 时间戳结束不超过 5.0
         assert "00:00:07" not in content
 
     def test_no_overflow_in_valid_srt(self, tmp_path):
@@ -157,7 +154,6 @@ class TestRenderRoughCut:
         renders.mkdir()
         tl = self._make_timeline(ep_dir)
 
-        # 预置假 MP4
         clean = renders / "preview-clean.mp4"
         cap = renders / "preview-with-captions.mp4"
         clean.write_bytes(b"fake")
@@ -212,15 +208,15 @@ class TestLayouts:
     def test_choose_layout_default_screen_focus_for_landscape(self):
         """Test landscape defaults to screen_focus (not contain)."""
         from avs.render.layouts import choose_layout
-        f = choose_layout(None, 1920, 1080)  # 横屏
-        assert "split[main][bg]" in f  # screen_focus 使用 split
-        assert "boxblur" in f  # screen_focus 使用模糊背景
+        f = choose_layout(None, 1920, 1080)
+        assert "split[main][bg]" in f
+        assert "boxblur" in f
 
     def test_choose_layout_default_contain_for_portrait(self):
         """Test portrait defaults to contain."""
         from avs.render.layouts import choose_layout
-        f = choose_layout(None, 1080, 1920)  # 竖屏
-        assert "pad" in f  # contain 使用 pad
+        f = choose_layout(None, 1080, 1920)
+        assert "pad" in f
 
     def test_choose_layout_cover(self):
         from avs.render.layouts import choose_layout
@@ -275,15 +271,6 @@ def test_timeline_and_render_cli_state_sequence(
     assert (ep_dir / "renders" / "preview-with-captions.mp4").is_file()
 
 
-def test_module6_demo_requires_force_to_replace_existing_episode(tmp_path: Path) -> None:
+def test_legacy_module6_demo_script_stays_removed() -> None:
     script_path = Path(__file__).resolve().parents[1] / "scripts" / "create_module6_demo.py"
-    spec = importlib.util.spec_from_file_location("create_module6_demo", script_path)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    module.create_demo(tmp_path)
-    marker = tmp_path / "episodes" / "active" / "EP-M6-DEMO" / "input" / "keep.txt"
-    marker.write_text("keep", encoding="utf-8")
-    with pytest.raises(FileExistsError, match="--force"):
-        module.create_demo(tmp_path)
-    assert marker.read_text(encoding="utf-8") == "keep"
+    assert not script_path.exists()
