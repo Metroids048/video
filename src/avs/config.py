@@ -34,6 +34,7 @@ class Config:
         "visual.yaml",
         "audio.yaml",
         "quality.yaml",
+        "video-review.yaml",
         "providers.yaml",
         "content-pillars.yaml",
         "creator-workflow.yaml",
@@ -76,6 +77,10 @@ class Config:
     @property
     def quality(self) -> dict[str, Any]:
         return self._get("quality.yaml")
+
+    @property
+    def video_review(self) -> dict[str, Any]:
+        return self._get("video-review.yaml")
 
     @property
     def providers(self) -> dict[str, Any]:
