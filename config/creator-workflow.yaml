@@ -1,6 +1,6 @@
 # Creator OS V2 — account-level operating contract
 creator_workflow:
-  version: "2.0"
+  version: "2.1"
 
   positioning:
     identity: "AI 产品经理，用真实项目记录 AI 如何从想法走到可验证结果"
@@ -25,6 +25,7 @@ creator_workflow:
       - voice_processing_or_synthesis
       - editing_motion_captions_music_sfx
       - technical_and_creative_review
+      - continuous_playback_review
       - localized_repairs
       - cover_and_publish_pack
 
@@ -65,12 +66,28 @@ creator_workflow:
     - id: creative-qa
       output: creator-review
       gate: "必须检查实际产物；仅有 JSON/时间线/自评分不得通过"
+    - id: continuous-video-review
+      output: continuous-playback-review
+      applies_when: "format == VIDEO"
+      gate: "必须对当前候选成片从头到尾 1x 连续播放，并检查首10秒、全部转场、360x640移动端可读性和实际音频；抽帧/contact sheet/metadata 只能辅助，不能代替完整播放。"
     - id: repair
       output: repaired-candidate
-      gate: "默认最多 3 轮，只修失败层；故事失败才回 Creative Director"
+      gate: "任何连续观看硬失败必须进入 REPAIRING；默认最多 3 轮，只修失败层；每轮修复后必须重新渲染并再次完整播放，旧 PASS 对新 SHA256 无效。"
     - id: delivery-learning
       output: publish-pack
-      gate: "只有 READY_TO_PUBLISH 允许产物命名为 FINAL"
+      gate: "只有 READY_TO_PUBLISH 且当前 SHA256 的连续播放验收无关键问题时，才允许命名 FINAL 和交付用户。"
+
+  video_release_gate:
+    config: "config/video-review.yaml"
+    prompt: "docs/creator-os/video-pre-delivery-qa-prompt.md"
+    required_before_delivery: true
+    actual_full_playback_required: true
+    contact_sheet_only_is_fail: true
+    sparse_keyframes_only_is_fail: true
+    metadata_only_is_fail: true
+    hard_fail_routes_to: REPAIRING
+    known_critical_issue_can_be_delivered: false
+    final_media_change_invalidates_previous_review: true
 
   creative_authority:
     owner: creative_director
