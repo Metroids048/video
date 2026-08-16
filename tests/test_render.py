@@ -65,8 +65,9 @@ class TestBuildSrt:
 
     def test_caption_burn_style_uses_bottom_safe_zone(self, tmp_path):
         graph = _caption_filter(tmp_path / "captions.srt")
-        assert "FontSize=15" in graph
-        assert "MarginV=40" in graph
+        assert "original_size=1080x1920" in graph
+        assert "FontSize=50" in graph
+        assert "MarginV=260" in graph
         assert "Alignment=2" in graph
 
     def test_overflow_truncated(self, tmp_path):

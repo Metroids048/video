@@ -361,9 +361,10 @@ def _caption_filter(srt_path: Path) -> str:
         drive_colon_escaped = srt_str
 
     return (
-        f"subtitles='{drive_colon_escaped}':force_style='FontSize=15,"
-        "PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
-        "Outline=2,Shadow=1,Alignment=2,MarginV=40'"
+        f"subtitles='{drive_colon_escaped}':original_size=1080x1920:"
+        "force_style='FontSize=50,PrimaryColour=&H00FFFFFF,"
+        "OutlineColour=&H00101010,BackColour=&H70000000,"
+        "BorderStyle=3,Outline=6,Shadow=0,Alignment=2,MarginL=48,MarginR=48,MarginV=260'"
     )
 
 
