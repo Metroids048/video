@@ -31,6 +31,13 @@ def _cover(width: int, height: int) -> str:
     return f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height}"
 
 
+def _contain(width: int, height: int) -> str:
+    return (
+        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black"
+    )
+
+
 def _normalized_region(region: list[float] | None, default: list[float]) -> list[float]:
     values = region if isinstance(region, list) and len(region) == 4 else default
     x, y, w, h = (max(0.0, min(1.0, float(value))) for value in values)
@@ -61,7 +68,11 @@ def primitive_filter(
     frames = max(1, round(duration * fps))
     cover = _cover(width, height)
     if primitive == "screenshot_full":
-        return f"{cover},fps={fps},format=yuv420p"
+        # Evidence screenshots are often 16:9 desktop UIs.  A cover crop throws
+        # away most of the page on a 9:16 canvas, so the safe full-view primitive
+        # must preserve the complete source.  Use focus/ROI primitives only when
+        # the storyboard explicitly identifies a detail worth cropping.
+        return f"{_contain(width, height)},fps={fps},format=yuv420p"
     if primitive == "screenshot_focus":
         zoom = float(opts.get("zoom", 1.06))
         return (
