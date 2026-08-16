@@ -28,3 +28,21 @@ jobs:
 
       - name: Run test suite
         run: python -m pytest -q
+
+      - name: Pack verified project snapshot
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=.pytest_cache \
+            --exclude='**/__pycache__' \
+            --exclude='*.egg-info' \
+            -czf /tmp/creator-os-v2-project.tar.gz .
+
+      - name: Upload verified project snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-os-v2-project-${{ github.sha }}
+          path: /tmp/creator-os-v2-project.tar.gz
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
