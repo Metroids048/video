@@ -8,6 +8,7 @@
     "reviewed_video",
     "video_sha256",
     "reviewer",
+    "source_fidelity_review",
     "continuous_playback_review",
     "first_pass_memory_summary",
     "first_10s_findings",
@@ -31,6 +32,53 @@
         "reviewer_id": {"type": "string", "minLength": 1},
         "inspected_pixels": {"const": true},
         "listened_audio": {"const": true}
+      },
+      "additionalProperties": true
+    },
+    "source_fidelity_review": {
+      "type": "object",
+      "required": [
+        "compared_source_to_final",
+        "full_frame_integrity_checked",
+        "spatial_continuity_checked",
+        "temporal_continuity_checked",
+        "opening_context_checked",
+        "all_crop_events_explicitly_authorized",
+        "unauthorized_destructive_crop_detected",
+        "source_context_loss_detected",
+        "spatial_continuity_broken",
+        "temporal_continuity_broken",
+        "opening_mid_action_or_partial_frame",
+        "source_fidelity_findings",
+        "source_artifacts"
+      ],
+      "properties": {
+        "compared_source_to_final": {"type": "boolean"},
+        "full_frame_integrity_checked": {"type": "boolean"},
+        "spatial_continuity_checked": {"type": "boolean"},
+        "temporal_continuity_checked": {"type": "boolean"},
+        "opening_context_checked": {"type": "boolean"},
+        "all_crop_events_explicitly_authorized": {"type": "boolean"},
+        "unauthorized_destructive_crop_detected": {"type": "boolean"},
+        "source_context_loss_detected": {"type": "boolean"},
+        "spatial_continuity_broken": {"type": "boolean"},
+        "temporal_continuity_broken": {"type": "boolean"},
+        "opening_mid_action_or_partial_frame": {"type": "boolean"},
+        "source_fidelity_findings": {"type": "array", "items": {"type": "string"}},
+        "source_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["path", "sha256", "role"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1},
+              "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "role": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": true
+          }
+        }
       },
       "additionalProperties": true
     },
