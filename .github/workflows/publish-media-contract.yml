@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - agent/creator-os-v2-quality-fix
+      - agent/video-quality-gate-v3
+  pull_request:
+    branches:
+      - main
+      - agent/creator-os-v2-quality-fix
+  workflow_dispatch:
 
 jobs:
   publish-media-contract:
@@ -16,9 +22,13 @@ jobs:
           cache: pip
       - name: Install project test dependencies
         run: python -m pip install -e '.[dev]'
+      - name: Validate Creator OS release gate
+        run: python scripts/validate_creator_os_v2.py
       - name: Run publish media contract regression tests
         run: >-
           pytest -q
+          tests/test_video_release_review.py
+          tests/test_visual_approval.py
           tests/test_publish_media_contract.py
           tests/test_audio_publishability_contract.py
           tests/test_publish_layout_contract.py
