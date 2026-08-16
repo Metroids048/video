@@ -4,7 +4,9 @@ Creator OS V2 是面向真实创作者生产的多格式内容生产系统。它
 
 ## 当前分支
 
-本项目的 V2 工作分支为 `agent/creator-os-v2`。
+V2 工作分支：`agent/creator-os-v2`。
+
+本地迁移只采用一种方式：**使用经过 CI 验证的完整 V2 项目包替换旧 `video` 文件夹**。不再维护本地清理脚本，也不要求从旧目录逐项搬运历史文件。
 
 ## 核心生产链
 
@@ -32,7 +34,7 @@ Input / Evidence
 
 V2 只保留第一期“7×24 自动交易”作为 Golden Episode 素材来源；旧量化视频草稿、一次性构建脚本、旧完成报告和失败版本不再属于 V2。
 
-> 注意：历史 main 分支中这批原始媒体没有提交到 GitHub，因此 V2 会把已恢复的核心素材重新归档到 `第一期视频_7x24自动交易/`。不要再从旧 main 的历史草稿目录复制文件回来。
+历史 `main` 从未跟踪这批原始二进制媒体，所以 V2 在 Git 中锁定 `第一期视频_7x24自动交易/source-manifest.json`；完整本地项目包负责携带真实 `原始录屏.mp4` 与最终交付物。不要再从旧 `main` 的历史草稿目录复制文件回来。
 
 ## 验证
 
@@ -41,7 +43,7 @@ python scripts/validate_creator_os_v2.py
 python -m pytest -q
 ```
 
-GitHub Actions：`.github/workflows/creator-os-v2-verify.yml`。
+GitHub Actions：`.github/workflows/creator-os-v2-verify.yml`。只有合同校验和完整测试都通过后，CI 才会打包 verified project snapshot。
 
 ## 能力资源
 
@@ -54,4 +56,4 @@ GitHub Actions：`.github/workflows/creator-os-v2-verify.yml`。
 - `vendor/`
 - `skills.lock.json`
 
-插件和 Skills 不是 V2 这次重构的删除目标；V2 主要收口项目配置、工作流、质量门禁和作品目录。
+插件和 Skills 不是 V2 重构的删除目标；V2 收口的是项目配置、工作流、质量门禁和历史作品残留。
