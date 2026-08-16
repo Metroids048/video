@@ -1,0 +1,21 @@
+name: Publish Media Contract
+
+on:
+  push:
+    branches:
+      - agent/creator-os-v2-quality-fix
+
+jobs:
+  publish-media-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: pip install pytest
+      - name: Run publish media contract regression tests
+        env:
+          PYTHONPATH: src
+        run: pytest -q tests/test_publish_media_contract.py
