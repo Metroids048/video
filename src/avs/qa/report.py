@@ -11,7 +11,7 @@ from typing import Any, Callable
 import jsonschema
 
 from avs.qa.approval import verify_approval_current
-from avs.qa.audio_levels import detect_max_volume
+from avs.qa.audio_levels import audio_is_publishable, detect_audio_levels
 from avs.qa.black_frames import detect_black_intervals
 from avs.qa.contact_sheet import create_final_contact_sheet
 from avs.qa.decode import decode_error
@@ -92,14 +92,12 @@ def _compute_input_fingerprint(
         _sha256_file(ep_dir / "delivery" / "visual-approval.json"),
     ]
 
-    # Include quality config hash
     for candidate in (ep_dir, *ep_dir.parents):
         config_path = candidate / "config" / "quality.yaml"
         if config_path.is_file():
             parts.append(_sha256_file(config_path))
             break
 
-    # Include publishable flag
     parts.append("publishable=true" if publishable else "publishable=false")
 
     combined = "|".join(parts)
@@ -161,34 +159,19 @@ def _media_checks(path: Path, label: str, prefix: str, expected_duration: float)
 
 
 def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False, require_human_approval: bool = True) -> dict[str, Any]:
-    """Run deterministic QA with three-layer gate logic and fingerprint checking.
-
-    Args:
-        ep_dir: Episode directory
-        episode_id: Episode ID
-        publishable: Whether this is for public release
-        force: Force re-run even if report exists
-
-    Returns:
-        QA report dict with technical_passed, publishability_passed, human_approved, passed
-    """
+    """Run deterministic QA with three-layer gate logic and fingerprint checking."""
     delivery_dir = ep_dir / "delivery"
     report_path = delivery_dir / "qa-report.json"
 
-    # Determine final video path
     final_video = _final_video_path(ep_dir)
-
-    # Compute input fingerprint
     current_fingerprint = _compute_input_fingerprint(ep_dir, final_video, publishable)
 
-    # Check if existing report is still valid
     if report_path.exists() and not force:
         existing_report = json.loads(report_path.read_text(encoding="utf-8"))
         existing_fingerprint = existing_report.get("input_fingerprint", "")
         if existing_fingerprint == current_fingerprint:
             _validate_report(ep_dir, existing_report)
             return existing_report
-        # Fingerprint mismatch, need to re-run
 
     delivery_dir.mkdir(parents=True, exist_ok=True)
     timeline = inspect_timeline(ep_dir / "work" / "timeline.json")
@@ -241,15 +224,12 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
     ))
 
     placeholder_count = int(timeline.get("placeholder_count") or 0)
-
-    # Publishability check: placeholders
     if publishable:
         placeholder_severity = "error"
         placeholder_passed = placeholder_count == 0
         placeholder_message = (
             f"{placeholder_count} 个占位卡，publishable=true 时不允许"
-            if placeholder_count > 0
-            else None
+            if placeholder_count > 0 else None
         )
         if not placeholder_passed:
             blocking_reasons.append(f"存在 {placeholder_count} 个占位卡")
@@ -258,8 +238,7 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         placeholder_passed = placeholder_count == 0
         placeholder_message = (
             f"{placeholder_count} 个占位卡需人工补充素材"
-            if placeholder_count > 0
-            else None
+            if placeholder_count > 0 else None
         )
 
     checks.append(QACheck(
@@ -304,11 +283,24 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
             "error" if planned_audio else "info", silence_message, long_silence,
         ))
 
-        peak, peak_error = _safe_call(detect_max_volume, final_video)
-        peak_ok = peak_error is None and (peak is None or float(peak) <= -1.0)
+        levels, levels_error = _safe_call(detect_audio_levels, final_video)
+        mean_db, peak = levels if isinstance(levels, tuple) else (None, None)
+        has_audio = bool(final_meta.get("audio_codec"))
+        audible_ok = levels_error is None and audio_is_publishable(
+            has_audio=has_audio, mean_db=mean_db, max_db=peak
+        )
+        checks.append(QACheck(
+            "audio_audible", "音频实际可听而非仅存在音轨", audible_ok,
+            message=levels_error or (
+                f"平均响度 {mean_db} dBFS / 峰值 {peak} dBFS，音轨存在但实际不可听"
+                if not audible_ok else None
+            ),
+            value={"mean_db": mean_db, "max_db": peak},
+        ))
+        peak_ok = levels_error is None and peak is not None and float(peak) <= -1.0
         checks.append(QACheck(
             "audio_peak", "音频峰值不高于 -1 dBFS", peak_ok,
-            message=peak_error or (f"峰值 {peak} dBFS，可能削波" if not peak_ok else None), value=peak,
+            message=levels_error or (f"峰值 {peak} dBFS，可能削波或无可测音频" if not peak_ok else None), value=peak,
         ))
 
         contact_path = delivery_dir / "qa-contact-sheet.jpg"
@@ -326,12 +318,11 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         checks.extend([
             QACheck("black_frames", "最终视频无连续 1 秒黑帧", False, message="无可检查的最终视频"),
             QACheck("planned_audio_silence", "计划音轨无异常长静音", False, message="无可检查的最终视频"),
+            QACheck("audio_audible", "音频实际可听而非仅存在音轨", False, message="无可检查的最终视频"),
             QACheck("audio_peak", "音频峰值不高于 -1 dBFS", False, message="无可检查的最终视频"),
             QACheck("visual_contact_sheet", "生成视觉联系表", False, "warning", "无可检查的最终视频"),
         ])
 
-    # Active multimodal gates are part of the canonical QA report, not side
-    # reports. Legacy Episodes without these artifacts keep the old checks.
     input_manifest_path = ep_dir / "work" / "input-manifest.json"
     evidence_path = ep_dir / "work" / "content" / "evidence-map.json"
     shot_plan_path = ep_dir / "work" / "content" / "shot-plan.json"
@@ -396,27 +387,25 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         if check.check_id.startswith("active_") and check.name not in blocking_reasons:
             blocking_reasons.append(check.name)
 
-    # Three-layer gate logic
     technical_passed = not errors
     publishability_passed = True
 
-    # Publishability checks: only enforce for publishable episodes
     if publishable:
-        # Check placeholders
         if placeholder_count > 0:
             publishability_passed = False
 
-        # Check audio (planned_audio and no long silence)
         planned_audio = bool(timeline.get("planned_audio"))
         if planned_audio and quality_config.get("quality", {}).get("publishable", {}).get("require_non_silent_audio", True):
-            # Check for silence - this is already in checks, find it
             silence_check = next((c for c in checks if c.check_id == "planned_audio_silence"), None)
             if silence_check and not silence_check.passed:
                 publishability_passed = False
                 if "静音" not in "".join(blocking_reasons):
                     blocking_reasons.append("音频静音或异常长静音")
+            audible_check = next((c for c in checks if c.check_id == "audio_audible"), None)
+            if audible_check and not audible_check.passed:
+                publishability_passed = False
+                blocking_reasons.append("音轨存在但实际响度不可听")
 
-    # Human approval check
     human_approved = not require_human_approval
     approval_message = None
     if publishable and require_human_approval and quality_config.get("quality", {}).get("publishable", {}).get("require_human_visual_approval", True):
@@ -426,8 +415,7 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
             approval_message = error
             blocking_reasons.append(f"人工批准: {error}")
     elif not publishable:
-        # Non-publishable episodes don't require approval
-        human_approved = True  # Not blocking for non-publishable
+        human_approved = True
         approval_message = "publishable=false，无需人工批准"
 
     checks.append(QACheck(
@@ -439,7 +427,6 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
         None,
     ))
 
-    # Final passed determination
     if publishable:
         passed = technical_passed and publishability_passed and human_approved
     else:
