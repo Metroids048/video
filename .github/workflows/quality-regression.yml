@@ -3,12 +3,11 @@ name: Creator OS V2 quality regressions
 on:
   push:
     branches:
-      - agent/creator-os-v2-quality-fix
-      - agent/video-quality-gate-v3
+      - agent/creator-os-v2
   pull_request:
     branches:
       - main
-      - agent/creator-os-v2-quality-fix
+      - agent/creator-os-v2
   workflow_dispatch:
 
 jobs:
@@ -30,6 +29,7 @@ jobs:
           tests/test_video_release_review.py
           tests/test_visual_approval.py
           tests/test_creator_os_v2_quality_regressions.py
+          tests/test_layouts.py
           tests/test_render.py
           tests/test_creative_review.py
           tests/test_creator_os_v2_config.py
