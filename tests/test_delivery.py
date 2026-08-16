@@ -44,7 +44,8 @@ def _episode(tmp_path: Path) -> Path:
     (episode / "renders" / "preview-with-motion.mp4").write_bytes(b"motion")
     (episode / "work" / "captions.srt").write_text("1\n", encoding="utf-8")
     (episode / "work" / "timeline.csv").write_text("clip_id\n", encoding="utf-8")
-    (episode / "work" / "prepared" / "used.mp4").write_bytes(b"asset")
+    source_asset = episode / "work" / "prepared" / "used.mp4"
+    source_asset.write_bytes(b"asset")
     timeline = {
         "tracks": [{"kind": "video", "clips": [{"asset_ref": "work/prepared/used.mp4", "clip_id": "v1", "start": 0.0, "duration": 1.0}]}],
     }
@@ -73,6 +74,7 @@ def _episode(tmp_path: Path) -> Path:
         final_video = episode / "renders" / "preview-clean.mp4"
 
     video_hash = hashlib.sha256(final_video.read_bytes()).hexdigest()
+    source_hash = hashlib.sha256(source_asset.read_bytes()).hexdigest()
     video_relative = final_video.relative_to(episode).as_posix()
 
     (episode / "work" / "qa").mkdir(parents=True, exist_ok=True)
@@ -95,6 +97,27 @@ def _episode(tmp_path: Path) -> Path:
             "reviewer_id": "test-independent-video-reviewer",
             "inspected_pixels": True,
             "listened_audio": True,
+        },
+        "source_fidelity_review": {
+            "compared_source_to_final": True,
+            "full_frame_integrity_checked": True,
+            "spatial_continuity_checked": True,
+            "temporal_continuity_checked": True,
+            "opening_context_checked": True,
+            "all_crop_events_explicitly_authorized": True,
+            "unauthorized_destructive_crop_detected": False,
+            "source_context_loss_detected": False,
+            "spatial_continuity_broken": False,
+            "temporal_continuity_broken": False,
+            "opening_mid_action_or_partial_frame": False,
+            "source_fidelity_findings": [],
+            "source_artifacts": [
+                {
+                    "path": source_asset.relative_to(episode).as_posix(),
+                    "sha256": source_hash,
+                    "role": "primary_video_source",
+                }
+            ],
         },
         "continuous_playback_review": {
             "watched_start_to_end_1x": True,
