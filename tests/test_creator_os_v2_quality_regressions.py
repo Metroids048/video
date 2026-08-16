@@ -172,7 +172,7 @@ def test_pre_delivery_prompt_requires_source_fidelity_full_playback_and_repair_l
     assert "temporal continuity" in prompt.lower()
     assert "Watch the CURRENT candidate from 0:00 to the end at normal 1x speed" in prompt
     assert "FIRST SECOND + FIRST 10 SECONDS DENSE REVIEW" in prompt
-    assert "contact sheets" in prompt
+    assert "contact sheet" in prompt
     assert "slideshow" in prompt.lower()
     assert "Ken Burns" in prompt
     assert "dark Binance -> white backend -> dark Binance" in prompt
