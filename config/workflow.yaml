@@ -64,17 +64,40 @@ workflow:
     - production
     - technical-review
     - creative-review
+    - continuous-video-review
+    - validate-video-release-review
     - repair
+    - approval
     - delivery
     - publish-pack
+
+  video_release_gate:
+    applies_when: "format == VIDEO and publishable == true"
+    input: "work/qa/video-release-review.input.json"
+    validated_record: "work/qa/video-release-review.json"
+    validator: "scripts/validate_video_release_review.py"
+    missing_or_invalid_routes_to: REPAIRING
+    stale_sha256_routes_to: REPAIRING
+    critical_findings_route_to: REPAIRING
+    unresolved_after_3_repairs_routes_to: BLOCKED
+    approval_must_happen_after_gate: true
+    delivery_must_reverify_gate: true
+    fail_closed: true
 
   repair:
     max_rounds: 3
     localized: true
+    full_rewatch_after_each_video_repair: true
+    invalidate_old_release_review_after_rerender: true
     failure_routes:
       VOICE_BAD: audio
       HOOK_WEAK: pilot
       SCREEN_UNREADABLE: visual_composition
+      CONTINUITY_BROKEN: cut_structure
+      SLIDESHOW_FEEL: source_motion
+      RAPID_DARK_LIGHT_SWITCHING: evidence_grouping
+      KEY_EVIDENCE_REQUIRES_PAUSE: shot_timing
+      AUDIO_VISUAL_MISMATCH: edit_alignment
       CAPTION_BLOCKING: captions
       STORY_CONFUSED: creative_director
       FACT_UNSUPPORTED: evidence_map
