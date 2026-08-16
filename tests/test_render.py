@@ -192,31 +192,35 @@ class TestLayouts:
         assert "1080" in f
         assert "1920" in f
         assert "pad" in f
+        assert "crop=1080:1920" not in f
 
     def test_cover_filter_output(self):
         from avs.render.layouts import cover_filter
         f = cover_filter(1920, 1080)
         assert "crop" in f
 
-    def test_choose_layout_default_screen_focus_for_landscape(self):
-        """Landscape defaults to one readable portrait evidence viewport."""
+    def test_choose_layout_defaults_to_full_frame_for_landscape(self):
+        """Landscape defaults to complete source context, not a center strip."""
         from avs.render.layouts import choose_layout
         f = choose_layout(None, 1920, 1080)
-        assert "scale=-2:1920" in f
-        assert "crop=1080:1920" in f
-        assert "split" not in f
-        assert "boxblur" not in f
-        assert "overlay" not in f
+        assert "force_original_aspect_ratio=decrease" in f
+        assert "pad=1080:1920" in f
+        assert "scale=-2:1920" not in f
+        assert "crop=1080:1920" not in f
 
     def test_choose_layout_default_contain_for_portrait(self):
         from avs.render.layouts import choose_layout
         f = choose_layout(None, 1080, 1920)
         assert "pad" in f
 
-    def test_choose_layout_cover(self):
+    def test_choose_layout_cover_requires_explicit_destructive_crop_authorization(self):
         from avs.render.layouts import choose_layout
-        f = choose_layout({"layout": "cover"}, 1920, 1080)
-        assert "crop" in f
+        safe = choose_layout({"layout": "cover"}, 1920, 1080)
+        assert "crop" not in safe
+        authorized = choose_layout(
+            {"layout": "cover", "allow_destructive_crop": True}, 1920, 1080
+        )
+        assert "crop" in authorized
 
 
 @pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"), reason="ffmpeg 不可用")
