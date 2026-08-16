@@ -135,3 +135,17 @@ def test_video_review_config_hard_fails_slideshow_and_unreadable_evidence() -> N
     assert review["pacing_rules"]["never_compress_to_hit_duration_metric"] is True
     assert review["repair_loop"]["full_rewatch_after_every_repair"] is True
     assert review["delivery_gate"]["delivery_requires_zero_known_critical_findings"] is True
+
+
+def test_pre_delivery_prompt_requires_full_playback_and_repair_loop() -> None:
+    prompt = (ROOT / "docs" / "creator-os" / "video-pre-delivery-qa-prompt.md").read_text(encoding="utf-8")
+
+    assert "Watch the CURRENT candidate from 0:00 to the end at normal 1x speed" in prompt
+    assert "contact sheets" in prompt
+    assert "slideshow" in prompt.lower()
+    assert "Ken-Burns" in prompt
+    assert "dark Binance -> white backend -> dark Binance" in prompt
+    assert "key evidence requires pause" in prompt
+    assert "MUST repair" in prompt
+    assert "Repeat steps 2–8 on the NEW full candidate" in prompt
+    assert "Never set READY_TO_PUBLISH while critical_findings is non-empty" in prompt
