@@ -1,68 +1,57 @@
 # Creator OS V2
 
-Creator OS V2 is a creator-production operating system for turning real project work into publish-ready content for **Douyin** and **Xiaohongshu**.
+Creator OS V2 是面向真实创作者生产的多格式内容生产系统。它把文本、录屏、图片、音频、参考视频与事实材料组织成可发布的内容，并以 `READY_TO_PUBLISH` 作为唯一成功交付状态。
 
-The product is no longer “an automatic video editor”. The user supplies real source material, references and optional provider tokens; the system owns research, creative direction, format choice, production, review, repair and the publish pack.
+## 当前分支
 
-## What goes in
+本项目的 V2 工作分支为 `agent/creator-os-v2`。
 
-- one idea/problem/project node;
-- project files, logs or GitHub/web links;
-- screenshots and screen recordings;
-- optional rough voice recording;
-- local reference videos or Douyin reference URLs;
-- privacy/redaction boundaries.
+## 核心生产链
 
-## What comes out
+```text
+Input / Evidence
+→ Research & Evidence
+→ Creative Director
+→ Format Router
+→ Production
+→ Creative QA
+→ Repair
+→ READY_TO_PUBLISH
+```
 
-Creator OS chooses the strongest format:
+默认优先真实素材和真实证据。对于录屏纪录片类内容：
 
-- `VIDEO` — publish-ready vertical video + covers + platform copy;
-- `CAROUSEL` — 6–9 page visual post + cover + Xiaohongshu copy;
-- `TEXT` — title variants + final post + tags/topics.
+- 首 3 秒必须出现真实证据；
+- 不使用企业 PPT 式片头；
+- 横屏录屏必须通过移动端可读的 ROI / 局部聚焦呈现；
+- 旁白音轨是字幕、镜头切换和节奏的主时钟；
+- 成片必须实际观看后才能通过 Creative Gate；
+- 若还需要用户进入剪映继续补救，则状态必须保持 `BLOCKED`，不能标成完成。
 
-A file may be named `FINAL.*` only after the Creator Review returns `READY_TO_PUBLISH`. If the user would still need to reopen Jianying/CapCut to make it acceptable, the status is `BLOCKED`, not “mostly finished”.
+## 第一期保留素材
 
-## Fixed production flow
+V2 只保留第一期“7×24 自动交易”作为 Golden Episode 素材来源；旧量化视频草稿、一次性构建脚本、旧完成报告和失败版本不再属于 V2。
 
-`Input Hub → Research & Evidence → Creative Director → Format Router → Production → Creative QA → localized Repair → Delivery & Learning`
+> 注意：历史 main 分支中这批原始媒体没有提交到 GitHub，因此 V2 会把已恢复的核心素材重新归档到 `第一期视频_7x24自动交易/`。不要再从旧 main 的历史草稿目录复制文件回来。
 
-The Creative Director is the only authority allowed to choose the story, Hook, output format, voice mode and visual direction. Skills/plugins are execution capabilities; installed does not mean automatically invoked.
+## 验证
 
-## Reference videos
+```bash
+python scripts/validate_creator_os_v2.py
+python -m pytest -q
+```
 
-Douyin links are first-class reference inputs. When media can be acquired through existing lawful/public access, it is cached locally and passed to reference analysis. If acquisition fails, the system records page-level evidence only and must not pretend it inspected shots, pacing or audio.
+GitHub Actions：`.github/workflows/creator-os-v2-verify.yml`。
 
-## Voice
+## 能力资源
 
-One-time audition compares available variants of the same 15–20 second script:
-
-1. `HUMAN_ENHANCED` — clean/master the user’s real voice;
-2. `HYBRID_S2S` — preserve the user’s performance while improving/replacing timbre through an authorized speech-to-speech route;
-3. `PREMIUM_TTS` — locked high-quality TTS fallback.
-
-The winner is persisted in a voice profile and reused. For video, final narration is the master clock; subtitles use real timestamps, never character-count timing.
-
-## Repository boundaries
-
-Capability resources remain intact:
+以下能力资产继续保留并复用：
 
 - `skills-src/`
 - `third_party_skills/`
-- `vendor/`
 - `.agents/skills/`
 - `.claude/skills/`
+- `vendor/`
 - `skills.lock.json`
-- `tools-manifest.yaml`
 
-Historical quant-video reports, EP01 one-off builders and `fixtures/golden-ai-quant` are intentionally removed from the V2 branch.
-
-## Start here
-
-1. Read `AGENTS.md`.
-2. Read `docs/creator-os-v2.md` and `docs/workflow-v2.md`.
-3. Run `python -m avs doctor` in a local checkout.
-4. Run `python scripts/validate_creator_os_v2.py` to verify the V2 contract.
-5. Put new source material into a new Episode; do not revive deleted EP01 build scripts.
-
-The existing `python -m avs` engine remains the deterministic execution substrate. Creator OS V2 is the product/control contract above it.
+插件和 Skills 不是 V2 这次重构的删除目标；V2 主要收口项目配置、工作流、质量门禁和作品目录。
