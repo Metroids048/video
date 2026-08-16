@@ -1,8 +1,7 @@
-"""tests/test_reference.py — 模块4验收测试。"""
+"""tests/test_reference.py — 参考素材分析与 V2 研究规则验收测试。"""
 from __future__ import annotations
 
 import json
-import re
 import shutil
 import subprocess
 import sys
@@ -24,23 +23,19 @@ from avs.cli import main
 from avs.models.episode import EpisodeModel
 
 
-def test_douyin_research_ledger_has_eighteen_verified_long_links() -> None:
+def test_reference_research_document_is_v2_reusable_rules_not_legacy_ledger() -> None:
+    """V2 不再把某一批 18 条历史链接当作生产前置条件。"""
     root = Path(__file__).resolve().parents[1]
-    ledger = (
-        root / "docs" / "reference-research" / "douyin-codex-short-video-study.md"
-    ).read_text(encoding="utf-8")
-    entries = [
-        line
-        for line in ledger.splitlines()
-        if re.match(r"^\|\s*\d+\s*\|", line)
-    ]
+    study_path = root / "docs" / "reference-research" / "douyin-codex-short-video-study.md"
+    study = study_path.read_text(encoding="utf-8")
 
-    assert len(entries) == 18
-    assert all(re.search(r"www\.douyin\.com/(?:video|note)/\d+", line) for line in entries)
-    assert all(re.search(r"\|\s*A\s*\|\s*$", line) for line in entries)
-    assert "| C |" not in ledger
-    assert "待补证" not in ledger
-    assert "其余 17 条" not in ledger
+    assert "Creator OS V2" in study
+    assert "真实结果" in study
+    assert "ROI" in study
+    assert "Creative Review" in study
+    assert "复制文案" in study
+    assert "18 条" not in study
+    assert not (root / "docs" / "reference-research" / "workbuddy-samples" / "video-workshop").exists()
 
 
 class TestShots:
@@ -67,7 +62,6 @@ class TestAudio:
         video.write_bytes(b"not a real video")
         out = tmp_path / "audio.wav"
         result = extract_audio(video, out)
-        # 无 ffmpeg 或文件损坏 → None（不抛异常）
         assert result is None or not out.exists()
 
 
@@ -79,7 +73,6 @@ class TestKeyframes:
         shots = [Shot("s001", 0.0, 5.0)]
         result = extract_keyframes(video, shots, tmp_path / "kf")
         assert isinstance(result, dict)
-        # 无 ffmpeg 或损坏文件 → 空字典
 
 
 class TestRecipe:
@@ -99,7 +92,6 @@ class TestRunReferenceAnalyze:
         ep_dir = tmp_path / "EP-TEST-REF"
         ep_dir.mkdir()
         (ep_dir / "work").mkdir()
-        # 空 manifest
         save_manifest(ep_dir, "EP-TEST-REF", [])
         recipes = run_reference_analyze(ep_dir, "EP-TEST-REF")
         assert recipes == []
