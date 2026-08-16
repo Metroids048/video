@@ -10,6 +10,8 @@ The user is not expected to become an editor, voice actor, motion designer or so
 
 **Hard definition of done:** if the user must reopen Jianying/CapCut and substantially repair the artifact, the episode is not complete. It is `BLOCKED`.
 
+For VIDEO, a technically valid MP4 is only a baseline. A video may not be delivered until the CURRENT rendered file has passed a full start-to-end 1x playback review under `config/video-review.yaml`. Contact sheets, sparse keyframes, metadata, duration checks and self-authored JSON can support diagnosis but cannot substitute for watching the actual video.
+
 ## 2. Read order for content-production tasks
 
 Before doing work, read:
@@ -19,8 +21,9 @@ Before doing work, read:
 4. `config/content-formats.yaml`;
 5. `config/reference-acquisition.yaml` when references are present;
 6. `config/voice.yaml` for narration;
-7. `config/quality.yaml` and `config/visual.yaml` for review;
-8. `docs/video-plugin-routing.md` only when choosing an execution capability.
+7. `config/quality.yaml`, `config/visual.yaml` and `config/video-review.yaml` for review;
+8. `docs/creator-os/video-pre-delivery-qa-prompt.md` before delivering any VIDEO;
+9. `docs/video-plugin-routing.md` only when choosing an execution capability.
 
 Do not use deleted V1 docs, deleted EP01 scripts or chat history as a competing contract.
 
@@ -69,8 +72,9 @@ Use this order:
 5. **Format Router** — select `VIDEO`, `CAROUSEL` or `TEXT` from evidence and storytelling needs.
 6. **Production** — invoke only capabilities required by the selected format.
 7. **Creative QA** — inspect the actual rendered artifact, not only JSON/timeline metadata.
-8. **Repair** — maximum 3 rounds by default; repair only the failing layer.
-9. **Delivery & Learning** — emit the publish pack only after `READY_TO_PUBLISH`.
+8. **Continuous Video Review** — for VIDEO only, watch the CURRENT rendered candidate start-to-end at 1x, inspect first 10s densely, scan every transition, review 360×640 mobile readability and listen to the actual mix.
+9. **Repair** — mandatory when any publish-quality hard fail remains; maximum 3 rounds by default; repair only the failing layer, rerender, then repeat the full continuous review on the new SHA256.
+10. **Delivery & Learning** — emit the publish pack only after `READY_TO_PUBLISH`.
 
 User-facing lifecycle:
 
@@ -122,7 +126,10 @@ Rules:
 - use establish → ROI focus/zoom for desktop recordings;
 - motion directs attention rather than decorates emptiness;
 - non-trivial video requires a 20–30 second publication-quality Pilot before full render;
-- Pilot uses final/locked voice direction, real evidence, real caption grammar and representative motion/SFX.
+- Pilot uses final/locked voice direction, real evidence, real caption grammar and representative motion/SFX;
+- process footage should prefer real continuous screen recording with cursor/click/scroll/state change over still screenshot camera motion;
+- do not force extra cuts, minimum shot counts or arbitrary short shot caps to make the video feel faster;
+- a coherent longer shot is better than several unreadable 1.x-second fragments.
 
 ### CAROUSEL
 Choose for structured explanations, comparisons, checklists, retrospectives or screenshot/chart-heavy evidence where time-based editing adds little.
@@ -163,8 +170,14 @@ Hard rules:
 - no tiny full desktop UI centered in a vertical canvas;
 - no subtitles covering balances/charts/orders/positions/primary proof;
 - no generic full-screen architecture diagram unless the story truly needs it;
-- screen shots longer than ~4 seconds must add information through ROI, cursor/action, callout, progressive reveal or meaningful cut;
-- every visual treatment must remain readable in the 360×640 mobile preview.
+- screen shots longer than ~4 seconds must add information through ROI, cursor/action, callout, progressive reveal or meaningful internal state change;
+- every visual treatment must remain readable in the 360×640 mobile preview;
+- no slideshow-like sequence where screenshots/cards are the whole motion language;
+- no repeated Ken-Burns pan/zoom over UI stills to fake a process;
+- no repeated dark exchange → bright backend → dark exchange hard-cut sequence that breaks viewer orientation;
+- no cut whose only purpose is to satisfy a duration, shot-count or visual-change metric;
+- key proof must stay understandable at 1x without pausing, scrubbing or replaying;
+- establish context before ROI detail; do not crop away the title/tab/label needed to understand the evidence.
 
 HyperFrames/Remotion/Seedance/etc. are optional execution tools. FFmpeg remains the deterministic assembly fallback. Choose the simplest tool that produces the desired shot.
 
@@ -174,27 +187,60 @@ HyperFrames/Remotion/Seedance/etc. are optional execution tools. FFmpeg remains 
 Check decode/playback, resolution/fps, audio validity, clipping, black frames, subtitle bounds, missing assets/placeholders and output integrity.
 
 ### Creative QA
-A reviewer must actually inspect the artifact/mobile preview and list inspected files. Evaluate at minimum:
+A reviewer must inspect the actual artifact and mobile preview and list inspected files. Evaluate at minimum:
 - Hook;
 - story clarity;
 - pacing;
+- continuity;
 - evidence readability;
 - visual design;
 - human tone;
 - audio;
 - captions.
 
-Null/unviewed/self-invented scores fail. A passing number cannot override contradictory evidence.
+Null/unviewed/self-invented scores fail. Numeric scores are advisory only. A passing number cannot override contradictory evidence or any hard-fail condition.
+
+### Mandatory continuous VIDEO review
+For every candidate VIDEO before delivery:
+1. Record exact path + SHA256.
+2. Watch the CURRENT candidate from 0:00 to end at 1x with actual audio. First pass must not use pause/scrub/replay to rescue comprehension.
+3. Inspect 0–10s densely for abrupt jumps, slideshow feel and readability.
+4. Inspect every scene boundary/high-contrast switch for semantic reason and preserved orientation.
+5. Review at 360×640.
+6. Listen through the actual mix for sync, cuts and natural phrasing.
+7. Produce timestamped findings.
+8. Any hard fail in `config/video-review.yaml` routes to `REPAIRING`.
+9. After repair, rerender and repeat the entire review on the NEW SHA256. Old approvals are stale.
+
+The following do **not** count as continuous review by themselves:
+- contact sheets;
+- sparse frame samples;
+- ffprobe/codec/duration output;
+- timeline/scene JSON;
+- automatic cut counts;
+- self-written PASS JSON.
+
+### Historical anti-regressions from EP01
+These are now project-wide rules:
+- A video that feels like screenshots being pushed/zoomed is a release failure even if the MP4 is technically perfect.
+- Repeated 1.x-second evidence shots that disappear before a normal viewer can orient/read are a release failure.
+- Repeated dark/bright page flipping that feels like flashing/interruption is a release failure.
+- Shorter duration is never a reason to destroy evidence readability or continuity.
+- "static shot <= N seconds" and "N visual changes per 10 seconds" are not publish-quality definitions.
+- If a normal viewer cannot understand a key proof at 1x without pausing, the shot fails.
 
 ### Repair routing
 - `VOICE_BAD` → audio only;
 - `HOOK_WEAK` → Hook/Pilot only;
-- `SCREEN_UNREADABLE` → screen composition/ROI only;
+- `SCREEN_UNREADABLE` → screen composition/ROI/timing only;
+- `CONTINUITY_BROKEN` → cut structure/source motion only;
+- `SLIDESHOW_FEEL` → replace fake screenshot motion with real continuous process footage or honest still treatment;
+- `RAPID_DARK_LIGHT_SWITCHING` → regroup evidence into coherent visual blocks and remove context-breaking alternation;
 - `CAPTION_BLOCKING` → captions only;
 - `FACT_UNSUPPORTED` → Evidence Map;
 - `STORY_CONFUSED` → Creative Director/new contract version.
 
-Maximum 3 repair rounds by default. If still below publish quality, return `BLOCKED` with the exact blocker; do not rebuild the whole platform.
+Maximum 3 repair rounds by default. If still below publish quality, return `BLOCKED` with the exact blocker; do not rebuild the whole platform and do not deliver a known bad video.
 
 ## 11. Naming and delivery
 
@@ -215,6 +261,8 @@ Video delivery target:
 - `xiaohongshu.md`;
 - `evidence-map.json`;
 - `review.json`.
+
+A VIDEO delivery is invalid if the final media SHA256 does not match the media that passed the current continuous playback review.
 
 Do not produce “完成 75%”, “基本可用”, or “粗稿完成请用户再精修” as a successful delivery state.
 
