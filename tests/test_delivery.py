@@ -10,6 +10,7 @@ import pytest
 from avs.delivery.manifest import validate_manifest
 from avs.delivery.package import run_delivery
 from avs.models.episode import EpisodeModel
+from avs.qa.video_release import save_video_release_review
 
 
 def _model(mode: str = "ORIGINAL", *, qa_passed: bool = True, publishable: bool = False) -> EpisodeModel:
@@ -28,13 +29,13 @@ def _episode(tmp_path: Path) -> Path:
     episode = project / "episodes" / "active" / "EP-DELIVERY-TEST"
     (project / "schemas").mkdir(parents=True)
 
-    # Copy delivery manifest schema
-    schema = Path(__file__).parents[1] / "schemas" / "delivery-manifest.schema.json"
-    shutil.copy2(schema, project / "schemas" / schema.name)
-
-    # Copy visual-approval schema for approval validation
-    approval_schema = Path(__file__).parents[1] / "schemas" / "visual-approval.schema.json"
-    shutil.copy2(approval_schema, project / "schemas" / approval_schema.name)
+    for name in (
+        "delivery-manifest.schema.json",
+        "visual-approval.schema.json",
+        "video-release-review.schema.json",
+    ):
+        source = Path(__file__).parents[1] / "schemas" / name
+        shutil.copy2(source, project / "schemas" / name)
 
     for relative in ("renders", "work/content", "work/prepared", "delivery/motion-graphics"):
         (episode / relative).mkdir(parents=True, exist_ok=True)
@@ -64,8 +65,6 @@ def _episode(tmp_path: Path) -> Path:
     (episode / "delivery" / "visual-review.md").write_text("visual", encoding="utf-8")
     (episode / "delivery" / "qa-contact-sheet.jpg").write_bytes(b"jpg")
 
-    # Add visual-approval.json for publishable episodes
-    # Must compute hash from actual video file
     import hashlib
     final_video = episode / "renders" / "preview-with-motion.mp4"
     if not final_video.is_file():
@@ -88,6 +87,45 @@ def _episode(tmp_path: Path) -> Path:
         "scores": {"overall": 8.5},
         "gate": {"technical_passed": True, "creative_passed": True},
     }), encoding="utf-8")
+
+    release_payload = {
+        "reviewed_video": video_relative,
+        "reviewer": {
+            "mode": "actual_artifact_review",
+            "reviewer_id": "test-independent-video-reviewer",
+            "inspected_pixels": True,
+            "listened_audio": True,
+        },
+        "continuous_playback_review": {
+            "watched_start_to_end_1x": True,
+            "first_pass_without_pause_for_comprehension": True,
+            "first_10s_dense_review_completed": True,
+            "key_evidence_readable_without_pause": True,
+            "audio_listened_end_to_end": True,
+            "mobile_360x640_reviewed": True,
+            "transition_scan_completed": True,
+            "slideshow_like": False,
+            "static_screenshot_motion_dominant": False,
+            "rapid_dark_light_switching": False,
+            "unmotivated_abrupt_cuts": False,
+            "abrupt_context_loss": False,
+            "visual_motion_without_semantic_reason": False,
+            "audio_visual_semantic_mismatch": False,
+            "caption_or_overlay_blocks_evidence": False,
+            "key_evidence_requires_pause": False,
+            "known_critical_issue_at_delivery": False,
+            "critical_findings": [],
+        },
+        "first_pass_memory_summary": "Viewer understood the proof and story at 1x without replay.",
+        "first_10s_findings": [{"range": "0-10s", "result": "continuous and readable"}],
+        "transition_findings": [{"timestamp": "1.0s", "result": "semantic transition"}],
+        "timestamped_findings": [],
+        "audio_review_notes": "Listened end-to-end and aligned with visible proof.",
+        "mobile_review_notes": "Key evidence readable at 360x640.",
+        "repair_round": 0,
+        "final_status": "READY_TO_PUBLISH",
+    }
+    save_video_release_review(episode, release_payload, expected_video=final_video)
 
     approval = {
         "episode_id": "EP-DELIVERY-TEST",
