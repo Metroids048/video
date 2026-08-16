@@ -1,0 +1,46 @@
+name: Apply caption quality fix
+
+on:
+  push:
+    branches:
+      - agent/creator-os-v2-quality-fix
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'chore: trigger caption quality patch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch caption renderer and regression expectation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          ffmpeg = Path('src/avs/render/ffmpeg.py')
+          text = ffmpeg.read_text(encoding='utf-8')
+          old = '''    return (\n        f"subtitles='{drive_colon_escaped}':force_style='FontSize=15,"\n        "PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"\n        "Outline=2,Shadow=1,Alignment=2,MarginV=40'"\n    )'''
+          new = '''    return (\n        f"subtitles='{drive_colon_escaped}':original_size=1080x1920:"\n        "force_style='FontSize=50,PrimaryColour=&H00FFFFFF,"\n        "OutlineColour=&H00101010,BackColour=&H70000000,"\n        "BorderStyle=3,Outline=6,Shadow=0,Alignment=2,MarginL=48,MarginR=48,MarginV=260'"\n    )'''
+          if old not in text:
+              raise SystemExit('caption filter source pattern not found; refusing blind patch')
+          ffmpeg.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          tests = Path('tests/test_render.py')
+          test_text = tests.read_text(encoding='utf-8')
+          old_test = '''        assert "FontSize=15" in graph\n        assert "MarginV=40" in graph\n        assert "Alignment=2" in graph'''
+          new_test = '''        assert "original_size=1080x1920" in graph\n        assert "FontSize=50" in graph\n        assert "MarginV=260" in graph\n        assert "Alignment=2" in graph'''
+          if old_test not in test_text:
+              raise SystemExit('caption test source pattern not found; refusing blind patch')
+          tests.write_text(test_text.replace(old_test, new_test, 1), encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          rm -f ops/trigger-caption-fix
+          git rm .github/workflows/apply-caption-quality-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/avs/render/ffmpeg.py tests/test_render.py ops/trigger-caption-fix || true
+          git commit -m 'fix: normalize portrait caption scale and safe zone'
+          git push origin HEAD:agent/creator-os-v2-quality-fix
