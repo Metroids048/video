@@ -1,0 +1,53 @@
+name: Patch audible QA gate
+
+on:
+  push:
+    branches:
+      - agent/creator-os-v2-quality-fix
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'chore: wire audible-audio gate into canonical QA'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creator-os-v2-quality-fix
+      - name: Patch canonical QA
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/avs/qa/report.py')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              'from avs.qa.audio_levels import detect_max_volume',
+              'from avs.qa.audio_levels import audio_is_publishable, detect_audio_levels',
+          )
+          old = '''        peak, peak_error = _safe_call(detect_max_volume, final_video)\n        peak_ok = peak_error is None and (peak is None or float(peak) <= -1.0)\n        checks.append(QACheck(\n            "audio_peak", "音频峰值不高于 -1 dBFS", peak_ok,\n            message=peak_error or (f"峰值 {peak} dBFS，可能削波" if not peak_ok else None), value=peak,\n        ))\n'''
+          new = '''        levels, levels_error = _safe_call(detect_audio_levels, final_video)\n        mean_db, peak = levels if isinstance(levels, tuple) else (None, None)\n        has_audio = bool(final_meta.get("audio_codec"))\n        audible_ok = levels_error is None and audio_is_publishable(\n            has_audio=has_audio, mean_db=mean_db, max_db=peak\n        )\n        checks.append(QACheck(\n            "audio_audible", "音频实际可听而非仅存在音轨", audible_ok,\n            message=levels_error or (\n                f"平均响度 {mean_db} dBFS / 峰值 {peak} dBFS，音轨存在但实际不可听"\n                if not audible_ok else None\n            ),\n            value={"mean_db": mean_db, "max_db": peak},\n        ))\n        peak_ok = levels_error is None and peak is not None and float(peak) <= -1.0\n        checks.append(QACheck(\n            "audio_peak", "音频峰值不高于 -1 dBFS", peak_ok,\n            message=levels_error or (f"峰值 {peak} dBFS，可能削波或无可测音频" if not peak_ok else None), value=peak,\n        ))\n'''
+          if old not in s:
+              raise SystemExit('audio peak block not found')
+          s = s.replace(old, new)
+          old2 = '''            QACheck("planned_audio_silence", "计划音轨无异常长静音", False, message="无可检查的最终视频"),\n            QACheck("audio_peak", "音频峰值不高于 -1 dBFS", False, message="无可检查的最终视频"),\n'''
+          new2 = '''            QACheck("planned_audio_silence", "计划音轨无异常长静音", False, message="无可检查的最终视频"),\n            QACheck("audio_audible", "音频实际可听而非仅存在音轨", False, message="无可检查的最终视频"),\n            QACheck("audio_peak", "音频峰值不高于 -1 dBFS", False, message="无可检查的最终视频"),\n'''
+          if old2 not in s:
+              raise SystemExit('missing-video audio block not found')
+          s = s.replace(old2, new2)
+          old3 = '''            if silence_check and not silence_check.passed:\n                publishability_passed = False\n                if "静音" not in "".join(blocking_reasons):\n                    blocking_reasons.append("音频静音或异常长静音")\n'''
+          new3 = '''            if silence_check and not silence_check.passed:\n                publishability_passed = False\n                if "静音" not in "".join(blocking_reasons):\n                    blocking_reasons.append("音频静音或异常长静音")\n            audible_check = next((c for c in checks if c.check_id == "audio_audible"), None)\n            if audible_check and not audible_check.passed:\n                publishability_passed = False\n                blocking_reasons.append("音轨存在但实际响度不可听")\n'''
+          if old3 not in s:
+              raise SystemExit('publishability audio block not found')
+          s = s.replace(old3, new3)
+          p.write_text(s, encoding='utf-8')
+          Path('.github/workflows/patch-audible-gate.yml').unlink()
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/avs/qa/report.py .github/workflows/patch-audible-gate.yml
+          git commit -m 'fix: require actually audible final audio'
+          git push origin HEAD:agent/creator-os-v2-quality-fix
