@@ -13,9 +13,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install test dependencies
-        run: pip install pytest
+          cache: pip
+      - name: Install project test dependencies
+        run: python -m pip install -e '.[dev]'
       - name: Run publish media contract regression tests
-        env:
-          PYTHONPATH: src
-        run: pytest -q tests/test_publish_media_contract.py tests/test_audio_publishability_contract.py tests/test_publish_layout_contract.py tests/test_publish_audio_levels_parse.py tests/test_creator_os_v2_quality_regressions.py tests/test_render.py tests/test_creative_review.py tests/test_creator_os_v2_config.py
+        run: >-
+          pytest -q
+          tests/test_publish_media_contract.py
+          tests/test_audio_publishability_contract.py
+          tests/test_publish_layout_contract.py
+          tests/test_publish_audio_levels_parse.py
+          tests/test_creator_os_v2_quality_regressions.py
+          tests/test_render.py
+          tests/test_creative_review.py
+          tests/test_creator_os_v2_config.py
