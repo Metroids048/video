@@ -8,10 +8,30 @@ quality:
     require_human_reedit: false
     require_continuous_playback_review: true
     require_full_start_to_end_watch_at_1x: true
+    require_first_10s_dense_review: true
     require_transition_scan: true
     require_mobile_preview_review: true
     require_audio_listen_review: true
+    require_first_pass_memory_summary: true
     require_no_critical_viewer_findings: true
+    require_video_release_review_record: true
+    require_release_review_current_sha256: true
+
+  release_gate:
+    fail_closed: true
+    canonical_input: "work/qa/video-release-review.input.json"
+    canonical_record: "work/qa/video-release-review.json"
+    validator: "scripts/validate_video_release_review.py"
+    schema: "schemas/video-release-review.schema.json"
+    only_passing_status: "READY_TO_PUBLISH"
+    missing_record: "BLOCK"
+    stale_sha256: "BLOCK"
+    invalid_record: "BLOCK"
+    any_hard_fail: "REPAIR"
+    any_critical_finding: "REPAIR"
+    metadata_only_review: "BLOCK"
+    contact_sheet_only_review: "BLOCK"
+    sparse_keyframes_only_review: "BLOCK"
 
   repair:
     max_rounds: 3
@@ -19,19 +39,25 @@ quality:
     mandatory_on_publish_quality_fail: true
     rerender_after_fix: true
     full_rewatch_after_each_round: true
+    require_new_release_review_after_media_change: true
     never_deliver_known_failure: true
+    unresolved_after_max_rounds: "BLOCKED"
 
   hook:
     must_be_clear_within_seconds: 3.0
     first_visual_change_within_seconds: 2.5
+    visual_change_must_be_semantic: true
 
   pacing:
     max_static_clip_seconds: 5.0
     screen_recording_max_static_seconds: 4.0
+    static_duration_values_are_diagnostic_only: true
     visual_change_rate_is_not_a_release_metric: true
     never_force_cuts_to_hit_duration_or_change_count: true
+    never_shorten_evidence_below_comprehension_time: true
     key_evidence_readability_over_shortness: true
     semantic_continuity_over_cut_frequency: true
+    longer_coherent_shot_beats_unreadable_fragments: true
 
   captions:
     max_lines: 2
@@ -47,12 +73,14 @@ quality:
     reject_landscape_contain: true
     min_median_active_frame_ratio: 0.55
     min_sample_active_frame_ratio: 0.40
+    key_proof_must_preserve_context_label: true
 
   creative_review:
     dimensions: [hook, story, pacing, continuity, evidence_readability, visual_design, human_tone, audio, captions]
     scores_are_advisory_only: true
     hard_fail_overrides_score: true
     no_numeric_score_without_full_playback: true
+    no_score_can_override_release_gate: true
     require_timestamped_findings: true
     require_no_critical_findings: true
     null_score_is_fail: true
@@ -60,4 +88,5 @@ quality:
 
   naming:
     final_prefix_requires_ready_to_publish: true
+    final_name_requires_current_release_review_sha256: true
     candidate_names: [pilot, candidate-v1, blocked-preview]
