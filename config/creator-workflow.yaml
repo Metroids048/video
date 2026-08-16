@@ -1,6 +1,6 @@
 # Creator OS V2 — account-level operating contract
 creator_workflow:
-  version: "2.2"
+  version: "2.3"
 
   positioning:
     identity: "AI 产品经理，用真实项目记录 AI 如何从想法走到可验证结果"
@@ -24,6 +24,7 @@ creator_workflow:
       - script_and_storyboard
       - voice_processing_or_synthesis
       - editing_motion_captions_music_sfx
+      - source_inventory_and_source_to_final_fidelity_review
       - technical_and_creative_review
       - continuous_playback_review
       - release_review_validation
@@ -63,29 +64,37 @@ creator_workflow:
       gate: "只能选择 VIDEO、CAROUSEL 或 TEXT"
     - id: production
       output: candidate
-      gate: "只有选中的格式调用对应能力；不得为了已安装插件而调用插件"
+      gate: "只有选中的格式调用对应能力；不得为了已安装插件而调用插件。横屏软件录屏默认 fit_full_frame；不得为了铺满9:16自动裁掉源画面。"
+    - id: source-inventory
+      output: source-artifact-manifest
+      applies_when: "format == VIDEO"
+      gate: "列出最终成片关键段落实际使用的源素材 path + SHA256；无法定位关键源素材时不得进入发布验收。"
+    - id: source-to-final-fidelity-review
+      output: source-fidelity-findings
+      applies_when: "format == VIDEO"
+      gate: "逐段比较真实源素材和当前成片，验证完整画面、页面身份、空间连续性、时间/动作顺序、首帧上下文；未授权 destructive crop、源上下文丢失或 A→C 跳跃均进入 REPAIRING。"
     - id: creative-qa
       output: creator-review
       gate: "必须检查实际产物；仅有 JSON/时间线/自评分不得通过"
     - id: continuous-video-review
       output: "work/qa/video-release-review.input.json"
       applies_when: "format == VIDEO"
-      gate: "必须对当前候选成片从头到尾 1x 连续播放，并检查第一秒、首10秒、全部转场、360x640移动端可读性和实际音频；抽帧/contact sheet/metadata 只能辅助，不能代替完整播放。"
+      gate: "必须对当前候选成片从头到尾 1x 连续播放，并检查第一秒、首10秒、全部转场、360x640移动端可读性和实际音频；360x640仅用于QA，不是第二个正式成品。"
     - id: validate-video-release-review
       output: "work/qa/video-release-review.json"
       applies_when: "format == VIDEO"
       command: "python scripts/validate_video_release_review.py <episode-dir>"
-      gate: "只有当前成片 SHA256 对应的 validated review 为 READY_TO_PUBLISH 且 critical_findings=[] 才能继续。缺失、损坏、旧 SHA、自评分或 hard fail 一律 fail-closed。"
+      gate: "只有当前成片 SHA256 + 当前源素材 SHA256s 对应的 validated review 为 READY_TO_PUBLISH，source_fidelity_review 通过且 critical_findings=[] 才能继续。"
     - id: repair
       output: repaired-candidate
-      gate: "任何连续观看硬失败必须进入 REPAIRING；默认最多 3 轮，只修失败层；每轮修复后必须重新渲染并再次完整播放，旧 PASS 对新 SHA256 无效。"
+      gate: "任何源保真或连续观看硬失败必须进入 REPAIRING；默认最多 3 轮，只修失败层；每轮修复后重新渲染、重新比较源→成片并再次完整播放，旧 PASS 对新 SHA256 无效。"
     - id: approval
       output: visual-approval
       applies_when: "format == VIDEO and publishable == true"
-      gate: "人工批准只能发生在当前 SHA256 的 video-release-review 已 READY_TO_PUBLISH 之后。"
+      gate: "人工批准只能发生在当前成片和源素材 SHA256 均匹配的 video-release-review 已 READY_TO_PUBLISH 之后。"
     - id: delivery-learning
       output: publish-pack
-      gate: "delivery 必须再次验证当前 SHA256 的 release review 和 approval；只有 READY_TO_PUBLISH 且无关键问题时才允许命名 FINAL 和交付用户。"
+      gate: "delivery 再验证当前成片/源素材 SHA256、source fidelity、release review 和 approval；正式视频只交付 1080x1920 master。"
 
   video_release_gate:
     config: "config/video-review.yaml"
@@ -96,6 +105,15 @@ creator_workflow:
     validator: "scripts/validate_video_release_review.py"
     required_before_approval: true
     required_before_delivery: true
+    source_inventory_required: true
+    source_to_final_fidelity_required: true
+    source_sha256s_must_be_current: true
+    final_sha256_must_be_current: true
+    full_frame_integrity_required: true
+    spatial_continuity_required: true
+    temporal_continuity_required: true
+    first_frame_context_required: true
+    unauthorized_destructive_crop_allowed: false
     actual_full_playback_required: true
     first_second_review_required: true
     first_10s_dense_review_required: true
@@ -103,10 +121,14 @@ creator_workflow:
     sparse_keyframes_only_is_fail: true
     metadata_only_is_fail: true
     self_score_only_is_fail: true
+    user_opinion_only_is_fail: true
     hard_fail_routes_to: REPAIRING
     known_critical_issue_can_be_delivered: false
     final_media_change_invalidates_previous_review: true
+    source_media_change_invalidates_previous_review: true
     stale_sha_blocks_delivery: true
+    mobile_preview_qa_only: true
+    formal_video_deliverable: "single 1080x1920 master"
     max_default_repair_rounds: 3
 
   creative_authority:
