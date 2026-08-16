@@ -1,7 +1,8 @@
-"""Tests for human visual approval with content-addressed binding."""
+"""Tests for human visual approval with content-addressed release-review binding."""
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -13,88 +14,88 @@ from avs.qa.approval import (
     sha256_file,
     verify_approval_current,
 )
+from avs.qa.video_release import save_video_release_review
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
 def mock_episode_dir(tmp_path: Path) -> Path:
-    """Create a mock episode directory with schemas."""
-    ep_dir = tmp_path / "episodes" / "active" / "EP-TEST"
+    """Create a mock episode directory with approval + release-review schemas."""
+    project = tmp_path
+    ep_dir = project / "episodes" / "active" / "EP-TEST"
     ep_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create schemas directory at project root
-    schemas_dir = tmp_path / "schemas"
+    schemas_dir = project / "schemas"
     schemas_dir.mkdir(exist_ok=True)
-
-    # Copy visual-approval schema
-    schema_content = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "$id": "visual-approval.schema.json",
-        "title": "VisualApproval",
-        "type": "object",
-        "required": [
-            "episode_id",
-            "approved",
-            "reviewer",
-            "video_path",
-            "video_sha256",
-            "reviewed_at",
-            "checklist",
-        ],
-        "properties": {
-            "episode_id": {"type": "string"},
-            "approved": {"type": "boolean"},
-            "reviewer": {"type": "string"},
-            "video_path": {"type": "string"},
-            "video_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-            "reviewed_at": {"type": "string", "format": "date-time"},
-            "checklist": {
-                "type": "object",
-                "required": [
-                    "hook_clear_within_3s",
-                    "captions_readable",
-                    "composition_acceptable",
-                    "audio_acceptable",
-                    "no_placeholders",
-                    "facts_and_rights_checked",
-                ],
-                "properties": {
-                    "hook_clear_within_3s": {"type": "boolean"},
-                    "captions_readable": {"type": "boolean"},
-                    "composition_acceptable": {"type": "boolean"},
-                    "audio_acceptable": {"type": "boolean"},
-                    "no_placeholders": {"type": "boolean"},
-                    "facts_and_rights_checked": {"type": "boolean"},
-                },
-            },
-            "notes": {"type": ["string", "null"]},
-        },
-    }
-    (schemas_dir / "visual-approval.schema.json").write_text(
-        json.dumps(schema_content, indent=2), encoding="utf-8"
-    )
-
+    for name in ("visual-approval.schema.json", "video-release-review.schema.json"):
+        shutil.copy2(ROOT / "schemas" / name, schemas_dir / name)
     return ep_dir
+
+
+def _release_payload(ep_dir: Path, video: Path) -> dict:
+    return {
+        "reviewed_video": video.relative_to(ep_dir).as_posix(),
+        "reviewer": {
+            "mode": "actual_artifact_review",
+            "reviewer_id": "test-independent-reviewer",
+            "inspected_pixels": True,
+            "listened_audio": True,
+        },
+        "continuous_playback_review": {
+            "watched_start_to_end_1x": True,
+            "first_pass_without_pause_for_comprehension": True,
+            "first_10s_dense_review_completed": True,
+            "key_evidence_readable_without_pause": True,
+            "audio_listened_end_to_end": True,
+            "mobile_360x640_reviewed": True,
+            "transition_scan_completed": True,
+            "slideshow_like": False,
+            "static_screenshot_motion_dominant": False,
+            "rapid_dark_light_switching": False,
+            "unmotivated_abrupt_cuts": False,
+            "abrupt_context_loss": False,
+            "visual_motion_without_semantic_reason": False,
+            "audio_visual_semantic_mismatch": False,
+            "caption_or_overlay_blocks_evidence": False,
+            "key_evidence_requires_pause": False,
+            "known_critical_issue_at_delivery": False,
+            "critical_findings": [],
+        },
+        "first_pass_memory_summary": "Viewer can follow the story and proof at 1x without replay.",
+        "first_10s_findings": [{"range": "0-10s", "result": "readable and continuous"}],
+        "transition_findings": [{"timestamp": "2.0s", "result": "semantic cut"}],
+        "timestamped_findings": [],
+        "audio_review_notes": "Audio listened end-to-end and aligned with proof.",
+        "mobile_review_notes": "Key proof readable at 360x640.",
+        "repair_round": 0,
+        "final_status": "READY_TO_PUBLISH",
+    }
 
 
 @pytest.fixture
 def mock_video(mock_episode_dir: Path) -> Path:
-    """Create a mock video file inside episode renders directory."""
+    """Create a mock video and a valid release review for the exact hash."""
     renders_dir = mock_episode_dir / "renders"
     renders_dir.mkdir(parents=True, exist_ok=True)
     video = renders_dir / "preview-with-motion.mp4"
     video.write_bytes(b"fake video content")
+    save_video_release_review(
+        mock_episode_dir,
+        _release_payload(mock_episode_dir, video),
+        expected_video=video,
+    )
     return video
 
 
 def test_sha256_file(mock_video: Path) -> None:
-    """Test file hashing."""
     hash1 = sha256_file(mock_video)
     assert len(hash1) == 64
-    assert hash1 == sha256_file(mock_video)  # Deterministic
+    assert hash1 == sha256_file(mock_video)
 
 
 def test_create_approval_success(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test creating a valid approval."""
     approval = create_approval(
         mock_episode_dir,
         "EP-TEST",
@@ -111,8 +112,14 @@ def test_create_approval_success(mock_episode_dir: Path, mock_video: Path) -> No
     assert all(approval["checklist"].values())
 
 
+def test_create_approval_requires_current_release_review(mock_episode_dir: Path, mock_video: Path) -> None:
+    (mock_episode_dir / "work" / "qa" / "video-release-review.json").unlink()
+
+    with pytest.raises(ValueError, match="视频发布验收未通过"):
+        create_approval(mock_episode_dir, "EP-TEST", "Reviewer", mock_video)
+
+
 def test_create_approval_missing_video(mock_episode_dir: Path) -> None:
-    """Test creating approval for non-existent video fails."""
     with pytest.raises(FileNotFoundError, match="视频不存在"):
         create_approval(
             mock_episode_dir,
@@ -123,7 +130,6 @@ def test_create_approval_missing_video(mock_episode_dir: Path) -> None:
 
 
 def test_create_approval_invalid_checklist(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test creating approval with invalid checklist fails."""
     with pytest.raises(ValueError, match="checklist 必须包含且仅包含以下键"):
         create_approval(
             mock_episode_dir,
@@ -135,10 +141,9 @@ def test_create_approval_invalid_checklist(mock_episode_dir: Path, mock_video: P
 
 
 def test_create_approval_false_checklist_item(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test creating approval with false checklist item fails."""
     checklist = {
         "hook_clear_within_3s": True,
-        "captions_readable": False,  # This should block
+        "captions_readable": False,
         "composition_acceptable": True,
         "audio_acceptable": True,
         "no_placeholders": True,
@@ -149,7 +154,6 @@ def test_create_approval_false_checklist_item(mock_episode_dir: Path, mock_video
 
 
 def test_save_and_load_approval(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test saving and loading approval."""
     approval = create_approval(mock_episode_dir, "EP-TEST", "Reviewer", mock_video)
     saved_path = save_approval(mock_episode_dir, approval)
 
@@ -163,12 +167,10 @@ def test_save_and_load_approval(mock_episode_dir: Path, mock_video: Path) -> Non
 
 
 def test_load_approval_missing(mock_episode_dir: Path) -> None:
-    """Test loading missing approval returns None."""
     assert load_approval(mock_episode_dir) is None
 
 
 def test_verify_approval_current_success(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test verifying current approval succeeds when hash matches."""
     approval = create_approval(mock_episode_dir, "EP-TEST", "Reviewer", mock_video)
     save_approval(mock_episode_dir, approval)
 
@@ -178,35 +180,46 @@ def test_verify_approval_current_success(mock_episode_dir: Path, mock_video: Pat
 
 
 def test_verify_approval_current_missing(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test verifying approval fails when approval missing."""
     is_valid, error = verify_approval_current(mock_episode_dir, mock_video)
     assert is_valid is False
+    assert error is not None
     assert "缺少人工视觉批准文件" in error
 
 
 def test_verify_approval_current_hash_mismatch(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test verifying approval fails when video hash changes."""
-    # Create and save approval for original video
     approval = create_approval(mock_episode_dir, "EP-TEST", "Reviewer", mock_video)
     save_approval(mock_episode_dir, approval)
 
-    # Modify video content
     mock_video.write_bytes(b"modified video content")
 
     is_valid, error = verify_approval_current(mock_episode_dir, mock_video)
     assert is_valid is False
-    assert "视频已变更" in error
-    assert "批准哈希" in error
+    assert error is not None
+    assert "SHA256" in error or "重新渲染" in error or "视频已变更" in error
 
 
 def test_verify_approval_current_video_missing(mock_episode_dir: Path, mock_video: Path) -> None:
-    """Test verifying approval fails when video no longer exists."""
     approval = create_approval(mock_episode_dir, "EP-TEST", "Reviewer", mock_video)
     save_approval(mock_episode_dir, approval)
 
-    # Remove video
     mock_video.unlink()
 
     is_valid, error = verify_approval_current(mock_episode_dir, mock_video)
     assert is_valid is False
+    assert error is not None
     assert "最终视频不存在" in error
+
+
+def test_release_review_change_invalidates_saved_approval(mock_episode_dir: Path, mock_video: Path) -> None:
+    approval = create_approval(mock_episode_dir, "EP-TEST", "Reviewer", mock_video)
+    save_approval(mock_episode_dir, approval)
+
+    review_path = mock_episode_dir / "work" / "qa" / "video-release-review.json"
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["mobile_review_notes"] = "changed after approval"
+    review_path.write_text(json.dumps(review), encoding="utf-8")
+
+    valid, reason = verify_approval_current(mock_episode_dir, mock_video)
+    assert valid is False
+    assert reason is not None
+    assert "Fingerprint" in reason or "指纹" in reason or "Release Review" in reason
