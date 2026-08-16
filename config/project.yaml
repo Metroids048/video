@@ -1,7 +1,7 @@
 # Creator OS V2 — project contract
 project:
   name: "Creator OS"
-  version: "2.1"
+  version: "2.2"
   product_contract: "creator_os_v2"
   execution_engine: "avs"
   episodes_root: "episodes"
@@ -13,6 +13,13 @@ project:
   final_filename_requires_publish_success: true
   video_review_config: "config/video-review.yaml"
   video_pre_delivery_prompt: "docs/creator-os/video-pre-delivery-qa-prompt.md"
+  video_release_review_input: "work/qa/video-release-review.input.json"
+  video_release_review_record: "work/qa/video-release-review.json"
+  video_release_review_schema: "schemas/video-release-review.schema.json"
+  video_release_review_validator: "scripts/validate_video_release_review.py"
+  release_gate_fail_closed: true
+  delivery_requires_current_video_release_review: true
+  release_review_must_match_current_sha256: true
 
 canvas:
   width: 1080
@@ -30,6 +37,10 @@ principles:
   continuous_video_review_before_delivery: true
   actual_rendered_media_is_quality_source_of_truth: true
   known_critical_video_issue_blocks_delivery: true
+  contact_sheet_or_metadata_cannot_prove_publish_quality: true
+  no_self_authored_pass_without_actual_playback: true
+  repair_before_delivery_when_any_hard_fail_exists: true
+  rerender_invalidates_previous_release_review: true
   max_default_repair_rounds: 3
 
 episode_id_pattern: "^[A-Z0-9][A-Z0-9_-]{1,63}$"
