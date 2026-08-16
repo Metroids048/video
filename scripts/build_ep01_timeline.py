@@ -23,12 +23,10 @@ def main() -> int:
     prepared_bgm = ep / "work" / "prepared" / "audio" / "bgm-tech-house.mp3"
     shutil.copy2(ep.parents[2] / "third_party_skills" / "video-shotcraft" / "assets" / "audio" / "bgm" / "bgm-tech-house.mp3", prepared_bgm)
 
-    # EP01 is evidence-led screen documentary footage. Do not assign motion
-    # primitives by modulo/index: screenshot_compare duplicated the same frame,
-    # while pan/scroll cover-cropped 16:9 UI into 9:16 and destroyed evidence.
-    # Scene-map edits define semantic cuts and may also declare focus_x (0..1)
-    # so the portrait renderer follows the actual evidence instead of blindly
-    # cropping the desktop centre.
+    # EP01 is evidence-led screen documentary footage. Preserve the complete
+    # landscape source page by default. Do not invent movement or crop away
+    # left/right context merely to fill 9:16. Any future ROI crop must be a
+    # separate, explicitly authorized semantic treatment after full context.
     video_clips: list[Clip] = []
     for index, shot in enumerate(scene_map):
         start = float(shot["output_start"])
@@ -43,10 +41,7 @@ def main() -> int:
                 asset_ref="work/prepared/screen/原始录屏.mp4",
                 in_point=source_start,
                 out_point=source_start + duration,
-                transform={
-                    "layout": "screen_focus",
-                    "focus_x": float(shot.get("focus_x", 0.5)),
-                },
+                transform={"layout": "fit_full_frame"},
                 primitive=None,
                 segment_id=f"scene-{index:02d}",
                 reference_pattern_ids=["single-primary-douyin-reference"],
