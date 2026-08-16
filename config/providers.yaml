@@ -17,8 +17,13 @@ providers:
       device: "cpu"
 
   tts:
-    default: "edge_tts"
+    # A voice profile selected through audition is required for Pilot/final
+    # production. Edge is retained only for explicit local development.
+    default: "voice_profile"
+    voice_profile:
+      required_for_publish: true
     edge_tts:
+      development_fallback_only: true
       voice: "zh-CN-YunxiNeural"
       rate: "+8%"
 

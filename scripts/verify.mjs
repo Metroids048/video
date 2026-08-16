@@ -44,35 +44,15 @@ for (const file of [
   ".claude/agents/content-worker.md", ".claude/agents/media-worker.md",
   ".claude/agents/reviewer.md", "pyproject.toml", "package.json",
   "README.md", "docs/getting-started.md", "docs/input-guide.md",
-  "docs/editing-guide.md", "docs/troubleshooting.md", "docs/compatibility.md",
-  "docs/decisions/0005-workflow-orchestration.md",
-  "docs/reference-research/douyin-codex-short-video-study.md",
+  "docs/creator-os-v2.md", "docs/workflow-v2.md", "docs/troubleshooting.md",
+  "config/content-formats.yaml", "config/reference-acquisition.yaml", "config/voice.yaml",
+  "schemas/creative-contract.schema.json", "schemas/creator-review.schema.json",
+  "schemas/voice-profile.schema.json", "scripts/validate_creator_os_v2.py",
 ]) {
   check(file, () => requireFile(file));
 }
 
-check("Roadmap reflects implemented modules", () => {
-  const roadmap = readFileSync(join(ROOT, "docs/implementation-roadmap.md"), "utf8");
-  if (roadmap.includes("状态：待开发")) throw new Error("implementation-roadmap.md 仍包含待开发模块");
-  if (!roadmap.includes("模块 10")) throw new Error("implementation-roadmap.md 缺少模块 10");
-});
-check("Douyin research ledger is fully verified", () => {
-  const ledger = readFileSync(
-    join(ROOT, "docs/reference-research/douyin-codex-short-video-study.md"),
-    "utf8",
-  );
-  const entries = ledger.split(/\r?\n/).filter((line) => /^\|\s*\d+\s*\|/.test(line));
-  if (entries.length !== 18) throw new Error(`参考条目应为 18 条，实际 ${entries.length} 条`);
-  if (entries.some((line) => !/www\.douyin\.com\/(?:video|note)\/\d+/.test(line))) {
-    throw new Error("存在未解析为抖音长链的参考条目");
-  }
-  if (entries.some((line) => !/\|\s*A\s*\|\s*$/.test(line))) {
-    throw new Error("存在未达到 A 级页面核验的参考条目");
-  }
-  if (ledger.includes("| C |") || ledger.includes("待补证") || ledger.includes("其余 17 条")) {
-    throw new Error("研究台账仍包含旧的未完成标记");
-  }
-});
+check("Creator OS V2 contract", () => run(python, ["scripts/validate_creator_os_v2.py"]));
 check("Python compile", () => run(python, ["-m", "compileall", "-q", "src", "tests", "scripts"]));
 check("AVS CLI", () => run(python, ["-m", "avs", "--help"]));
 check("AVS workflow CLI", () => run(python, ["-m", "avs", "workflow", "--help"]));

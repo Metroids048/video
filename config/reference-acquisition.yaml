@@ -3,6 +3,9 @@ reference_acquisition:
   cache_enabled: true
   deduplicate_by_source_url_and_media_hash: true
   preserve_source_metadata: true
+  primary_reference:
+    strategy: single_main_reference
+    require_audiovisual_evidence_for_recipe: true
 
   sources:
     local_video:
@@ -24,9 +27,13 @@ reference_acquisition:
     - source.json
     - transcript.srt
     - transcript.words.json
-    - frames
-    - contact_sheet
+    - shots.json
+    - keyframes
+    - contact-sheet.jpg
+    - audio-analysis.json
+    - cover-analysis.json
     - reference-recipe.json
+    - provenance.json
 
   prohibitions:
     - "不得在下载失败时推断具体镜头、节奏、字幕和声音设计"

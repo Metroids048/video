@@ -69,11 +69,11 @@ def test_threshold_and_duplicate_reviewer_gate(tmp_path: Path) -> None:
         review_pilots(ep_dir, [_reviewer("r1"), _reviewer("r1")])
     low = _reviewer("r1")
     for reviewer in (low,):
-        reviewer["variants"]["A-result"]["scores"]["hook"] = 6.9  # type: ignore[index]
+        reviewer["variants"]["primary"]["scores"]["hook"] = 6.9  # type: ignore[index]
     report = review_pilots(ep_dir, [low, _reviewer("r2")], force=True)
-    assert report["decision"] == "PASS"
-    assert report["winner"] in {"B-reversal", "C-project"}
-    assert report["reviews"]["A-result"]["scores"]["hook"] < 8
+    assert report["decision"] == "REJECT"
+    assert report["winner"] is None
+    assert report["reviews"]["primary"]["scores"]["hook"] < 8
 
 
 def test_final_render_is_denied_before_pilot_gate(tmp_path: Path) -> None:

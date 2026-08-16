@@ -29,7 +29,7 @@ from avs.creative.reference_matcher import save_reference_selection
 from avs.models.episode import EpisodeModel
 from avs.render.captions import build_srt
 from avs.timeline import build_timeline
-from avs.timeline.models import Clip, Timeline, Track
+from avs.timeline.models import Timeline
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -325,21 +325,16 @@ def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
     timeline = build_timeline(ep_dir, model.id, force=force)
     voice_track = next((track for track in timeline.tracks if track.kind == "audio" and track.audio_role == "voice"), None)
     if voice_track is None:
-        from avs.render.tts import ensure_edge_narration
-        narration = ensure_edge_narration(ep_dir, script, force=force)
-        relative = narration.relative_to(ep_dir).as_posix()
-        duration = float(timeline.total_duration or timeline.compute_duration())
-        timeline.tracks.append(Track(
-            track_id="audio-voice-generated", kind="audio", audio_role="voice",
-            clips=[Clip(
-                clip_id="voice-edge-tts", start=0.0, duration=duration,
-                asset_ref=relative, style={"volume": 1.0, "role": "voice", "provider": "edge_tts"},
-            )],
-        ))
-        timeline.save(ep_dir / "work" / "timeline.json")
+        raise RuntimeError(
+            "V2 预览需要已经锁定的最终旁白音轨；请先完成 voice audition、voice-profile 和 forced alignment。"
+        )
     if model.status == "ASSETS_READY":
         model.ensure_stage("timeline", "TIMELINE_READY")
-    build_srt(timeline, ep_dir / "work" / "captions.srt")
+    build_srt(
+        timeline,
+        ep_dir / "work" / "captions.srt",
+        words_path=ep_dir / "work" / "final-narration.words.json",
+    )
     from avs.render import render_rough_cut
     render_rough_cut(ep_dir, timeline, force=force)
     from avs.hyperframes import render_motion_graphics
@@ -360,7 +355,11 @@ def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = Fals
     if not review.get("passed") or review.get("blocked"):
         raise RuntimeError("visual-review 未通过，禁止进入 final-render")
     timeline = Timeline.load(ep_dir / "work" / "timeline.json")
-    build_srt(timeline, ep_dir / "work" / "captions.srt")
+    build_srt(
+        timeline,
+        ep_dir / "work" / "captions.srt",
+        words_path=ep_dir / "work" / "final-narration.words.json",
+    )
     from avs.render import render_rough_cut
     rough = render_rough_cut(ep_dir, timeline, force=force)
     renders = ep_dir / "renders"

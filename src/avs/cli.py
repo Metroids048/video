@@ -320,7 +320,7 @@ def episode_reset(episode_id: str, target_status: str, force: bool) -> None:
     from avs.config import Config
     from avs.models.episode import EpisodeModel
     from avs.paths import PathError, find_episode_dir, episode_json_path
-    from avs.state import TransitionError
+    from avs.recovery import reset_episode
 
     root = _find_project_root()
     cfg = Config(root)
@@ -342,12 +342,8 @@ def episode_reset(episode_id: str, target_status: str, force: bool) -> None:
     ep_json = episode_json_path(ep_dir)
     try:
         model = EpisodeModel.load(ep_json)
-        old_status = model.status
-        model.transition(target_status, force=True)
-        model.save(ep_json)
-    except TransitionError as exc:
-        console.print(f"[red]✗ {exc}[/red]")
-        sys.exit(1)
+        result = reset_episode(ep_dir, model, target_status)
+        old_status = result.old_status
     except Exception as exc:
         console.print(f"[red]✗ 操作失败: {exc}[/red]")
         sys.exit(1)

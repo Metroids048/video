@@ -17,7 +17,7 @@ from avs.ingest import run_ingest
 from avs.models.episode import EpisodeModel
 from avs.paths import create_episode_skeleton
 from avs.render.primitives import PRIMITIVES, apply_redactions, primitive_filter
-from avs.timeline.models import Timeline
+from avs.timeline.models import Clip, Timeline, Track
 from avs.timeline.shot_expander import expand_shot
 from avs.workflow import action_for_episode
 
@@ -285,11 +285,16 @@ def _active_content(ep_dir: Path) -> None:
 def test_active_preview_runs_hyperframes_on_formal_path(tmp_path: Path) -> None:
     ep_dir = tmp_path / "episodes" / "active" / "EP-ACTIVE"
     _active_content(ep_dir)
-    timeline = Timeline("EP-ACTIVE", total_duration=2.0)
+    timeline = Timeline("EP-ACTIVE", total_duration=2.0, tracks=[Track(
+        track_id="voice", kind="audio", audio_role="voice",
+        clips=[Clip(clip_id="locked-voice", start=0.0, duration=2.0, asset_ref="work/narration.mp3")],
+    )])
+    words = ep_dir / "work" / "final-narration.words.json"
+    words.parent.mkdir(parents=True, exist_ok=True)
+    words.write_text(json.dumps({"words": [{"text": "开场", "start": 0.0, "end": 1.0, "confidence": 1.0}]}), encoding="utf-8")
     model = MagicMock(id="EP-ACTIVE", status="CONTENT_READY")
     with (
         patch("avs.active.build_timeline", return_value=timeline),
-        patch("avs.render.tts.ensure_edge_narration", return_value=ep_dir / "work/prepared/generated/narration.mp3"),
         patch("avs.render.render_rough_cut", return_value={}),
         patch("avs.hyperframes.render_motion_graphics", return_value=SimpleNamespace(output_path=None)) as motion,
     ):

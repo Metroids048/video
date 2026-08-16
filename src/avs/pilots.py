@@ -9,7 +9,6 @@ import hashlib
 import json
 import shutil
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -17,15 +16,16 @@ from typing import Any
 import yaml
 
 from avs.qa.creative_sampling import build_contact_sheets, extract_frames, extract_uniform_frames
+from avs.render.captions import build_srt_from_words
 
 
-PILOT_IDS = ("A-result", "B-reversal", "C-project")
+PILOT_IDS = ("primary",)
 CORE_DIMENSIONS = (
     "first_frame", "hook", "mobile_readability", "real_evidence",
     "caption_intrusion", "visual_density", "pacing", "ppt_feel",
     "cheap_ai_feel", "continue_watching",
 )
-MAX_REPAIR_ROUNDS = 2
+MAX_REPAIR_ROUNDS = 3
 
 
 def _now() -> str:
@@ -56,7 +56,14 @@ def _sha256(path: Path) -> str:
 
 def screen_documentary_rules() -> dict[str, Any]:
     payload = yaml.safe_load((_root() / "config" / "production-types.yaml").read_text(encoding="utf-8"))
-    return dict(payload["production_types"]["SCREEN_DOCUMENTARY"])
+    raw = dict(payload["production_types"]["SCREEN_DOCUMENTARY"])
+    # Normalize the product contract's names to the renderer's internal gate keys.
+    pilot_seconds = raw.get("pilot_seconds", [20, 30])
+    raw.setdefault("pilot_duration_seconds", {"min": float(pilot_seconds[0]), "max": float(pilot_seconds[1])})
+    raw.setdefault("real_screen_footage_ratio_min", raw.get("real_screen_footage_min_ratio", 0.7))
+    raw.setdefault("generated_card_count_max", raw.get("generated_fullscreen_cards_max", 2))
+    raw.setdefault("generated_motion_total_seconds_max", raw.get("generated_fullscreen_cards_total_seconds_max", 5))
+    return raw
 
 
 def _vci_package() -> Path:
@@ -64,20 +71,18 @@ def _vci_package() -> Path:
 
 
 def _source_recording(ep_dir: Path) -> Path:
-    candidates = (
-        ep_dir / "work" / "prepared" / "screen" / "20260812_131106.mp4",
-        _root() / "录屏" / "20260812_131106.mp4",
-        _vci_package() / "original" / "source_video.mp4",
-    )
-    source = next((item for item in candidates if item.is_file()), None)
-    if source is None:
-        raise RuntimeError("找不到冻结的 EP01 原始录屏工作副本")
+    source = _root() / "第一期视频_7x24自动交易" / "原始录屏.mp4"
+    if not source.is_file():
+        raise RuntimeError("找不到冻结的 EP01 原始录屏母带")
+    expected = "dfc4edef0a19b3945e18bdc63825e2ff5f80149c59e6c485075589ac571f7dfd"
+    if _sha256(source) != expected:
+        raise RuntimeError("EP01 原始录屏 SHA256 与冻结 source identity 不一致")
     return source
 
 
 def _prepared_source(ep_dir: Path) -> Path:
     source = _source_recording(ep_dir)
-    target = ep_dir / "work" / "prepared" / "screen" / "20260812_131106.mp4"
+    target = ep_dir / "work" / "prepared" / "screen" / "原始录屏.mp4"
     target.parent.mkdir(parents=True, exist_ok=True)
     if not target.exists():
         shutil.copy2(source, target)
@@ -121,22 +126,22 @@ def direct_story(ep_dir: Path) -> Path:
     return _write(ep_dir / "work" / "director" / "short-video-brief.json", payload)
 
 
-def _pilot_spec(variant: str) -> list[dict[str, Any]]:
-    specs: dict[str, list[dict[str, Any]]] = {
-        "A-result": [
-            {"start": 0.0, "duration": 4.1, "in": 129.0, "region": [0.05, 0.42, 0.92, 0.50], "target": "Binance Demo Order History", "caption": "5000U 到约7355U", "spoken": "我用 AI 做的交易系统，模拟盘从五千U到现在约七千三百五十五U。"},
-            {"start": 4.1, "duration": 4.7, "in": 1.0, "region": [0.02, 0.05, 0.72, 0.90], "target": "Dashboard", "caption": "Binance Demo 模拟盘", "spoken": "但这只是阶段账户快照，不等于策略已经成功。"},
-        ],
-        "B-reversal": [
-            {"start": 0.0, "duration": 4.2, "in": 129.0, "region": [0.05, 0.42, 0.92, 0.50], "target": "Binance Demo Order History", "caption": "阶段变化约47%", "spoken": "模拟盘涨了大约百分之四十七，但我现在不敢说策略赚钱。"},
-            {"start": 4.2, "duration": 4.5, "in": 136.0, "region": [0.80, 0.55, 0.19, 0.37], "target": "Binance Demo Balance", "caption": "样本、回撤、手续费未验证", "spoken": "因为样本量、回撤和手续费，都还没验证完。"},
-        ],
-        "C-project": [
-            {"start": 0.0, "duration": 4.4, "in": 1.0, "region": [0.02, 0.05, 0.72, 0.90], "target": "Dashboard + chart", "caption": "AI 做出的交易系统", "spoken": "我不会传统编程，却用 Codex 和 Claude Code 做出了这套系统。"},
-            {"start": 4.4, "duration": 4.4, "in": 129.0, "region": [0.05, 0.42, 0.92, 0.50], "target": "Binance Demo Order History", "caption": "直接看 Binance Demo", "spoken": "它不是演示界面，订单我直接去 Binance Demo 看。"},
-        ],
-    }
-    return specs[variant]
+def _pilot_spec(ep_dir: Path, variant: str) -> list[dict[str, Any]]:
+    """Load episode-specific shots from the locked Creative/Shot Plan."""
+    plan_path = ep_dir / "work" / "content" / "pilot-shot-plan.json"
+    if not plan_path.is_file():
+        raise RuntimeError("缺少数据驱动的 pilot-shot-plan.json；Pilot 不得从 runtime 硬编码 EP 文案")
+    payload = _read(plan_path)
+    variants = payload.get("variants", payload)
+    specs = variants.get(variant)
+    if not isinstance(specs, list) or not specs:
+        raise RuntimeError(f"pilot-shot-plan.json 缺少 variant={variant}")
+    required = {"start", "duration", "in", "region", "target", "spoken"}
+    for index, spec in enumerate(specs):
+        if not isinstance(spec, dict) or not required.issubset(spec):
+            missing = sorted(required - set(spec)) if isinstance(spec, dict) else sorted(required)
+            raise RuntimeError(f"pilot-shot-plan.json 第 {index + 1} 镜缺少字段: {missing}")
+    return specs
 
 
 def _srt_timestamp(seconds: float) -> str:
@@ -151,7 +156,7 @@ def _subtitles_filter(path: Path) -> str:
     filename = path.resolve().as_posix().replace(":", r"\:").replace("'", r"\'")
     # Restrained single-line captions: no black outline, a translucent backing,
     # and enough bottom margin to avoid the primary ROI.
-    style = "FontName=Microsoft YaHei,FontSize=42,PrimaryColour=&H00FFFFFF,BackColour=&H70000000,BorderStyle=3,Outline=0,Shadow=0,Alignment=2,MarginV=150,MarginL=68,MarginR=68"
+    style = "FontName=Microsoft YaHei,FontSize=16,PrimaryColour=&H00FFFFFF,BackColour=&H70000000,BorderStyle=3,Outline=0,Shadow=0,Alignment=2,MarginV=120,MarginL=72,MarginR=72"
     return f"subtitles='{filename}':force_style='{style}'"
 
 
@@ -164,18 +169,12 @@ def _run(command: list[str], *, timeout: int, error: str) -> None:
 def _ensure_narration(work: Path, specs: list[dict[str, Any]], *, force: bool) -> Path:
     output = work / "narration.mp3"
     provenance = work / "narration.json"
-    text = "\n".join(item["spoken"] for item in specs)
-    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-    if output.is_file() and provenance.is_file() and not force:
-        try:
-            if _read(provenance).get("text_sha256") == digest:
-                return output
-        except (OSError, ValueError):
-            pass
-    _run([sys.executable, "-m", "edge_tts", "--voice", "zh-CN-YunxiNeural", "--rate", "+8%", "--text", text, "--write-media", str(output)], timeout=180, error="Edge TTS Pilot 旁白生成失败")
-    if not output.is_file() or output.stat().st_size == 0:
-        raise RuntimeError("Edge TTS Pilot 旁白生成失败：没有生成音频文件")
-    _write(provenance, {"provider": "edge_tts", "voice": "zh-CN-YunxiNeural", "rate": "+8%", "text_sha256": digest, "spoken_lines": [item["spoken"] for item in specs], "generated_at": _now()})
+    words = work / "narration.words.json"
+    if not output.is_file() or not words.is_file() or not provenance.is_file():
+        raise RuntimeError("Pilot 需要已经锁定的旁白、voice-profile 和词级强制对齐；禁止使用 Edge TTS 自动补旁白")
+    metadata = _read(provenance)
+    if metadata.get("provider") == "edge_tts" or not metadata.get("voice_profile"):
+        raise RuntimeError("Edge TTS 只能作为开发 fallback，不能进入 Pilot 或 READY_TO_PUBLISH")
     return output
 
 
@@ -208,12 +207,9 @@ def _render_pilot(ep_dir: Path, variant: str, specs: list[dict[str, Any]], *, fo
         clips.append({"source_start": spec["in"], "source_end": spec["in"] + spec["duration"], "target": spec["target"], "region": {"x": x, "y": y, "w": w, "h": h}, "zoom": zoom, "pan": None, "caption_safe_zone": "bottom", "minimum_mobile_readability": True})
     concat = work / "concat.txt"
     concat.write_text("".join(f"file '{part.resolve().as_posix()}'\n" for part in segments), encoding="utf-8")
-    lines: list[str] = []
-    for index, spec in enumerate(specs, start=1):
-        lines.extend([str(index), f"{_srt_timestamp(spec['start'])} --> {_srt_timestamp(spec['start'] + spec['duration'])}", spec["caption"], ""])
-    srt.write_text("\n".join(lines), encoding="utf-8")
     narration = _ensure_narration(work, specs, force=force)
     total = sum(float(item["duration"]) for item in specs)
+    build_srt_from_words(work / "narration.words.json", srt, total_duration=total)
     # apad preserves the visual duration when narration ends before the last shot.
     _run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-i", str(narration), "-filter_complex", "[1:a]apad=pad_dur=12[a]", "-map", "0:v:0", "-map", "[a]", "-vf", _subtitles_filter(srt), "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "-pix_fmt", "yuv420p", str(output)], timeout=240, error=f"Pilot {variant} 合并、字幕或旁白失败")
     _run(["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height", "-of", "json", str(output)], timeout=30, error=f"Pilot {variant} 解码验证失败")
@@ -243,11 +239,13 @@ def render_pilots(ep_dir: Path, *, force: bool = False) -> dict[str, Any]:
         raise RuntimeError("请先完成 story-mine 与 direct")
     result: dict[str, Any] = {"episode_id": ep_dir.name, "pilots": {}}
     for variant in PILOT_IDS:
-        output = _render_pilot(ep_dir, variant, _pilot_spec(variant), force=force)
+        output = _render_pilot(ep_dir, variant, _pilot_spec(ep_dir, variant), force=force)
         timeline = _read(output["timeline"])
         _validate_pilot_timeline(timeline)
         video, qa_root = output["video"], ep_dir / "work" / "qa" / "pilots" / variant
-        dense = extract_frames(video, [0.0, .5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], qa_root / "dense", force=force)
+        total = float(_read(output["timeline"])["total_duration"])
+        dense_stamps = [round(total * index / 10, 2) for index in range(11)]
+        dense = extract_frames(video, dense_stamps, qa_root / "dense", force=force)
         uniform = extract_uniform_frames(video, qa_root / "uniform", step_seconds=1.0, force=force)
         sheets = build_contact_sheets(uniform or dense, qa_root / "contact-sheets", label=f"pilot-{variant}")
         mobile = qa_root / "mobile-preview"
@@ -293,14 +291,14 @@ def _validate_reviewer_payload(raw: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Reviewer 必须列出实际查看过的 MP4、联系表或关键帧")
     variants = raw.get("variants")
     if not isinstance(variants, dict) or set(variants) != set(PILOT_IDS):
-        raise ValueError("每个独立 Reviewer 必须对 A-result/B-reversal/C-project 全部评分")
+        raise ValueError(f"每个独立 Reviewer 必须对 {', '.join(PILOT_IDS)} 全部评分")
     return {"reviewer_id": reviewer_id, "reviewer_kind": reviewer_kind, "reviewed_artifacts": reviewed_artifacts, "variants": {variant: _validate_variant_review(dict(variants[variant]), variant) for variant in PILOT_IDS}}
 
 
 def review_pilots(ep_dir: Path, reviewer_payloads: list[dict[str, Any]] | None = None, *, force: bool = False) -> dict[str, Any]:
     manifest = ep_dir / "work" / "qa" / "pilots" / "pilot-manifest.json"
     if not manifest.is_file():
-        raise RuntimeError("请先运行 pilot 生成三个真实 Pilot")
+        raise RuntimeError("请先运行 pilot 生成真实 Pilot")
     output_dir, existing = ep_dir / "work" / "qa" / "pilots", ep_dir / "work" / "qa" / "pilots" / "pilot-review.json"
     if existing.is_file() and not force and reviewer_payloads is None:
         return _read(existing)
@@ -371,7 +369,8 @@ def assert_screen_documentary_pilot_gate(ep_dir: Path, model: Any) -> None:
     """Shared fail-closed guard for every SCREEN_DOCUMENTARY render path."""
     if getattr(model, "production_type", "STANDARD") != "SCREEN_DOCUMENTARY":
         return
-    if getattr(model, "status", None) != "PILOT_APPROVED" or not pilot_gate_passed(ep_dir):
+    downstream_statuses = {"PILOT_APPROVED", "ROUGH_CUT_READY", "QA_PASSED", "DELIVERY_READY"}
+    if getattr(model, "status", None) not in downstream_statuses or not pilot_gate_passed(ep_dir):
         raise RuntimeError(
             "SCREEN_DOCUMENTARY 必须先通过字幕驱动的 20-30 秒 Pilot Gate；"
             "没有匹配录屏不是阻塞条件，但没有真实看片记录不能完整渲染"

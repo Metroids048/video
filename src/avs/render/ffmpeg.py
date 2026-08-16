@@ -312,10 +312,10 @@ def _mix_audio_and_mux(
         "ffmpeg", "-y",
         *inputs,
         "-filter_complex",
-        f"[{voice_idx}:a]volume={voice_volume},atrim=duration={total_duration},asplit=2[v][sc];"
-        f"[{bgm_idx}:a]volume={bgm_volume},atrim=duration={total_duration}[b];"
+        f"[{voice_idx}:a]volume={voice_volume},atrim=duration={total_duration},apad=whole_dur={total_duration},asplit=2[v][sc];"
+        f"[{bgm_idx}:a]volume={bgm_volume},atrim=duration={total_duration},apad=whole_dur={total_duration}[b];"
         f"[b][sc]sidechaincompress=threshold=0.04:ratio=10:attack=20:release=450[ducked];"
-        f"[v][ducked]amix=inputs=2:duration=first,alimiter=limit=0.95[a]",
+        f"[v][ducked]amix=inputs=2:duration=longest,atrim=duration={total_duration},alimiter=limit=0.95[a]",
         "-map", "0:v",
         "-map", "[a]",
         "-c:v", "copy",

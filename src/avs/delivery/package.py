@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from PIL import Image, ImageDraw, ImageFont
+
 from avs.delivery.manifest import file_record, sha256_file, validate_manifest
 from avs.delivery.paths import safe_delivery_target
 from avs.models.episode import EpisodeModel
@@ -216,10 +218,16 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
         )
         files.append((keywords_path, False))
         final_video = _final_video_path(ep_dir)
-        cover = delivery_dir / "publish" / "cover.jpg"
-        if force or not cover.is_file():
-            _generate_cover(final_video, cover)
-        files.append((cover, True))
+        cover_video = ep_dir / "renders" / "final-clean.mp4"
+        if not cover_video.is_file():
+            cover_video = final_video
+        cover_a = delivery_dir / "publish" / "cover-A.png"
+        cover_b = delivery_dir / "publish" / "cover-B.png"
+        if force or not cover_a.is_file():
+            _generate_cover(cover_video, cover_a, model=model, position=0.18, variant="A")
+        if force or not cover_b.is_file():
+            _generate_cover(cover_video, cover_b, model=model, position=0.82, variant="B")
+        files.extend(((cover_a, True), (cover_b, True)))
 
     unique_files = {path.resolve(): (path, required) for path, required in files}
     records = [
@@ -256,15 +264,18 @@ def _edit_notes(timeline: dict[str, Any], *, publishable: bool) -> str:
         for clip in track.get("clips", [])
         if (clip.get("style") or {}).get("placeholder")
     ]
-    final_step = "- 人工确认平台文案后发布" if publishable else "- 本包仅供内部学习，不得公开发布"
-    lines = ["# 编辑说明", "", "## 待补素材", "", *(placeholders or ["- 无"]), "", "## 发布前人工复核", "", "- 完整播放并检查画面、音量、字幕和事实", "- 替换全部占位卡", "- 在剪映等软件中完成最终调整", final_step, ""]
+    final_step = "- 人工确认平台文案与发布权限后即可发布" if publishable else "- 本包仅供内部学习，不得公开发布"
+    lines = ["# 交付检查", "", "## 待补素材", "", *(placeholders or ["- 无"]), "", "## 发布前复核", "", "- 完整播放并检查画面、音量、字幕和事实", "- 替换全部占位卡", "- 不需要在剪映或 CapCut 中进行编辑修复", final_step, ""]
     return "\n".join(lines)
 
 
 def _publish_copy(platform: str, model: EpisodeModel) -> str:
     title = model.to_dict().get("title") or f"{model.id} 视频"
+    platform_name = "抖音" if platform == "douyin" else "小红书" if platform == "xiaohongshu" else platform
     return "\n".join([
-        f"# {platform} 发布文案草稿", "", f"标题: {title}", "", "正文:", "", "（发布前人工填写并核对事实）", "", "话题:", "", "（发布前人工选择）", "",
+        f"# {platform_name} 发布文案", "", f"标题: {title}", "", "正文:",
+        "这是一次基于真实项目素材的制作记录。视频中的事实、画面和结论均以交付包内的证据与审核结果为准。", "",
+        "话题:", "#AI创作 #产品复盘 #真实项目", "",
     ])
 
 
@@ -284,17 +295,48 @@ def _material_usage_report(timeline: dict[str, Any]) -> dict[str, Any]:
     return {"used_asset_ids": used, "primitives": primitives}
 
 
-def _generate_cover(video_path: Path, output_path: Path) -> None:
+def _video_duration(video_path: Path) -> float:
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", str(video_path)],
+        capture_output=True, text=True, timeout=30, check=False,
+    )
+    if result.returncode:
+        raise RuntimeError(f"无法读取最终视频时长: {result.stderr[-300:]}")
+    return max(float(result.stdout.strip()), 0.0)
+
+
+def _cover_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    for candidate in (Path("C:/Windows/Fonts/msyh.ttc"), Path("C:/Windows/Fonts/msyhbd.ttc")):
+        if candidate.is_file():
+            return ImageFont.truetype(str(candidate), size=size)
+    return ImageFont.load_default()
+
+
+def _generate_cover(video_path: Path, output_path: Path, *, model: EpisodeModel, position: float, variant: str) -> None:
     executable = shutil.which("ffmpeg")
     if executable is None or not video_path.is_file():
         raise FileNotFoundError("无法从最终视频生成封面")
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = _video_duration(video_path) * position
+    frame = output_path.with_suffix(".frame.png")
     result = subprocess.run(
-        [executable, "-y", "-ss", "0", "-i", str(video_path), "-frames:v", "1", "-q:v", "2", str(output_path)],
+        [executable, "-y", "-ss", f"{timestamp:.3f}", "-i", str(video_path), "-frames:v", "1", str(frame)],
         capture_output=True,
         text=True,
         timeout=120,
         check=False,
     )
-    if result.returncode != 0 or not output_path.is_file():
+    if result.returncode != 0 or not frame.is_file():
         raise RuntimeError(f"封面生成失败: {result.stderr[-300:]}")
+    try:
+        with Image.open(frame).convert("RGB") as image:
+            draw = ImageDraw.Draw(image, "RGBA")
+            width, height = image.size
+            draw.rectangle((0, int(height * .62), width, height), fill=(0, 0, 0, 165))
+            title = str(model.to_dict().get("title") or "真实项目，做成一条视频")
+            kicker = "真实录屏 / 项目复盘" if variant == "A" else "不是演示，直接看证据"
+            draw.text((64, int(height * .68)), kicker, font=_cover_font(36), fill=(89, 224, 184, 255))
+            draw.multiline_text((64, int(height * .74)), title, font=_cover_font(58), fill=(255, 255, 255, 255), spacing=8)
+            image.save(output_path)
+    finally:
+        frame.unlink(missing_ok=True)

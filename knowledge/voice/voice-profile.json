@@ -1,0 +1,20 @@
+{
+  "version": "2.0",
+  "profile_id": "creator-os-ep01-voice-v1",
+  "mode": "HYBRID_S2S",
+  "provider": "GPT-SoVITS-local",
+  "voice_id": "user-reference-A",
+  "settings": {
+    "reference": "episodes/active/EP-20260812-01-V2/work/audio/voice-references/voice-ref-A-gpt-8s.wav",
+    "sample_rate": 48000
+  },
+  "audition_script_hash": "fc660ab51674fa74bdee0d758cc77b41d7829dd2c0560561296acc76552994b6",
+  "audition_artifacts": [
+    "episodes/active/EP-20260812-01-V2/work/closure/voice-audition/HUMAN_ENHANCED.wav",
+    "episodes/active/EP-20260812-01-V2/work/closure/voice-audition/HYBRID_S2S.wav",
+    "episodes/active/EP-20260812-01-V2/work/closure/voice-audition.json"
+  ],
+  "approved": true,
+  "approved_at": "2026-08-16T08:07:43.367166+00:00",
+  "notes": "锁定一次试听结果；后续 Episode 不得静默更换声音。Premium TTS 探测失败，未作为回退。"
+}

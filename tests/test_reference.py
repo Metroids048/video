@@ -35,7 +35,23 @@ def test_reference_research_document_is_v2_reusable_rules_not_legacy_ledger() ->
     assert "Creative Review" in study
     assert "复制文案" in study
     assert "18 条" not in study
-    assert not (root / "docs" / "reference-research" / "workbuddy-samples" / "video-workshop").exists()
+    legacy_path = "docs/reference-research/workbuddy-samples/video-workshop"
+    tracked = subprocess.run(
+        ["git", "ls-files", "--", legacy_path],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert not tracked
+
+
+def test_reference_acquisition_contract_requires_single_primary_outputs() -> None:
+    root = Path(__file__).resolve().parents[1]
+    contract = (root / "config" / "reference-acquisition.yaml").read_text(encoding="utf-8")
+    assert "primary_reference" in contract
+    for artifact in ("video.mp4", "transcript.words.json", "contact-sheet.jpg", "reference-recipe.json", "provenance.json"):
+        assert artifact in contract
 
 
 class TestShots:

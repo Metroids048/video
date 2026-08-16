@@ -1,8 +1,10 @@
 """src/avs/render/captions.py — SRT 生成与字幕越界检测。"""
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from avs.freshness import write_text_if_changed
 from avs.timeline.models import Timeline
@@ -20,29 +22,100 @@ def _seconds_to_srt_time(s: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{ms:03d}"
 
 
-def build_srt(timeline: Timeline, output_path: Path) -> int:
+def _word_entries(words_path: Path) -> list[tuple[float, float, str]]:
+    """Build semantic cues from final-narration word alignment data.
+
+    The aligner is allowed to provide timing only.  It must not become an
+    alternative script author, which is why every entry keeps the canonical
+    ``text`` emitted by the narration stage.
+    """
+    payload: Any = json.loads(words_path.read_text(encoding="utf-8"))
+    words = payload.get("words", payload) if isinstance(payload, dict) else payload
+    if not isinstance(words, list):
+        raise ValueError("final narration word timestamps must be a list or {words: [...]}")
+    entries: list[tuple[float, float, str]] = []
+    buffer: list[dict[str, Any]] = []
+    for word in words:
+        if not isinstance(word, dict):
+            raise ValueError("word timestamp entry must be an object")
+        text = str(word.get("text") or "").strip()
+        start, end = word.get("start"), word.get("end")
+        if not text or not isinstance(start, (int, float)) or not isinstance(end, (int, float)) or end <= start:
+            raise ValueError("word timestamp entry requires text, start and end")
+        buffer.append({"text": text, "start": float(start), "end": float(end)})
+        # Chinese narration normally has no whitespace boundaries.  Keep cues
+        # short and use actual audio pauses/punctuation as natural breaks.
+        joined = _join_caption_tokens([item["text"] for item in buffer])
+        pause = len(buffer) > 1 and float(start) - float(buffer[-2]["end"]) >= 0.28
+        boundary = text[-1:] in "。！？；，、,.!?;"
+        if pause or boundary or len(joined.replace(" ", "")) >= 14:
+            entries.append((buffer[0]["start"], buffer[-1]["end"], joined))
+            buffer = []
+    if buffer:
+        entries.append((buffer[0]["start"], buffer[-1]["end"], _join_caption_tokens([item["text"] for item in buffer])))
+    return entries
+
+
+def _join_caption_tokens(tokens: list[str]) -> str:
+    """Add readable boundaries around Latin/numeric evidence without spacing Chinese."""
+    joined = ""
+    for token in tokens:
+        if not joined:
+            joined = token
+            continue
+        previous = joined[-1:]
+        current = token[:1]
+        previous_ascii = bool(previous and previous.isascii() and previous.isalnum())
+        current_ascii = bool(current and current.isascii() and current.isalnum())
+        previous_cjk = bool(previous and "一" <= previous <= "鿿")
+        current_cjk = bool(current and "一" <= current <= "鿿")
+        if (previous_cjk and current_ascii) or (previous_ascii and current_cjk):
+            joined += " "
+        joined += token
+    return joined
+
+
+def build_srt_from_words(words_path: Path, output_path: Path, *, total_duration: float | None = None) -> int:
+    """Write SRT directly from final narration alignment, never shot timing."""
+    entries = _word_entries(words_path)
+    if total_duration is not None:
+        entries = [(start, min(end, total_duration), text) for start, end, text in entries if end > start]
+    lines: list[str] = []
+    for index, (start, end, text) in enumerate(entries, start=1):
+        lines.extend((str(index), f"{_seconds_to_srt_time(start)} --> {_seconds_to_srt_time(end)}", format_cue_lines(text).strip(), ""))
+    write_text_if_changed(output_path, "\n".join(lines))
+    return len(entries)
+
+
+def build_srt(timeline: Timeline, output_path: Path, *, words_path: Path | None = None) -> int:
     """从 caption 轨道提取 SRT；返回字幕条目数。
 
     字幕时间戳不得越界（超出 total_duration 的字幕会被截断并记录 warning）。
     """
+    if words_path is not None:
+        if not words_path.is_file():
+            raise FileNotFoundError(f"最终旁白缺少词级对齐文件: {words_path}")
+        return build_srt_from_words(words_path, output_path, total_duration=timeline.total_duration or timeline.compute_duration())
+    else:
+        entries = []
+
     caption_track = None
     for t in timeline.tracks:
         if t.kind == "caption":
             caption_track = t
             break
 
-    if caption_track is None or not caption_track.clips:
+    if words_path is None and (caption_track is None or not caption_track.clips):
         # 无字幕轨：从脚本生成草稿（仅在无旁白时）
         logger.info("无 caption 轨道，SRT 为空")
         write_text_if_changed(output_path, "")
         return 0
 
     total_dur = timeline.total_duration or timeline.compute_duration()
-    entries: list[tuple[float, float, str]] = []
     graphic_track = next((track for track in timeline.tracks if track.kind == "graphic"), None)
     graphic_clips = graphic_track.clips if graphic_track else []
 
-    for clip in sorted(caption_track.clips, key=lambda c: c.start):
+    for clip in sorted(caption_track.clips if caption_track else [], key=lambda c: c.start):
         text = clip.text or ""
         if not text.strip():
             continue

@@ -36,6 +36,39 @@ def _count_cjk_chars(text: str) -> int:
     return len([c for c in text if "一" <= c <= "鿿"])
 
 
+def _display_units(text: str) -> int:
+    """Approximate rendered width: CJK and non-space Latin glyphs each occupy one unit."""
+    return len([c for c in text if not c.isspace()])
+
+
+def _caption_tokens(text: str) -> list[str]:
+    pattern = r"Claude Code|Binance Demo|Why No Trade|5000U|7350U|Codex|[A-Za-z]+|[0-9]+(?:[×xX][0-9]+)?|[\u4e00-\u9fff]"
+    return re.findall(pattern, text.replace("\n", ""))
+
+
+def _token_units(token: str) -> int:
+    if all("一" <= char <= "鿿" for char in token):
+        return len(token)
+    return max(2, (len(token) + 3) // 4)
+
+
+def _join_tokens_readably(tokens: list[str]) -> str:
+    joined = ""
+    for token in tokens:
+        if not joined:
+            joined = token
+            continue
+        prev, current = joined[-1:], token[:1]
+        prev_ascii = bool(prev and prev.isascii() and prev.isalnum())
+        curr_ascii = bool(current and current.isascii() and current.isalnum())
+        prev_cjk = bool(prev and "一" <= prev <= "鿿")
+        curr_cjk = bool(current and "一" <= current <= "鿿")
+        if (prev_cjk and curr_ascii) or (prev_ascii and curr_cjk):
+            joined += " "
+        joined += token
+    return joined
+
+
 def _split_by_punctuation(text: str) -> list[str]:
     """按标点符号分句。"""
     # 中文句子结束符号
@@ -142,24 +175,26 @@ def format_cue_lines(text: str, max_chars_per_line: int = 14, max_lines: int = 2
         return ""
 
     # 如果已经符合单行限制
-    if _count_cjk_chars(text) <= max_chars_per_line:
+    if _display_units(text) <= max_chars_per_line:
         return text
 
-    parts = _split_by_punctuation(text)
-    compact = "".join(parts) if parts else text
+    compact = re.sub(r"[。！？；，、：]+", "", text)
     lines: list[str] = []
     current = ""
     current_units = 0
-    for char in compact:
-        units = 1 if ("一" <= char <= "鿿" or not char.isspace()) else 0
+    for token in _caption_tokens(compact):
+        units = _token_units(token)
         if current and current_units + units > max_chars_per_line:
-            lines.append(current)
+            lines.append(current.strip())
             current = ""
             current_units = 0
-        current += char
+        if current:
+            current = _join_tokens_readably([current, token])
+        else:
+            current = token
         current_units += units
     if current:
-        lines.append(current)
+        lines.append(current.strip())
     return "\n".join(lines[:max_lines])
 
 
