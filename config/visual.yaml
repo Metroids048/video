@@ -6,6 +6,9 @@ visual:
     no_logo_intro: true
     no_empty_tech_cards: true
     motion_must_direct_attention: true
+    continuity_over_cut_frequency: true
+    comprehension_over_shortness: true
+    real_process_motion_over_fake_camera_motion: true
 
   caption_safe_zone:
     top: 0.05
@@ -24,6 +27,23 @@ visual:
     forbid_full_landscape_contain_black_bars: true
     establish_then_zoom: true
     max_seconds_without_information_increment: 4.0
+    prefer_real_continuous_recording: true
+    allow_same_shot_to_progress_via_cursor_action_or_data_change: true
+    do_not_cut_only_to_create_motion: true
+    do_not_use_static_screenshot_pan_zoom_as_process_video: true
+    keep_page_context_before_roi: true
+
+  still_images:
+    present_honestly_as_stills: true
+    max_semantic_emphasis_actions_per_still: 1
+    forbid_repeated_ken_burns_ui_sequence: true
+    forbid_fake_interaction_via_pan_zoom: true
+
+  transitions:
+    semantic_reason_required: true
+    avoid_repeated_dark_light_flashing: true
+    avoid_context_breaking_hard_cut_sequences: true
+    transition_count_is_not_quality: true
 
   cards:
     max_fullscreen_cards_per_short_video: 2
@@ -34,11 +54,14 @@ visual:
     intensity: medium
     prefer_simple_transitions: true
     avoid_excessive_effects: true
+    avoid_motion_for_motion_sake: true
+    cursor_or_real_action_preferred_for_ui_process: true
 
   mobile_preview:
     width: 360
     height: 640
     required_for_creative_review: true
+    key_evidence_must_be_readable_without_pause: true
 
   proxy:
     width: 540
