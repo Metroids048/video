@@ -1,0 +1,118 @@
+param(
+    [string]$Root = (Resolve-Path (Join-Path $PSScriptRoot "..")),
+    [switch]$Apply
+)
+
+$ErrorActionPreference = "Stop"
+$Root = (Resolve-Path $Root).Path
+$PreserveName = "第一期视频_7x24自动交易"
+$Preserve = Join-Path $Root $PreserveName
+
+if (-not (Test-Path -LiteralPath $Preserve -PathType Container)) {
+    throw "保护目录不存在，拒绝执行任何删除：$Preserve"
+}
+
+$ProtectedTopLevel = @(
+    ".git", ".agents", ".claude", ".cursor",
+    "config", "docs", "episodes", "fixtures", "knowledge", "renderers",
+    "schemas", "scripts", "skills-src", "src", "templates", "tests",
+    "third_party_skills", "vendor", $PreserveName
+)
+
+$KnownLegacyRootFiles = @(
+    "AI量化交易视频项目完成报告.md",
+    "AI量化交易账号完整方案.md",
+    "DELIVERY_REPORT.md",
+    "FINAL_COMPLETION_REPORT.md",
+    "FINAL_EXECUTION_REPORT.md",
+    "FINAL_VIDEO_QUALITY_CLOSURE.md",
+    "PLEASE_VERIFY_VIDEO.md",
+    "PROGRESS_UPDATE.md",
+    "REAL_PROGRESS_REPORT.md",
+    "RENDERING_PROGRESS.md",
+    "TASK_COMPLETION_SUMMARY.txt",
+    "TASK_EXECUTION_REPORT.md",
+    "VIDEO_FIX_REPORT.md",
+    "create_video_with_jianying.py",
+    "create_visuals.py",
+    "final_summary.py",
+    "generate_voiceover.py"
+)
+
+$KnownGeneratedDirs = @(
+    "output", "outputs", "delivery", "deliveries", "drafts", "exports",
+    "rendered", "renders", "preview", "previews", "tmp", "temp"
+)
+
+$MediaExtensions = @(
+    ".mp4", ".mov", ".mkv", ".webm", ".avi",
+    ".wav", ".mp3", ".m4a", ".aac", ".flac",
+    ".png", ".jpg", ".jpeg", ".webp", ".gif", ".srt", ".ass"
+)
+
+$Candidates = New-Object System.Collections.Generic.List[string]
+
+foreach ($name in $KnownLegacyRootFiles) {
+    $p = Join-Path $Root $name
+    if (Test-Path -LiteralPath $p) { $Candidates.Add($p) }
+}
+
+foreach ($name in $KnownGeneratedDirs) {
+    $p = Join-Path $Root $name
+    if (Test-Path -LiteralPath $p -PathType Container) { $Candidates.Add($p) }
+}
+
+# Top-level historical media are safe cleanup candidates. Media inside protected
+# source/core directories are deliberately NOT traversed or deleted here.
+Get-ChildItem -LiteralPath $Root -File -Force | ForEach-Object {
+    if ($MediaExtensions -contains $_.Extension.ToLowerInvariant()) {
+        $Candidates.Add($_.FullName)
+    }
+}
+
+# Old Episode generated work is disposable; preserve directory skeleton/.gitkeep.
+foreach ($bucket in @("active", "completed", "archived")) {
+    $bucketPath = Join-Path (Join-Path $Root "episodes") $bucket
+    if (Test-Path -LiteralPath $bucketPath -PathType Container) {
+        Get-ChildItem -LiteralPath $bucketPath -Force | Where-Object { $_.Name -ne ".gitkeep" } | ForEach-Object {
+            $Candidates.Add($_.FullName)
+        }
+    }
+}
+
+# Historical quant fixture only; generic fixtures remain protected.
+$quantFixture = Join-Path $Root "fixtures\golden-ai-quant"
+if (Test-Path -LiteralPath $quantFixture) { $Candidates.Add($quantFixture) }
+
+$Candidates = $Candidates | Sort-Object -Unique
+
+Write-Host "Creator OS V2 local cleanup"
+Write-Host "Root:      $Root"
+Write-Host "Preserve:  $Preserve"
+Write-Host "Mode:      $(if ($Apply) { 'APPLY' } else { 'DRY-RUN' })"
+Write-Host ""
+
+if ($Candidates.Count -eq 0) {
+    Write-Host "No recognized historical artifacts found."
+    exit 0
+}
+
+foreach ($p in $Candidates) {
+    $resolvedParent = Split-Path -Parent $p
+    if ($p.StartsWith($Preserve, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-Host "SKIP protected: $p"
+        continue
+    }
+    Write-Host "DELETE candidate: $p"
+    if ($Apply) {
+        Remove-Item -LiteralPath $p -Recurse -Force
+    }
+}
+
+Write-Host ""
+if ($Apply) {
+    Write-Host "Cleanup applied. Protected source folder was not touched: $Preserve"
+} else {
+    Write-Host "Dry-run only. Re-run with -Apply after reviewing the candidate list."
+}
+Write-Host "Core project/Skill/plugin directories were not recursively scanned for media deletion."

@@ -1,24 +1,30 @@
-# 输入说明
+# Creator OS V2 Input Guide
 
-每期输入均在 `episodes/active/<ID>/input/` 下。原始输入只读保留，系统只在 `work/prepared/` 创建工作副本。
+The user does not need to prepare polished media. Raw but truthful material is preferred over pre-edited material that hides context.
 
-| 输入 | 目录/文件 | 用途 |
-|---|---|---|
-| 创意、事实来源、口播要点 | `idea.md` 或其他 `.md/.txt` | 内容简报和脚本的可追溯来源 |
-| 本地授权参考视频 | `reference/` | 生成镜头、关键帧与 `reference-recipe.json` |
-| 录屏 | `screen/` | 录屏讲解主画面 |
-| 图片 | `images/` | 分镜视觉素材和封面候选 |
-| 配音、BGM、音效 | `audio/` | 音频时间基准与混音 |
-| 链接 | `links.txt` | 来源、权利和待研究记录，不会被自动下载 |
+## Minimal packet
 
-先执行 `python -m avs ingest <ID>` 或 `python -m avs workflow resume <ID>`。损坏文件会被标记，不会进入渲染；横屏素材必须在分镜中明确选择 contain、cover 或布局模板。
+1. **Problem / project node** — what happened or what is worth explaining.
+2. **Fact source** — file/log/repo/screenshot/recording/result supporting the story.
+3. **Privacy boundary** — what may not be exposed.
 
-如果当前只有产品截图和文字资料，可以创建截图图文预览路线：
+## High-value optional inputs
 
-```bash
-python -m avs episode create EP-SCREENSHOT-INTRO --mode ORIGINAL --input-mode screenshot_intro
-```
+### Raw screen recording
+Long, unedited recordings are acceptable. The system should identify evidence moments, remove dead time and design mobile-readable ROI framing.
 
-在 `input/input-manifest.json` 为每张截图写 `user_note`（例如“研究入口；策略库；回测验证”）。该路线会依据明确备注生成待审阅的截图图文预览，素材分析会标记 `semantic_source=user_note`；没有 Vision Provider 时仍不能通过 `visual-review`、QA 或最终发布门禁。录屏讲解、真实语音和逐句视觉语义审核仍需补充对应素材与 Provider。
+### Rough voice
+Speak naturally as if sending a voice message. This may be used as HUMAN_ENHANCED audio or as the performance track for HYBRID_S2S. It does not need to be a perfect read.
 
-`REFERENCE_ADAPT` 只能借鉴结构、节奏和镜头语法，必须替换原文案、素材、案例、数据、标题和封面。无法核实的内容写为“需确认”，不要补造事实。
+### Douyin reference URL
+Paste the share/direct URL. The acquisition layer attempts to build a local reference package when accessible. A failed acquisition is explicitly marked and never converted into invented shot/audio analysis.
+
+### Local reference video
+Best input for precise pacing, subtitle, shot and audio-structure analysis.
+
+### Screenshots / charts
+Use as first-party evidence or for carousel pages. Preserve originals and redact only on derived production copies.
+
+## Do not ask the user to manufacture filler assets
+
+Do not require the user to make PPT pages, manually capture nine screenshots, build charts or draw architecture diagrams just to satisfy a predetermined storyboard. Change the storyboard/format instead.

@@ -1,90 +1,36 @@
-# Agent Video Studio V1 — Getting Started
+# Getting Started — Creator OS V2
 
-## 快速开始
+## 1. Check the environment
 
-### 1. 环境检查
+Run:
 
 ```bash
 python -m avs doctor
+python scripts/validate_creator_os_v2.py
 ```
 
-必需：Python 3.11+, FFmpeg  
-可选：ffprobe, HyperFrames (npx)
+The validator checks the V2 configuration/contracts and verifies that deleted quant/EP01 residue has not been reintroduced.
 
-### 2. 创建 Episode
+## 2. Start with source material, not a giant prompt
 
-```bash
-python -m avs episode create EP-MY-FIRST --mode REFERENCE_ADAPT
-```
+For each new Episode, provide:
+- a real problem/project node;
+- at least one factual source;
+- screen recording/screenshots when available;
+- optional rough voice;
+- 1–3 useful reference links/videos;
+- privacy/redaction boundary.
 
-### 3. 放入素材
+The system is responsible for deciding whether VIDEO, CAROUSEL or TEXT is strongest.
 
-将素材放入 `episodes/active/EP-MY-FIRST/input/`：
-- `input/reference/` — 参考视频（可选）
-- `input/images/` — 图片素材
-- `input/audio/` — 音频素材
-- `input/screen/` — 录屏素材
+## 3. Reference links
 
-### 4. 运行全流程
+Douyin links are accepted directly. The system may resolve/cache publicly accessible media and analyze the local copy. If acquisition is unavailable, it must preserve the URL and mark the evidence as page-only rather than pretend the full video was reviewed.
 
-```bash
-python -m avs run EP-MY-FIRST
-```
+## 4. Do not revive historical EP01 builders
 
-或分步执行：
+The V2 branch intentionally removed one-off `build_ep01_v*`, `final_final_lock` and historical completion-report paths. Reusable implementation belongs in the core engine/config/Skills; Episode-specific artifacts belong inside the Episode.
 
-```bash
-# 清点素材
-python -m avs ingest EP-MY-FIRST
+## 5. Completion
 
-# 分析参考（可选）
-python -m avs reference analyze EP-MY-FIRST
-
-# 内容生成（Agent 驱动，手动调用 Skills）
-python -m avs content init EP-MY-FIRST
-
-# 构建时间线
-python -m avs timeline build EP-MY-FIRST
-
-# 生成字幕
-python -m avs subtitles build EP-MY-FIRST
-
-# 渲染粗剪
-python -m avs render rough EP-MY-FIRST
-
-# QA 检查
-python -m avs qa EP-MY-FIRST
-
-# 生成交付包
-python -m avs deliver EP-MY-FIRST
-```
-
-### 5. 查看产物
-
-```bash
-# 查看状态
-python -m avs episode status EP-MY-FIRST
-
-# 播放粗剪
-ffplay episodes/active/EP-MY-FIRST/renders/preview-with-captions.mp4
-
-# 检查交付包
-ls episodes/active/EP-MY-FIRST/delivery/
-```
-
-## 常见问题
-
-### Q: FFmpeg 失败
-A: 检查 `ffmpeg -version`，确保版本 ≥ 4.0
-
-### Q: HyperFrames 失败
-A: 正常，系统会自动降级到 FFmpeg 静态卡片
-
-### Q: 缺失素材
-A: 系统会生成占位卡，查看 `delivery/edit-notes.md`
-
-## 下一步
-
-- [输入规范](input-guide.md) — 素材准备
-- [编辑指南](editing-guide.md) — 人工修改交付包
-- [兼容性](compatibility.md) — 支持的格式与工具版本
+`READY_TO_PUBLISH` means the content can be uploaded without mandatory manual re-editing. Anything short of that is `BLOCKED`, `REPAIR`, `WAITING_FOR_RESOURCE` or `FAILED`.

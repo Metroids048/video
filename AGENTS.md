@@ -1,211 +1,232 @@
-# AGENTS.md
+# Creator OS V2 — Agent Contract
 
-## 1. 项目目标
+This file is the highest-priority project operating contract for Codex and other coding/production agents working in this repository.
 
-Agent Video Studio 是一个通用短视频辅助制作系统。
+## 1. Product definition
 
-用户可能只提供文本、图片、参考视频、录屏、音频和链接。系统应将这些输入整理为参考分析、内容简报、脚本、分镜、素材清单、时间线、字幕、视频粗稿、质量报告和可人工编辑的交付包。
+Creator OS V2 turns real project material into content that can be published directly to Douyin or Xiaohongshu. Video is preferred when it is genuinely the strongest medium, but the system may select a carousel or text package.
 
-目标是无人值守产出可直接发布的成片：用户只提供想法和素材，Agent 完成研究、选题、脚本、分镜、素材、配音、剪辑、审片和返工。
+The user is not expected to become an editor, voice actor, motion designer or social-media operator. The user supplies facts, source material, reference links, privacy boundaries and optional provider tokens. The system owns production quality.
 
-「生成了 MP4」不等于交付。交付的判定标准是 Creative Gate（见第 11.1 节），不是 pytest 通过、Schema 合法或 FFmpeg 退出码为 0。需要用户再进剪映重剪的成片一律视为未完成。
+**Hard definition of done:** if the user must reopen Jianying/CapCut and substantially repair the artifact, the episode is not complete. It is `BLOCKED`.
 
-## 2. V1 边界
+## 2. Read order for content-production tasks
 
-必须支持：
+Before doing work, read:
+1. `AGENTS.md`;
+2. `config/project.yaml`;
+3. `config/creator-workflow.yaml`;
+4. `config/content-formats.yaml`;
+5. `config/reference-acquisition.yaml` when references are present;
+6. `config/voice.yaml` for narration;
+7. `config/quality.yaml` and `config/visual.yaml` for review;
+8. `docs/video-plugin-routing.md` only when choosing an execution capability.
 
-- 参考视频改编；
-- 录屏讲解；
-- 抖音和小红书竖屏输出；
-- FFmpeg 基础粗剪；
-- HyperFrames 标题、信息卡和结尾卡；
-- 带字幕和无字幕两个 MP4；
-- SRT、时间线、素材包和编辑说明；
-- 人工发布。
+Do not use deleted V1 docs, deleted EP01 scripts or chat history as a competing contract.
 
-不得自行扩展到：
+## 3. Capability-resource freeze
 
-- 自动发布；
-- 自动登录、评论或私信（ChatCut MCP 登录除外，且不得把凭证写入仓库）；
-- 数字人和声音克隆；
-- 云渲染；
-- 多账号矩阵。
+Do not add, upgrade, remove, bulk-rewrite or replace plugin/Skill resources unless the user explicitly asks for a plugin/Skill change.
 
-允许进入正式链路（须按路由表调用，产物回挂 Episode，见 ADR-0006）：
+Protected capability paths include:
+- `skills-src/`;
+- `third_party_skills/`;
+- `vendor/`;
+- `.agents/skills/`;
+- `.claude/skills/`;
+- `skills.lock.json`;
+- `tools-manifest.yaml`.
 
-- Remotion 代码驱动渲染；
-- CapCut/剪映草稿工具（`capcut-david` / `cut-skill`，原 cut-motion 继任）；
-- ChatCut、video-use、Seedance、OpenMontage、Pixelle-Video、IP Strategist。
+Existing capabilities are a toolbox, not a workflow. Never invoke a tool merely because it is installed.
 
-## 3. 制作模式
+## 4. Single creative authority
 
-### REFERENCE_CLONE
+Exactly one Creative Contract controls each episode.
 
-仅用于内部学习。必须设置 `publishable: false`，不得默认生成公开发布包。
+Only the Creative Director may choose/change:
+- main story;
+- primary conflict;
+- primary Hook;
+- viewer payoff;
+- output format;
+- target duration;
+- reference-pattern selection;
+- voice mode;
+- visual direction.
 
-### REFERENCE_ADAPT
+After `CREATIVE_LOCKED`, downstream Skills execute bounded tasks. They may not quietly rewrite the concept. Story-level failure explicitly returns to the Creative Director and creates a new contract version.
 
-默认公开模式。可以参考结构、节奏、镜头语法和动效逻辑，但必须替换原文案、配音、素材、案例、数据、观点、标题和封面。
+The contract must validate against `schemas/creative-contract.schema.json`.
 
-### ORIGINAL
+## 5. Fixed flow
 
-使用项目自有模板，不依赖单条参考视频。
+Use this order:
 
-## 4. 核心规则
+1. **Input Hub** — normalize source material and privacy boundary.
+2. **Reference Acquire** — resolve/cache accessible reference media; record honest degradation when inaccessible.
+3. **Research & Evidence** — separate first-party facts from third-party style references; create Evidence Map and Reference Recipes.
+4. **Creative Director** — freeze one Creative Contract.
+5. **Format Router** — select `VIDEO`, `CAROUSEL` or `TEXT` from evidence and storytelling needs.
+6. **Production** — invoke only capabilities required by the selected format.
+7. **Creative QA** — inspect the actual rendered artifact, not only JSON/timeline metadata.
+8. **Repair** — maximum 3 rounds by default; repair only the failing layer.
+9. **Delivery & Learning** — emit the publish pack only after `READY_TO_PUBLISH`.
 
-1. 原始素材不可移动、覆盖或修改。
-2. 所有处理使用工作副本。
-3. 不虚构事实、数据、产品功能、运行结果或用户经历。
-4. 缺失素材必须标记，不使用明显无关内容硬凑。
-5. Codex 插件只能作为增强，核心流程必须能通过项目 CLI 运行。
-6. `timeline.json` 是渲染器共享的中间协议；真人口播项目的 SRT/词级时间戳是时间线主时钟。
-7. HyperFrames 只负责动效和包装，不管理 Episode 状态。
-8. 不自动发布。
-9. 不将密钥、Cookie、Token 或登录状态写入仓库。
-10. 未运行验证命令，不得声称完成。
+User-facing lifecycle:
 
-## 5. 单一真相来源
+`CREATED → INPUT_READY → RESEARCH_READY → CREATIVE_LOCKED → PRODUCING → REVIEWING → REPAIRING ↺ → READY_TO_PUBLISH`
 
-- 项目规则：`AGENTS.md`
-- Claude 入口：`CLAUDE.md`
-- 配置：`config/`
-- 数据合同：`schemas/`
-- Episode 状态：`episode.json`
-- 项目自有 Skills：`skills-src/`
-- 第三方视频 Skills：`third_party_skills/`（`npm run skills:vendor`）
-- 视频插件强制路由：`docs/video-plugin-routing.md`
-- 业务 CLI：`python -m avs`
-- 时间线：`timeline.json`
+Exceptional states: `WAITING_FOR_RESOURCE`, `BLOCKED`, `FAILED`.
 
-禁止创建第二套互相独立的状态、配置或 CLI。
+The existing AVS engine may retain lower-level compatibility states internally. Map them through `config/workflow.yaml`; do not expose `DELIVERY_READY` as the product definition of success.
 
-## 5.1 视频任务强制 Skills
+## 6. Input rules
 
-**任何视频相关任务开始前，必须先读 `docs/video-plugin-routing.md`，并按场景加载对应第三方 Skill。** 不得跳过路由表。旁路渲染器不得伪造状态机完成态。
+Minimum useful Episode input:
+- one concrete problem/conflict/project node;
+- at least one verifiable fact source;
+- a public/privacy boundary.
 
-路由表覆盖（含本批强制接入）：HyperFrames、Remotion、video-use、Seedance / seedance-free、ChatCut、CapCut（`capcut-david` + `cut-skill`）、**jianying-editor**（与 cut-skill 并存分流）、**ffmpeg**、**azure-speech**、**elevenlabs**、**ai-video-shot-prompt**、**ltx-prompt-director**、**epidemic-sound**、**moneyprinterturbo**、**pixelle-video**、IP Strategist、OpenMontage。
+Accepted inputs include ideas, files/logs, GitHub/web URLs, images, screenshots, screen recordings, rough voice, local reference video, Douyin URL and published metrics.
 
-## 6. 标准流程
+### Douyin URLs
 
-1. 创建 Episode。
-2. 清点并标准化输入。
-3. 有参考视频时生成参考分析。
-4. 生成内容简报、脚本和分镜。
-5. 准备素材并列出缺口。
-6. 构建时间线。
-7. 先生成 20-30 秒、字幕驱动的可审片 Pilot；录屏专题没有逐句同步录屏不得作为阻塞理由。
-8. Pilot 通过后构建以真人口播为主时钟的时间线；每段旁白必须映射到真实素材、证据页和 ROI。
-9. FFmpeg 负责确定性装配；Remotion / HyperFrames 只用于随字幕进入的必要微动效和包装。
-10. 运行确定性 QA、视觉 QA 与实际看片的 Creative Review；未过闸则定位最小责任层返工后重新渲染。
-11. 生成交付包。
-12. 等待用户发布（不自动发布）。
+Douyin share/direct URLs are first-class references.
 
-## 7. 状态机
+When technically/publicly accessible:
+- resolve the share URL;
+- cache the media once;
+- record `source.json`;
+- pass the local copy to existing reference analysis;
+- produce transcript/word timestamps/frames/contact sheet/reference recipe where supported.
 
-正式状态：
+When acquisition is blocked:
+- do not bypass login/access controls;
+- store the source URL and page-level evidence;
+- mark audiovisual evidence unavailable;
+- continue with other usable references or original direction;
+- never infer exact shots, timing, captions, music or delivery from a title/snippet.
 
-- `CREATED`
-- `INGESTED`
-- `REFERENCE_READY`
-- `CONTENT_READY`
-- `ASSETS_READY`
-- `TIMELINE_READY`
-- `PILOT_APPROVED`（仅录屏专题；20-30 秒真人口播试片已有真实审片记录）
-- `ROUGH_CUT_READY`
-- `QA_PASSED`
-- `DELIVERY_READY`
+Reference material may transfer structure, pacing, shot grammar and motion logic. Do not copy original wording, voice, footage, examples, data, title or cover.
 
-辅助状态：
+## 7. Format Router
 
-- `WAITING_FOR_INPUT`
-- `WAITING_FOR_REVIEW`
-- `FAILED`
+### VIDEO
+Choose when real dynamic evidence/process materially improves the story.
 
-不得跳过前置状态或手工伪造完成状态。
+Rules:
+- 9:16 mobile-first;
+- prefer real evidence in the first 3 seconds when available;
+- no corporate-PPT/title/logo intro;
+- no full landscape contain with black bars;
+- use establish → ROI focus/zoom for desktop recordings;
+- motion directs attention rather than decorates emptiness;
+- non-trivial video requires a 20–30 second publication-quality Pilot before full render;
+- Pilot uses final/locked voice direction, real evidence, real caption grammar and representative motion/SFX.
 
-## 8. 开发规则
+### CAROUSEL
+Choose for structured explanations, comparisons, checklists, retrospectives or screenshot/chart-heavy evidence where time-based editing adds little.
 
-开始任务前：
+Default: 6–9 pages, cover + one main message per page.
 
-1. 阅读本文件。
-2. 阅读项目规范和当前模块 Prompt。
-3. 检查 Git 状态。
-4. 检查前置模块是否通过。
-5. 先输出本模块实施计划，不执行下一模块。
+### TEXT
+Choose for concise opinions, lessons, checklists or project notes where additional visual packaging has low value.
 
-开发时：
+Do not switch a failed video to another format and call the original video successful. A format change after Creative Lock requires a new contract version.
 
-- 一次只实现当前模块。
-- 使用小而清晰的文件和接口。
-- 先写失败测试，再写最小实现。
-- 所有结构化输出必须通过 Schema。
-- 所有外部命令必须检查退出码。
-- 使用项目相对路径。
-- 为错误提供明确消息和非零退出码。
-- 同一命令重复执行应保持幂等。
-- 只有 `--force` 可以覆盖可再生成产物。
-- 不修改与当前模块无关的代码。
+## 8. Voice contract
 
-## 9. 媒体规则
+Do not default to arbitrary Edge TTS or a new voice every episode.
 
-- V1 默认画布：1080×1920、30fps、H.264、AAC；当横屏系统 UI 在 9:16 内不可读时，允许明确选择 16:9，不能为平台比例牺牲证据可读性。
-- 所有输入先用 FFprobe 检查。
-- 损坏文件不得进入渲染。
-- 横屏素材必须明确使用全页建立场景或 ROI Screen Focus，不能静默拉伸、缩成细条或用全局 cover 裁掉证据。
-- 缺少音频时必须正常降级。
-- 字幕必须位于安全区。
-- 不同机器的视频输出不要求逐像素相等；测试元数据、解码和容差。
+Use a one-time audition against the same 15–20 second script:
+- `HUMAN_ENHANCED`;
+- `HYBRID_S2S`;
+- `PREMIUM_TTS`.
 
-## 10. HyperFrames 与其它渲染器
+Persist the approved result as `knowledge/voice/voice-profile.json` using `schemas/voice-profile.schema.json`.
 
-- 安装并使用官方 HyperFrames Skills（项目内：`third_party_skills/hyperframes`）。
-- 实际运行 doctor、lint 和 render。
-- V1 最少实现 HookTitle、InfoCard、EndCard。
-- HyperFrames 失败时必须保留 FFmpeg 基础粗剪。
-- 不得把整个业务流程写进 HyperFrames HTML。
-- Remotion / ChatCut / CapCut / JianyingEditor / video-use / OpenMontage / Pixelle-Video / MoneyPrinterTurbo / FFmpeg·Azure·ElevenLabs·Epidemic Sound·镜头脚本 Skills 按 `docs/video-plugin-routing.md` 启用；失败不得静默冒充成功（见 ADR-0006）。
+For VIDEO:
+- accepted final narration is the master clock;
+- preserve natural pauses/emphasis when using human/hybrid modes;
+- generate subtitle/word timing from the final narration audio;
+- never allocate subtitle timing from text length/character count.
 
-## 11. 完成报告
+If no voice profile exists, create audition candidates before a full production rather than silently choosing a temporary voice for the final.
 
-每个模块结束时必须报告：
+## 9. Visual contract
 
-- 完成内容；
-- 修改文件；
-- 执行命令；
-- 测试及返回码；
-- 生成产物；
-- 已知限制；
-- 未完成项；
-- Git commit；
-- 是否满足本模块验收。
+Evidence before decoration.
 
-只要验收项未全部通过，就必须明确标记为“未完成”，不得进入下一个模块。
+Hard rules:
+- no empty technology cards used to cover missing evidence;
+- no long static opening;
+- no tiny full desktop UI centered in a vertical canvas;
+- no subtitles covering balances/charts/orders/positions/primary proof;
+- no generic full-screen architecture diagram unless the story truly needs it;
+- screen shots longer than ~4 seconds must add information through ROI, cursor/action, callout, progressive reveal or meaningful cut;
+- every visual treatment must remain readable in the 360×640 mobile preview.
 
-## 11.1 Creative Gate
+HyperFrames/Remotion/Seedance/etc. are optional execution tools. FFmpeg remains the deterministic assembly fallback. Choose the simplest tool that produces the desired shot.
 
-技术审核与创作审核分离，两者都必须过。
+## 10. QA and repair
 
-技术闸门（`work/qa/qa-report.json` + `creative-review.json` 的 `metrics`）：可解码、分辨率、音轨、字幕、黑边、证据存在。
+### Technical QA
+Check decode/playback, resolution/fps, audio validity, clipping, black frames, subtitle bounds, missing assets/placeholders and output integrity.
 
-创作闸门（`work/qa/creative-review.json` 的 `scores`）：
+### Creative QA
+A reviewer must actually inspect the artifact/mobile preview and list inspected files. Evaluate at minimum:
+- Hook;
+- story clarity;
+- pacing;
+- evidence readability;
+- visual design;
+- human tone;
+- audio;
+- captions.
 
-- Overall ≥ 8.0（权重见 `avs.qa.creative_review.SCORE_WEIGHTS`）；
-- 核心维度 hook / narrative / pacing / visual_design / human_tone / audio 均 ≥ 7.0。
+Null/unviewed/self-invented scores fail. A passing number cannot override contradictory evidence.
 
-命令：
+### Repair routing
+- `VOICE_BAD` → audio only;
+- `HOOK_WEAK` → Hook/Pilot only;
+- `SCREEN_UNREADABLE` → screen composition/ROI only;
+- `CAPTION_BLOCKING` → captions only;
+- `FACT_UNSUPPORTED` → Evidence Map;
+- `STORY_CONFUSED` → Creative Director/new contract version.
 
-```bash
-python -m avs creative review <ID>     # 度量成片、生成审片包，不评分
-python -m avs creative score <ID> --scores <json>   # 由看过成片的审片人写入评分
-python -m avs creative baseline <ID>   # 固定已评分审核为对比基线
-python -m avs creative compare <ID>    # Baseline vs Current 逐维度对比
-```
+Maximum 3 repair rounds by default. If still below publish quality, return `BLOCKED` with the exact blocker; do not rebuild the whole platform.
 
-规则：
+## 11. Naming and delivery
 
-1. `scores` 为 `null` 时创作闸门恒为 FAIL，不得视为通过。
-2. 评分只能来自真正看过成片的审片人（`reviewer_kind` = `agent` 或 `provider`），必须列出实际查看的 `reviewed_artifacts`，不得由代码推算或由确定性指标折算。
-3. 确定性指标只提供可证伪的证据，不构成评分。
-4. 未过闸时按 `findings[].repair_target` 定位最小责任层返工，不得整体重做。
-5. 单条视频最多 3 轮 Repair；连续两轮 Overall 改善 < 0.3 时停止微调，重新做根因诊断。
-6. 无 Vision API Key 的环境下由 Creative Runtime Agent 读取 `review_package.contact_sheets` 审片；拼图宽度不得低于 `min_sheet_width`，否则部分 Agent 传输层会丢弃图像而使审片静默失效。
+Only `READY_TO_PUBLISH` artifacts may be named `FINAL.*`.
+
+Before pass, use names such as:
+- `pilot.mp4`;
+- `candidate-v1.mp4`;
+- `blocked-preview.mp4`.
+
+Video delivery target:
+- `FINAL.mp4`;
+- optional `FINAL-clean.mp4`;
+- `captions.srt`;
+- `cover-A.png`;
+- `cover-B.png`;
+- `douyin.md`;
+- `xiaohongshu.md`;
+- `evidence-map.json`;
+- `review.json`.
+
+Do not produce “完成 75%”, “基本可用”, or “粗稿完成请用户再精修” as a successful delivery state.
+
+## 12. Repository hygiene
+
+Do not recreate:
+- deleted quant-video completion/progress reports;
+- `fixtures/golden-ai-quant`;
+- `scripts/build_ep01_v*.py`;
+- `scripts/build_ep01_final*.py`;
+- random `final_final_new` style builders/artifacts.
+
+Reusable logic belongs in `src/avs`, a bounded project Skill, renderer, schema or config. Episode-specific work belongs under that Episode and is not promoted into root-level scripts without a proven reusable need.
+
+The local folder `第一期视频_7x24自动交易` is a protected source-material folder for the user’s retained first episode. Do not delete or mutate its original files.
