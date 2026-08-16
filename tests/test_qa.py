@@ -54,7 +54,7 @@ def _run(ep_dir: Path, *, publishable: bool = False, timeline: dict[str, object]
         patch("avs.qa.report.decode_error", return_value=None),
         patch("avs.qa.report.detect_black_intervals", return_value=black or []),
         patch("avs.qa.report.detect_silence_intervals", return_value=silence or []),
-        patch("avs.qa.report.detect_max_volume", return_value=peak),
+        patch("avs.qa.report.detect_audio_levels", return_value=(-18.0, peak)),
         patch("avs.qa.report.create_final_contact_sheet", side_effect=fake_contact),
         patch("avs.qa.report._load_quality_config", return_value={}),
         patch("avs.qa.report.verify_approval_current", return_value=(not publishable, "测试无批准" if publishable else None)),
@@ -63,13 +63,12 @@ def _run(ep_dir: Path, *, publishable: bool = False, timeline: dict[str, object]
 
 
 def test_qa_checks_both_mp4s_and_writes_visual_artifacts(tmp_path: Path) -> None:
-    """Test QA checks both MP4s and writes artifacts (publishable=False, no approval needed)."""
     episode = _episode(tmp_path)
     report = _run(episode, publishable=False)
 
     assert report["passed"] is True
     assert report["technical_passed"] is True
-    assert report["human_approved"] is True  # Not required for non-publishable
+    assert report["human_approved"] is True
     ids = {check["check_id"] for check in report["checks"]}
     assert {"clean_decode", "captions_decode", "black_frames", "audio_peak"} <= ids
     assert (episode / "delivery" / "qa-contact-sheet.jpg").is_file()
@@ -79,7 +78,6 @@ def test_qa_checks_both_mp4s_and_writes_visual_artifacts(tmp_path: Path) -> None
 
 
 def test_black_frame_over_one_second_fails_qa(tmp_path: Path) -> None:
-    """Test black frames fail technical checks."""
     report = _run(_episode(tmp_path), publishable=False, black=[{"start": 1.0, "end": 2.2, "duration": 1.2}])
     assert report["passed"] is False
     assert report["technical_passed"] is False
@@ -87,7 +85,6 @@ def test_black_frame_over_one_second_fails_qa(tmp_path: Path) -> None:
 
 
 def test_planned_audio_with_long_silence_fails_qa(tmp_path: Path) -> None:
-    """Test planned audio with silence fails technical checks."""
     timeline = {"errors": [], "warnings": [], "placeholder_count": 0, "planned_audio": True, "total_duration": 9.0}
     silence = [{"start": 2.0, "end": 5.0, "duration": 3.0}]
     report = _run(_episode(tmp_path), publishable=False, timeline=timeline, silence=silence)
@@ -96,7 +93,6 @@ def test_planned_audio_with_long_silence_fails_qa(tmp_path: Path) -> None:
 
 
 def test_low_resolution_and_clipping_fail_qa(tmp_path: Path) -> None:
-    """Test low resolution and clipping fail technical checks."""
     report = _run(_episode(tmp_path), publishable=False, metadata=_metadata(width=720, height=1280), peak=-0.2)
     failed = {check["check_id"] for check in report["checks"] if not check["passed"] and check["severity"] == "error"}
     assert {"clean_canvas", "captions_canvas", "audio_peak"} <= failed
@@ -104,18 +100,16 @@ def test_low_resolution_and_clipping_fail_qa(tmp_path: Path) -> None:
 
 
 def test_subtitle_overflow_fails_but_placeholder_is_warning_for_non_publishable(tmp_path: Path) -> None:
-    """Test subtitle overflow fails but placeholder is warning for non-publishable."""
     timeline = {"errors": [], "warnings": [], "placeholder_count": 2, "planned_audio": False, "total_duration": 9.0}
     subtitles = {"missing": False, "overflow": ["3"], "long_lines": []}
     report = _run(_episode(tmp_path), publishable=False, timeline=timeline, subtitles=subtitles)
-    assert report["passed"] is False  # Due to subtitle overflow
+    assert report["passed"] is False
     assert report["technical_passed"] is False
     placeholder = next(check for check in report["checks"] if check["check_id"] == "placeholder_assets")
-    assert placeholder["severity"] == "warning"  # Not blocking for non-publishable
+    assert placeholder["severity"] == "warning"
 
 
 def test_placeholder_becomes_error_for_publishable(tmp_path: Path) -> None:
-    """Test placeholders become error for publishable episodes."""
     timeline = {"errors": [], "warnings": [], "placeholder_count": 3, "planned_audio": False, "total_duration": 9.0}
     report = _run(_episode(tmp_path), publishable=True, timeline=timeline)
     placeholder = next(check for check in report["checks"] if check["check_id"] == "placeholder_assets")
@@ -125,9 +119,7 @@ def test_placeholder_becomes_error_for_publishable(tmp_path: Path) -> None:
 
 
 def test_placeholder_warning_does_not_block_non_publishable_qa(tmp_path: Path) -> None:
-    """Test placeholder warning does not block non-publishable QA."""
     timeline = {"errors": [], "warnings": [], "placeholder_count": 3, "planned_audio": False, "total_duration": 9.0}
     report = _run(_episode(tmp_path), publishable=False, timeline=timeline)
     assert report["passed"] is True
     assert report["technical_passed"] is True
-
