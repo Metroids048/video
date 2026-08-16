@@ -78,16 +78,34 @@ def main() -> int:
             errors.append(f"legacy residue still present: {rel}")
 
     project = loaded.get("project.yaml", {}).get("project", {})
-    if project.get("name") != "Creator OS" or str(project.get("version")) != "2.2":
-        errors.append("project.yaml is not Creator OS 2.2")
+    if project.get("name") != "Creator OS" or str(project.get("version")) != "2.3":
+        errors.append("project.yaml is not Creator OS 2.3")
     if project.get("publish_success_state") != "READY_TO_PUBLISH":
         errors.append("publish success state is not READY_TO_PUBLISH")
-    if project.get("release_gate_fail_closed") is not True:
-        errors.append("video release gate must fail closed")
-    if project.get("delivery_requires_current_video_release_review") is not True:
-        errors.append("delivery must require current video release review")
-    if project.get("release_review_must_match_current_sha256") is not True:
-        errors.append("release review must match current SHA256")
+    for key in (
+        "release_gate_fail_closed",
+        "delivery_requires_current_video_release_review",
+        "release_review_must_match_current_sha256",
+        "release_review_must_match_current_source_sha256s",
+        "release_review_requires_source_to_final_fidelity",
+    ):
+        if project.get(key) is not True:
+            errors.append(f"project contract missing: {key}")
+
+    principles = loaded.get("project.yaml", {}).get("principles", {})
+    for key in (
+        "source_fidelity_before_canvas_fill",
+        "full_frame_context_before_roi",
+        "preserve_spatial_continuity",
+        "preserve_temporal_continuity",
+        "destructive_crop_requires_explicit_authorization",
+        "mobile_preview_is_qa_only",
+        "formal_video_delivery_is_single_1080x1920_master",
+    ):
+        if principles.get(key) is not True:
+            errors.append(f"project principle missing: {key}")
+    if principles.get("landscape_screen_recording_default") != "fit_full_frame":
+        errors.append("landscape screen recording default must be fit_full_frame")
 
     workflow = loaded.get("workflow.yaml", {}).get("workflow", {})
     lifecycle = workflow.get("public_lifecycle", [])
@@ -96,16 +114,44 @@ def main() -> int:
     if workflow.get("repair", {}).get("max_rounds") != 3:
         errors.append("repair max_rounds must be 3")
     release_gate = workflow.get("video_release_gate", {})
-    if release_gate.get("fail_closed") is not True:
-        errors.append("workflow video_release_gate must fail closed")
-    if release_gate.get("delivery_must_reverify_gate") is not True:
-        errors.append("delivery must reverify release gate")
+    for key in (
+        "fail_closed",
+        "delivery_must_reverify_gate",
+        "requires_source_inventory",
+        "requires_source_to_final_fidelity_review",
+        "requires_current_source_sha256s",
+        "requires_current_final_sha256",
+    ):
+        if release_gate.get(key) is not True:
+            errors.append(f"workflow video_release_gate missing: {key}")
+
+    visual = loaded.get("visual.yaml", {}).get("visual", {})
+    screen = visual.get("screen_recording", {})
+    if screen.get("landscape_strategy") != "fit_full_frame":
+        errors.append("visual landscape strategy must be fit_full_frame")
+    if screen.get("preserve_full_source_frame_by_default") is not True:
+        errors.append("visual must preserve full source frame by default")
+    if screen.get("destructive_crop_requires_explicit_authorization") is not True:
+        errors.append("visual destructive crop must require explicit authorization")
+    if screen.get("unauthorized_destructive_crop_falls_back_to") != "fit_full_frame":
+        errors.append("unauthorized destructive crop must fall back to fit_full_frame")
+    mobile = visual.get("mobile_preview", {})
+    if mobile.get("qa_only") is not True or mobile.get("include_in_delivery") is not False:
+        errors.append("360x640 mobile preview must be QA-only and excluded from delivery")
 
     review = loaded.get("video-review.yaml", {}).get("video_review", {})
-    if review.get("source_of_truth") != "actual rendered video pixels and audible audio":
-        errors.append("video-review source_of_truth must be actual rendered media")
+    source_truth = review.get("source_of_truth")
+    if not isinstance(source_truth, list) or "original source artifacts actually used" not in source_truth:
+        errors.append("video-review source_of_truth must include actual source artifacts")
     hard_fails = review.get("hard_fail_conditions", {})
     for key in (
+        "source_to_final_fidelity_not_verified",
+        "source_artifact_hash_missing_or_stale",
+        "unauthorized_destructive_crop",
+        "source_frame_context_lost",
+        "spatial_continuity_broken",
+        "temporal_continuity_broken",
+        "first_frame_partial_or_mid_action",
         "abrupt_or_discontinuous_opening",
         "slideshow_feel",
         "static_screenshot_pan_zoom_dominant",
@@ -115,14 +161,36 @@ def main() -> int:
     ):
         if hard_fails.get(key, {}).get("fail") is not True:
             errors.append(f"video-review hard fail missing: {key}")
-    if review.get("delivery_gate", {}).get("current_sha256_match_required") is not True:
-        errors.append("video release delivery gate must require current SHA256")
+    delivery_gate = review.get("delivery_gate", {})
+    for key in (
+        "current_sha256_match_required",
+        "current_source_sha256s_match_required",
+        "source_fidelity_pass_required",
+        "delivery_requires_zero_known_critical_findings",
+        "mobile_preview_is_qa_only",
+    ):
+        if delivery_gate.get(key) is not True:
+            errors.append(f"video-review delivery gate missing: {key}")
 
     quality = loaded.get("quality.yaml", {}).get("quality", {})
     if quality.get("release_gate", {}).get("fail_closed") is not True:
         errors.append("quality release gate must fail closed")
-    if quality.get("publishable", {}).get("require_video_release_review_record") is not True:
-        errors.append("publishable video must require release-review record")
+    publishable = quality.get("publishable", {})
+    for key in (
+        "require_video_release_review_record",
+        "require_source_to_final_fidelity_review",
+        "require_source_artifact_hashes",
+        "require_spatial_continuity_review",
+        "require_temporal_continuity_review",
+        "require_no_unauthorized_destructive_crop",
+    ):
+        if publishable.get(key) is not True:
+            errors.append(f"publishable video contract missing: {key}")
+    composition = quality.get("composition", {})
+    if composition.get("landscape_default_layout") != "fit_full_frame":
+        errors.append("quality landscape_default_layout must be fit_full_frame")
+    if composition.get("destructive_crop_requires_explicit_authorization") is not True:
+        errors.append("quality destructive crop authorization gate missing")
 
     formats = set(loaded.get("content-formats.yaml", {}).get("format_router", {}).get("allowed", []))
     if formats != {"VIDEO", "CAROUSEL", "TEXT"}:
@@ -149,7 +217,9 @@ def main() -> int:
     print("CREATOR OS V2 VALIDATION: PASS")
     print(f"configs: {len(REQUIRED_CONFIG)}")
     print(f"schemas: {len(REQUIRED_SCHEMAS)}")
-    print("video release gate: fail-closed + current SHA256 bound")
+    print("video release gate: fail-closed + final/source SHA256 bound + source fidelity required")
+    print("landscape screen recording: fit_full_frame default; destructive crop explicit-only")
+    print("mobile 360x640: QA-only; formal delivery is one 1080x1920 master")
     print("protected capability resources: present")
     print("legacy quant/EP01 residue checks: clear")
     return 0
