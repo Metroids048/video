@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - agent/creator-os-v2
+      - agent/creator-os-v2-quality-fix
+      - agent/video-quality-gate-v3
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
