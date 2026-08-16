@@ -3,12 +3,11 @@ name: Publish Media Contract
 on:
   push:
     branches:
-      - agent/creator-os-v2-quality-fix
-      - agent/video-quality-gate-v3
+      - agent/creator-os-v2
   pull_request:
     branches:
       - main
-      - agent/creator-os-v2-quality-fix
+      - agent/creator-os-v2
   workflow_dispatch:
 
 jobs:
@@ -38,6 +37,7 @@ jobs:
           tests/test_ep01_focus_propagation.py
           tests/test_production_loop_publishing_quality.py
           tests/test_creator_os_v2_quality_regressions.py
+          tests/test_layouts.py
           tests/test_render.py
           tests/test_creative_review.py
           tests/test_creator_os_v2_config.py
