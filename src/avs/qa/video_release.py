@@ -1,10 +1,12 @@
 """Fail-closed pre-delivery review for the exact rendered video artifact.
 
-This gate intentionally does not try to infer publish quality from metadata.
-It validates a reviewer-produced record that confirms a real 1x start-to-end
-watch, dense first-10-second inspection, transition scan, mobile preview and
-actual audio listening.  The record is content-addressed to the reviewed MP4 so
-any rerender invalidates the previous approval.
+Release quality is proven in two directions:
+1) source -> final fidelity (frame/context/action preservation), and
+2) final -> viewer comprehension (full 1x playback, mobile and audio review).
+
+Sparse frames, metadata, self-scores, or a stable-but-cropped render cannot unlock delivery.
+The validated record is content-addressed to both the final MP4 and every declared source
+artifact, so either a rerender or source change invalidates the prior pass.
 """
 from __future__ import annotations
 
@@ -43,6 +45,23 @@ REQUIRED_FALSE_FLAGS = frozenset({
     "known_critical_issue_at_delivery",
 })
 
+REQUIRED_SOURCE_TRUE_FLAGS = frozenset({
+    "compared_source_to_final",
+    "full_frame_integrity_checked",
+    "spatial_continuity_checked",
+    "temporal_continuity_checked",
+    "opening_context_checked",
+    "all_crop_events_explicitly_authorized",
+})
+
+REQUIRED_SOURCE_FALSE_FLAGS = frozenset({
+    "unauthorized_destructive_crop_detected",
+    "source_context_loss_detected",
+    "spatial_continuity_broken",
+    "temporal_continuity_broken",
+    "opening_mid_action_or_partial_frame",
+})
+
 
 class VideoReleaseReviewError(ValueError):
     """The current rendered video has not satisfied the release gate."""
@@ -68,7 +87,7 @@ def _resolve_inside_episode(ep_dir: Path, raw: str) -> Path:
     try:
         path.relative_to(ep_dir.resolve())
     except ValueError as exc:
-        raise VideoReleaseReviewError(f"reviewed_video 路径逃逸 Episode: {raw}") from exc
+        raise VideoReleaseReviewError(f"review artifact 路径逃逸 Episode: {raw}") from exc
     return path
 
 
@@ -94,6 +113,56 @@ def _validate_finding_list(payload: dict[str, Any], key: str) -> None:
             raise VideoReleaseReviewError(f"{key}[{index}] 必须是 object")
 
 
+def _validate_source_artifacts(ep_dir: Path, source_review: dict[str, Any]) -> None:
+    artifacts = source_review.get("source_artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        raise VideoReleaseReviewError(
+            "source_fidelity_review.source_artifacts 至少需要一个真实源素材 path + SHA256"
+        )
+
+    for index, item in enumerate(artifacts):
+        if not isinstance(item, dict):
+            raise VideoReleaseReviewError(f"source_artifacts[{index}] 必须是 object")
+        raw_path = item.get("path")
+        expected_sha = item.get("sha256")
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            raise VideoReleaseReviewError(f"source_artifacts[{index}].path is required")
+        if not isinstance(expected_sha, str) or len(expected_sha) != 64:
+            raise VideoReleaseReviewError(f"source_artifacts[{index}].sha256 is required")
+        source_path = _resolve_inside_episode(ep_dir, raw_path)
+        if not source_path.is_file():
+            raise VideoReleaseReviewError(f"源素材不存在: {raw_path}")
+        current_sha = sha256_file(source_path)
+        if current_sha != expected_sha:
+            raise VideoReleaseReviewError(
+                f"源素材 SHA256 已变化/记录失效: {raw_path}; 必须重新做 source-to-final 验收"
+            )
+
+
+def _validate_source_ready(source_review: dict[str, Any]) -> None:
+    missing_true = sorted(
+        key for key in REQUIRED_SOURCE_TRUE_FLAGS if source_review.get(key) is not True
+    )
+    if missing_true:
+        raise VideoReleaseReviewError(f"source fidelity 确认项未通过: {missing_true}")
+
+    active_hard_fails = sorted(
+        key for key in REQUIRED_SOURCE_FALSE_FLAGS if source_review.get(key) is not False
+    )
+    if active_hard_fails:
+        raise VideoReleaseReviewError(
+            f"source fidelity 仍存在 crop/context/连续性 hard fail: {active_hard_fails}"
+        )
+
+    findings = source_review.get("source_fidelity_findings")
+    if not isinstance(findings, list):
+        raise VideoReleaseReviewError("source_fidelity_findings 必须是 list")
+    if findings:
+        raise VideoReleaseReviewError(
+            f"source fidelity 仍存在关键问题，禁止交付: {findings}"
+        )
+
+
 def _validate_ready_to_publish(review: dict[str, Any]) -> None:
     missing_true = sorted(key for key in REQUIRED_TRUE_FLAGS if review.get(key) is not True)
     if missing_true:
@@ -116,12 +185,7 @@ def validate_video_release_review(
     *,
     expected_video: Path | None = None,
 ) -> dict[str, Any]:
-    """Validate reviewer input and bind it to the exact current MP4.
-
-    A REPAIRING/BLOCKED record may be saved to preserve findings.  A
-    READY_TO_PUBLISH record is accepted only when every continuous-review hard
-    gate passes.
-    """
+    """Validate reviewer input and bind it to the exact current MP4 and sources."""
     ep_dir = ep_dir.resolve()
     reviewer = payload.get("reviewer")
     if not isinstance(reviewer, dict):
@@ -149,6 +213,13 @@ def validate_video_release_review(
             "release review 审看的不是当前交付视频；必须重新完整验收当前 MP4"
         )
 
+    source_review = payload.get("source_fidelity_review")
+    if not isinstance(source_review, dict):
+        raise VideoReleaseReviewError(
+            "source_fidelity_review is required; 必须先比较真实源素材与最终成片，不能只看 final"
+        )
+    _validate_source_artifacts(ep_dir, source_review)
+
     continuous = payload.get("continuous_playback_review")
     if not isinstance(continuous, dict):
         raise VideoReleaseReviewError(
@@ -169,6 +240,7 @@ def validate_video_release_review(
     if final_status not in {"REPAIRING", "BLOCKED", "READY_TO_PUBLISH"}:
         raise VideoReleaseReviewError("final_status 必须为 REPAIRING/BLOCKED/READY_TO_PUBLISH")
     if final_status == "READY_TO_PUBLISH":
+        _validate_source_ready(source_review)
         _validate_ready_to_publish(continuous)
 
     output = dict(payload)
@@ -209,7 +281,7 @@ def verify_video_release_review_current(
     ep_dir: Path,
     final_video: Path,
 ) -> tuple[bool, str | None]:
-    """Verify release review exists, passed, and matches the exact final MP4."""
+    """Verify release review exists, passed, and matches final + source hashes."""
     if not final_video.is_file():
         return False, f"最终视频不存在: {final_video}"
 
@@ -229,6 +301,15 @@ def verify_video_release_review_current(
     current_hash = sha256_file(final_video)
     if review.get("video_sha256") != current_hash:
         return False, "最终视频已重新渲染/修改，旧发布验收 SHA256 已失效"
+
+    source_review = review.get("source_fidelity_review")
+    if not isinstance(source_review, dict):
+        return False, "发布验收缺少 source_fidelity_review"
+    try:
+        _validate_source_artifacts(ep_dir.resolve(), source_review)
+        _validate_source_ready(source_review)
+    except VideoReleaseReviewError as exc:
+        return False, str(exc)
 
     continuous = review.get("continuous_playback_review")
     if not isinstance(continuous, dict):
