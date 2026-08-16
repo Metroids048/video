@@ -22,10 +22,14 @@ def test_creator_workflow_config_is_loaded_and_has_reusable_contract() -> None:
 
     creator = config.creator_workflow["creator_workflow"]
     assert creator["positioning"]["scope"] == "multi_project"
-    assert creator["intake"]["reference_video_rule"]["local_copy_required_for_visual_review"] is True
-    assert creator["pipeline"][0]["id"] == "intake"
-    assert any("ip-strategist" in stage["skills"] for stage in creator["pipeline"])
-    assert "human_approval" in creator["quality_gates"]["hard_fail"]
+    assert "douyin_reference_url" in creator["intake"]["accepted_inputs"]
+    pipeline_ids = [stage["id"] for stage in creator["pipeline"]]
+    assert pipeline_ids[0] == "input-hub"
+    assert "format-router" in pipeline_ids
+    assert "creative-qa" in pipeline_ids
+    assert creator["creative_authority"]["owner"] == "creative_director"
+    assert creator["completion"]["publish_success"] == "READY_TO_PUBLISH"
+    assert creator["completion"]["manual_reedit_required"] == "BLOCKED"
 
 
 def test_creator_workflow_is_part_of_full_config_validation() -> None:
