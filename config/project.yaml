@@ -1,7 +1,7 @@
 # Creator OS V2 — project contract
 project:
   name: "Creator OS"
-  version: "2.0"
+  version: "2.1"
   product_contract: "creator_os_v2"
   execution_engine: "avs"
   episodes_root: "episodes"
@@ -11,6 +11,8 @@ project:
   inbox_dir: "inbox"
   publish_success_state: "READY_TO_PUBLISH"
   final_filename_requires_publish_success: true
+  video_review_config: "config/video-review.yaml"
+  video_pre_delivery_prompt: "docs/creator-os/video-pre-delivery-qa-prompt.md"
 
 canvas:
   width: 1080
@@ -25,6 +27,9 @@ principles:
   format_agnostic: true
   plugins_are_capabilities_not_workflow_owners: true
   manual_reedit_is_not_complete: true
+  continuous_video_review_before_delivery: true
+  actual_rendered_media_is_quality_source_of_truth: true
+  known_critical_video_issue_blocks_delivery: true
   max_default_repair_rounds: 3
 
 episode_id_pattern: "^[A-Z0-9][A-Z0-9_-]{1,63}$"
