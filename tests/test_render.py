@@ -17,8 +17,6 @@ from avs.models.episode import EpisodeModel
 from avs.paths import create_episode_skeleton
 
 
-# ── SRT 生成测试 ──────────────────────────────────────────────────────────
-
 class TestBuildSrt:
     def test_basic_srt(self, tmp_path):
         tl = Timeline("EP-X", tracks=[
@@ -112,8 +110,6 @@ class TestSrtTimecode:
         assert _seconds_to_srt_time(3661.0) == "01:01:01,000"
 
 
-# ── 渲染测试（FFmpeg 可用时运行，否则 mock）─────────────────────────────────
-
 class TestRenderRoughCut:
     """核心渲染逻辑测试，FFmpeg 不可用时 mock subprocess。"""
 
@@ -132,7 +128,6 @@ class TestRenderRoughCut:
 
     @pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg 不可用")
     def test_render_produces_mp4(self, tmp_path):
-        """有 ffmpeg 时：实际生成两个 MP4。"""
         ep_dir = tmp_path / "ep"
         ep_dir.mkdir()
         (ep_dir / "work").mkdir()
@@ -178,7 +173,6 @@ class TestRenderRoughCut:
         assert second["preview_clean"].stat().st_mtime_ns == mtime
 
     def test_render_error_no_ffmpeg(self, tmp_path):
-        """ffmpeg 不可用时抛出 RenderError。"""
         ep_dir = tmp_path / "ep"
         ep_dir.mkdir()
         (ep_dir / "work").mkdir()
@@ -190,8 +184,6 @@ class TestRenderRoughCut:
             with pytest.raises(RenderError, match="ffmpeg"):
                 render_rough_cut(ep_dir, tl, force=True)
 
-
-# ── 布局测试 ──────────────────────────────────────────────────────────────
 
 class TestLayouts:
     def test_contain_filter_output(self):
@@ -207,14 +199,16 @@ class TestLayouts:
         assert "crop" in f
 
     def test_choose_layout_default_screen_focus_for_landscape(self):
-        """Test landscape defaults to screen_focus (not contain)."""
+        """Landscape defaults to one readable portrait evidence viewport."""
         from avs.render.layouts import choose_layout
         f = choose_layout(None, 1920, 1080)
-        assert "split[main][bg]" in f
-        assert "boxblur" in f
+        assert "scale=-2:1920" in f
+        assert "crop=1080:1920" in f
+        assert "split" not in f
+        assert "boxblur" not in f
+        assert "overlay" not in f
 
     def test_choose_layout_default_contain_for_portrait(self):
-        """Test portrait defaults to contain."""
         from avs.render.layouts import choose_layout
         f = choose_layout(None, 1080, 1920)
         assert "pad" in f
