@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "video-release-review.schema.json",
+  "title": "Creator OS Video Release Review",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "reviewed_video",
+    "video_sha256",
+    "reviewer",
+    "continuous_playback_review",
+    "first_pass_memory_summary",
+    "first_10s_findings",
+    "transition_findings",
+    "timestamped_findings",
+    "audio_review_notes",
+    "mobile_review_notes",
+    "repair_round",
+    "final_status",
+    "generated_at"
+  ],
+  "properties": {
+    "episode_id": {"type": "string", "minLength": 1},
+    "reviewed_video": {"type": "string", "minLength": 1},
+    "video_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "reviewer": {
+      "type": "object",
+      "required": ["mode", "reviewer_id", "inspected_pixels", "listened_audio"],
+      "properties": {
+        "mode": {"const": "actual_artifact_review"},
+        "reviewer_id": {"type": "string", "minLength": 1},
+        "inspected_pixels": {"const": true},
+        "listened_audio": {"const": true}
+      },
+      "additionalProperties": true
+    },
+    "continuous_playback_review": {
+      "type": "object",
+      "required": [
+        "watched_start_to_end_1x",
+        "first_pass_without_pause_for_comprehension",
+        "first_10s_dense_review_completed",
+        "key_evidence_readable_without_pause",
+        "audio_listened_end_to_end",
+        "mobile_360x640_reviewed",
+        "transition_scan_completed",
+        "slideshow_like",
+        "static_screenshot_motion_dominant",
+        "rapid_dark_light_switching",
+        "unmotivated_abrupt_cuts",
+        "abrupt_context_loss",
+        "visual_motion_without_semantic_reason",
+        "audio_visual_semantic_mismatch",
+        "caption_or_overlay_blocks_evidence",
+        "key_evidence_requires_pause",
+        "known_critical_issue_at_delivery",
+        "critical_findings"
+      ],
+      "properties": {
+        "watched_start_to_end_1x": {"type": "boolean"},
+        "first_pass_without_pause_for_comprehension": {"type": "boolean"},
+        "first_10s_dense_review_completed": {"type": "boolean"},
+        "key_evidence_readable_without_pause": {"type": "boolean"},
+        "audio_listened_end_to_end": {"type": "boolean"},
+        "mobile_360x640_reviewed": {"type": "boolean"},
+        "transition_scan_completed": {"type": "boolean"},
+        "slideshow_like": {"type": "boolean"},
+        "static_screenshot_motion_dominant": {"type": "boolean"},
+        "rapid_dark_light_switching": {"type": "boolean"},
+        "unmotivated_abrupt_cuts": {"type": "boolean"},
+        "abrupt_context_loss": {"type": "boolean"},
+        "visual_motion_without_semantic_reason": {"type": "boolean"},
+        "audio_visual_semantic_mismatch": {"type": "boolean"},
+        "caption_or_overlay_blocks_evidence": {"type": "boolean"},
+        "key_evidence_requires_pause": {"type": "boolean"},
+        "known_critical_issue_at_delivery": {"type": "boolean"},
+        "critical_findings": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "first_pass_memory_summary": {"type": "string", "minLength": 1},
+    "first_10s_findings": {"type": "array", "items": {"type": "object"}},
+    "transition_findings": {"type": "array", "items": {"type": "object"}},
+    "timestamped_findings": {"type": "array", "items": {"type": "object"}},
+    "audio_review_notes": {"type": "string", "minLength": 1},
+    "mobile_review_notes": {"type": "string", "minLength": 1},
+    "repair_round": {"type": "integer", "minimum": 0, "maximum": 3},
+    "final_status": {"enum": ["REPAIRING", "BLOCKED", "READY_TO_PUBLISH"]},
+    "generated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": true
+}
