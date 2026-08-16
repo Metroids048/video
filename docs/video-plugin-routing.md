@@ -11,8 +11,15 @@
 1. 不得跳过本路由表直接「自由发挥」剪辑/渲染。
 2. `python -m avs` 仍是 Episode 状态机与交付包主入口。
 3. Remotion / ChatCut / CapCut / OpenMontage / Pixelle-Video / MoneyPrinterTurbo / JianyingEditor 产出必须落到对应 Episode 的 `work/` 或 `output/`，不得伪造 `QA_PASSED`。
-4. HyperFrames 失败 → FFmpeg 静态卡降级；其它渲染器失败 → 非零退出并报告，禁止静默成功。
+4. FFmpeg 只可降级为可检查的确定性装配，不能把“静态卡 + 长字幕”伪装成可发布成片；其它渲染器失败 → 非零退出并报告，禁止静默成功。
 5. ChatCut 需本机 MCP 登录；Epidemic Sound 需官方 MCP；脚本只 vendoring Skills，不代登、不存密钥。
+
+### 录屏像素完整性（P0）
+
+1. 录屏须在时间线中明确标注全页建立场景或 ROI Screen Focus。ROI 只能服务于当前口播证据，不能成为全局 `cover`、自动重构图或裁掉真实页面边界的默认。
+2. 全页镜头用于建立场景，ROI 镜头用于余额、订单、仓位、历史等证据可读性；目标比例不同时不得把横屏缩成黑边细条。
+3. 在交付前，至少抽取源视频与输出的对应帧，确认原始左边界、右边界、顶部导航和底部内容仍可见。
+   任一边界内容在输出中缺失时，必须报 `FAIL_SOURCE_FRAME_CROPPED` 并停止交付。
 
 ## 场景 → Skill
 
@@ -50,6 +57,13 @@
 1. 默认免费平替（Edge TTS / 项目 Whisper 转写等）
 2. 用户明确要求 Azure → `azure-speech`
 3. 用户明确要求 ElevenLabs 高表现 → `elevenlabs` / `text-to-speech`
+
+### 真人口播录屏专题（强制组合）
+
+1. 先调用 `video-use` / Whisper，复用 VCI 中已有的转写与词级时间戳；生成语义切分 SRT 和 EDL。
+2. 有本机 ChatCut 登录时，优先用 ChatCut 处理口播删句、停顿与可视时间线；无登录时用 FFmpeg 仅做确定性装配。
+3. Remotion / HyperFrames 只可为 SRT 关键词加微动效，不能替代真实录屏证据或制造整屏 PPT。
+4. 没有“新口播逐句同步录屏”不构成阻塞；使用原始录屏和参考成片的真实镜头池按语义重新映射。
 
 ## 上游仓库
 

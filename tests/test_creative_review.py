@@ -37,6 +37,10 @@ def _passing_scores() -> dict[str, float]:
     return {name: 8.5 for name in SCORE_WEIGHTS}
 
 
+def _watched() -> list[str]:
+    return ["renders/preview-with-motion.mp4", "work/qa/sheets/hook-01.jpg"]
+
+
 # ── sampling ──────────────────────────────────────────────────────────
 
 
@@ -276,11 +280,11 @@ def test_score_then_baseline_then_compare(tmp_path: Path, monkeypatch) -> None:
     build_review(episode, "EP-CREATIVE-TEST")
 
     weak = {name: 4.0 for name in SCORE_WEIGHTS}
-    record_scores(episode, weak, reviewer_id="test-agent")
+    record_scores(episode, weak, reviewer_id="test-agent", reviewed_artifacts=_watched())
     promote_baseline(episode)
 
     strong = {name: 8.5 for name in SCORE_WEIGHTS}
-    record_scores(episode, strong, reviewer_id="test-agent")
+    record_scores(episode, strong, reviewer_id="test-agent", reviewed_artifacts=_watched())
     comparison = compare_to_baseline(episode)
     assert comparison["has_baseline"] is True
     overall = next(row for row in comparison["rows"] if row["dimension"] == "overall")
@@ -329,6 +333,7 @@ def test_agent_findings_merge_with_deterministic(tmp_path: Path, monkeypatch) ->
             "repair_target": "hook", "recommended_action": "用真实数字或反差画面开场",
         }],
         reviewer_id="claude",
+        reviewed_artifacts=_watched(),
     )
     jsonschema.Draft7Validator(SCHEMA).validate(review)
     sources = {item.get("source") for item in review["findings"]}
@@ -346,7 +351,13 @@ def test_rescoring_replaces_previous_agent_findings(tmp_path: Path, monkeypatch)
         "observation": "第一轮观察", "why_it_hurts": "节奏平",
         "repair_target": "edit", "recommended_action": "调整时长",
     }
-    record_scores(episode, {name: 5.0 for name in SCORE_WEIGHTS}, findings=[finding])
-    second = record_scores(episode, {name: 7.0 for name in SCORE_WEIGHTS}, findings=[])
+    record_scores(
+        episode, {name: 5.0 for name in SCORE_WEIGHTS}, findings=[finding],
+        reviewer_id="claude", reviewed_artifacts=_watched(),
+    )
+    second = record_scores(
+        episode, {name: 7.0 for name in SCORE_WEIGHTS}, findings=[],
+        reviewer_id="claude", reviewed_artifacts=_watched(),
+    )
     agent_findings = [item for item in second["findings"] if item.get("source") == "agent"]
     assert agent_findings == [], "重新评分必须清掉上一轮主观发现，避免陈旧结论累积"

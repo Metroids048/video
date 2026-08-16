@@ -1,0 +1,25 @@
+# Single source of SCREEN_DOCUMENTARY visual constraints.  These values are
+# interpreted by pilot planning, render validation, and visual QA.
+production_types:
+  STANDARD: {}
+  SCREEN_DOCUMENTARY:
+    duration_seconds: {min: 75, max: 115}
+    pilot_duration_seconds: {min: 20, max: 30}
+    real_screen_footage_ratio_min: 0.80
+    generated_card_count_max: 2
+    generated_motion_total_seconds_max: 6
+    intro_card_allowed: false
+    logo_intro_allowed: false
+    first_3_seconds_must_contain_real_evidence: true
+    blank_background_max_seconds: 0.3
+    full_landscape_fit_allowed: false
+    mobile_readability_required: true
+    narration:
+      master_audio_required: true
+      allow_reordered_real_screen_footage: true
+      forbid_synthetic_voice: true
+      alignment_source: "word_timestamps"
+    subtitle:
+      max_lines: 2
+      max_chinese_chars_per_line: 18
+      forbidden_regions: ["balance", "chart", "orders", "positions", "why_no_trade"]

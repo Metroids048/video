@@ -54,7 +54,7 @@ python -m avs workflow next EP-20260730-01 --json
 1. `ingest`；
 2. 当 `input/reference/` 有本地视频时执行 `reference analyze`；
 3. `content init`；
-4. 在素材已人工确认后调用既有 `run`，完成时间线、字幕、FFmpeg、HyperFrames、QA 和交付。
+4. 真人口播 + 录屏专题先复用 VCI 转写，生成词级 SRT/EDL 与 20-30 秒 Pilot；Pilot 真实审片通过后，才调用既有 `run` 完成时间线、确定性装配、必要微动效、QA 和交付。
 
 ## Agent 内容关口
 

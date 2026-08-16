@@ -41,12 +41,13 @@
       document.getElementById("title").textContent = vars.title || "3 个步骤做出短视频粗剪";
       document.getElementById("subtitle").textContent = vars.subtitle || "先搭流程，再开始创作";
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo(".panel", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.55, ease: "power2.out" }, 0);
-      tl.fromTo("#title", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 0.25);
-      tl.fromTo("#subtitle", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.7);
-      tl.fromTo("#progress-fill", { scaleX: 0 }, { scaleX: 1, duration: 2.5, ease: "none" }, 0.25);
-      tl.to(".accent-a", { rotation: 180, duration: 2.5, ease: "none" }, 0.25);
-      tl.to(".accent-b", { y: -32, duration: 1.2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0.5);
+      // The first encoded frame must already communicate the hook; animation only adds emphasis.
+      tl.fromTo(".panel", { opacity: 0.96, x: -18 }, { opacity: 1, x: 0, duration: 0.28, ease: "power2.out" }, 0);
+      tl.fromTo("#title", { opacity: 0.96, y: 10 }, { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" }, 0);
+      tl.fromTo("#subtitle", { opacity: 0.96 }, { opacity: 1, duration: 0.22 }, 0.08);
+      tl.fromTo("#progress-fill", { scaleX: 0.08 }, { scaleX: 1, duration: 2.7, ease: "none" }, 0);
+      tl.to(".accent-a", { rotation: 180, duration: 2.7, ease: "none" }, 0);
+      tl.to(".accent-b", { y: -32, duration: 1.2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0.25);
       window.__timelines = window.__timelines || {};
       window.__timelines["hook-title"] = tl;
     </script>

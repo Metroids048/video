@@ -37,6 +37,7 @@ class TestValidTransitions:
             EpisodeStatus.CONTENT_READY,
             EpisodeStatus.ASSETS_READY,
             EpisodeStatus.TIMELINE_READY,
+            EpisodeStatus.PILOT_APPROVED,
             EpisodeStatus.ROUGH_CUT_READY,
             EpisodeStatus.QA_PASSED,
             EpisodeStatus.DELIVERY_READY,
@@ -55,6 +56,7 @@ class TestValidTransitions:
             EpisodeStatus.CONTENT_READY,
             EpisodeStatus.ASSETS_READY,
             EpisodeStatus.TIMELINE_READY,
+            EpisodeStatus.PILOT_APPROVED,
             EpisodeStatus.ROUGH_CUT_READY,
             EpisodeStatus.QA_PASSED,
         ]
@@ -111,15 +113,15 @@ class TestForceReset:
 
 
 class TestAllStates:
-    def test_all_states_returns_13(self):
+    def test_all_states_returns_14(self):
         states = all_states()
-        assert len(states) == 13, f"期望13个状态，实际 {len(states)}: {states}"
+        assert len(states) == 14, f"期望14个状态，实际 {len(states)}: {states}"
 
     def test_contains_required(self):
         states = set(all_states())
         required = {
             "CREATED", "INGESTED", "REFERENCE_READY", "CONTENT_READY",
-            "ASSETS_READY", "TIMELINE_READY", "ROUGH_CUT_READY",
+            "ASSETS_READY", "TIMELINE_READY", "PILOT_APPROVED", "ROUGH_CUT_READY",
             "QA_PASSED", "DELIVERY_READY",
             "WAITING_FOR_INPUT", "WAITING_FOR_REVIEW", "BLOCKED", "FAILED",
         }

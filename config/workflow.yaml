@@ -30,9 +30,15 @@ workflow:
       - BLOCKED
       - FAILED
     TIMELINE_READY:
+      - PILOT_APPROVED
       - ROUGH_CUT_READY
       - FAILED
       - BLOCKED
+    PILOT_APPROVED:
+      - ROUGH_CUT_READY
+      - WAITING_FOR_REVIEW
+      - BLOCKED
+      - FAILED
     ROUGH_CUT_READY:
       - QA_PASSED
       - WAITING_FOR_REVIEW
@@ -66,6 +72,12 @@ workflow:
   stages:
     - ingest
     - analyze
+    - story-mine
+    - direct
+    - screen-plan
+    - pilot
+    - pilot-review
+    - pilot-revise
     - plan
     - preview
     - visual-review

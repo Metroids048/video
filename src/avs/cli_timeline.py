@@ -228,6 +228,13 @@ def register_commands(main_group: click.Group) -> None:
             sys.exit(1)
 
         try:
+            from avs.pilots import assert_screen_documentary_pilot_gate
+            assert_screen_documentary_pilot_gate(ep_dir, model)
+        except Exception as exc:
+            console.print(f"[red]✗ render rough 被 Pilot Gate 拒绝: {exc}[/red]")
+            sys.exit(1)
+
+        try:
             tl = Timeline.load(timeline_path)
         except Exception as exc:
             console.print(f"[red]✗ 加载 timeline.json 失败: {exc}[/red]")
@@ -332,6 +339,13 @@ def register_commands(main_group: click.Group) -> None:
             sys.exit(1)
 
         try:
+            from avs.pilots import assert_screen_documentary_pilot_gate
+            assert_screen_documentary_pilot_gate(ep_dir, model)
+        except Exception as exc:
+            console.print(f"[red]✗ QA 被 Pilot Gate 拒绝: {exc}[/red]")
+            sys.exit(1)
+
+        try:
             from avs.qa import run_qa
             active_path = "final-render" in model.completed_stages
             report = run_qa(
@@ -420,6 +434,13 @@ def register_commands(main_group: click.Group) -> None:
             model = EpisodeModel.load(ep_json)
         except Exception as exc:
             console.print(f"[red]✗ 加载 episode.json 失败: {exc}[/red]")
+            sys.exit(1)
+
+        try:
+            from avs.pilots import assert_screen_documentary_pilot_gate
+            assert_screen_documentary_pilot_gate(ep_dir, model)
+        except Exception as exc:
+            console.print(f"[red]✗ deliver 被 Pilot Gate 拒绝: {exc}[/red]")
             sys.exit(1)
 
         if "final-render" in model.completed_stages:

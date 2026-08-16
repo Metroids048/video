@@ -275,6 +275,7 @@ def build_review(
         "reviewed_at": datetime.now(timezone.utc).isoformat(),
         "reviewer_kind": "pending",
         "reviewer_id": None,
+        "reviewed_artifacts": [],
         "baseline_ref": (baseline or {}).get("video_sha256"),
         "metrics": metrics,
         "scores": None,
@@ -306,6 +307,7 @@ def record_scores(
     *,
     reviewer_kind: str = "agent",
     reviewer_id: str | None = None,
+    reviewed_artifacts: list[str] | None = None,
     findings: list[dict[str, Any]] | None = None,
     repair_round: int | None = None,
 ) -> dict[str, Any]:
@@ -316,6 +318,12 @@ def record_scores(
     missing = [name for name in SCORE_WEIGHTS if name not in scores]
     if missing:
         raise ValueError("缺少维度评分: " + ", ".join(sorted(missing)))
+    if reviewer_kind not in {"agent", "provider"}:
+        raise ValueError("评分审片人必须为 agent 或 provider")
+    if not reviewer_id or not reviewer_id.strip():
+        raise ValueError("评分审片人必须提供 reviewer_id")
+    if not reviewed_artifacts or not all(isinstance(item, str) and item.strip() for item in reviewed_artifacts):
+        raise ValueError("评分必须列出至少一个实际查看的 reviewed_artifacts")
     resolved = {name: float(scores[name]) for name in SCORE_WEIGHTS}
     resolved["overall"] = float(scores.get("overall") or weighted_overall(resolved))
     merged = [item for item in review.get("findings", []) if item.get("source") == "deterministic"]
@@ -330,6 +338,7 @@ def record_scores(
     review["findings"] = merged
     review["reviewer_kind"] = reviewer_kind
     review["reviewer_id"] = reviewer_id
+    review["reviewed_artifacts"] = list(reviewed_artifacts)
     review["gate"] = evaluate_gate(review["metrics"], resolved, merged, repair_round=round_index)
     review["reviewed_at"] = datetime.now(timezone.utc).isoformat()
     jsonschema.Draft7Validator(_schema()).validate(review)

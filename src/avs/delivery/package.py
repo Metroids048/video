@@ -58,6 +58,26 @@ def _qa_report(ep_dir: Path) -> dict[str, Any]:
     return payload
 
 
+def _require_passing_creative_review(ep_dir: Path, final_video: Path) -> None:
+    """Refuse delivery until a real reviewer has scored this exact MP4."""
+    from avs.qa.creative_review import load_review
+
+    review = load_review(ep_dir)
+    if review is None:
+        raise ValueError("缺少 work/qa/creative-review.json；必须先实际审看片子并评分")
+    if review.get("reviewer_kind") not in {"agent", "provider"} or not review.get("reviewer_id"):
+        raise ValueError("Creative Review 没有有效的真实审片人身份")
+    if not review.get("reviewed_artifacts"):
+        raise ValueError("Creative Review 未记录实际查看的 MP4 / 关键帧 / 联系表")
+    if review.get("scores") is None:
+        raise ValueError("Creative Review 只有审片包，尚未填写评分")
+    gate = review.get("gate") or {}
+    if not gate.get("technical_passed") or not gate.get("creative_passed"):
+        raise ValueError("Creative Gate 未通过，不能生成交付包")
+    if review.get("video_sha256") != sha256_file(final_video):
+        raise ValueError("Creative Review 对应的不是当前最终视频；请重新审片")
+
+
 def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
     """Copy all editable outputs into delivery/ and write a validated manifest."""
     if model.status not in {"QA_PASSED", "DELIVERY_READY"}:
@@ -81,6 +101,8 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
 
         if not final_video.is_file():
             raise FileNotFoundError("最终视频不存在")
+
+        _require_passing_creative_review(ep_dir, final_video)
 
         valid, reason = verify_approval_current(ep_dir, final_video)
         if not valid:

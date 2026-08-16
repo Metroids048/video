@@ -24,19 +24,27 @@ _PIPELINE_ORDER = {
         EpisodeStatus.CONTENT_READY,
         EpisodeStatus.ASSETS_READY,
         EpisodeStatus.TIMELINE_READY,
+        EpisodeStatus.PILOT_APPROVED,
         EpisodeStatus.ROUGH_CUT_READY,
         EpisodeStatus.QA_PASSED,
         EpisodeStatus.DELIVERY_READY,
     ))
 }
 _ACTIVE_STAGE_ORDER = (
-    "ingest", "analyze", "plan", "preview", "visual-review",
+    "ingest", "analyze", "story-mine", "direct", "screen-plan", "pilot",
+    "pilot-review", "pilot-revise", "plan", "preview", "visual-review",
     "final-render", "qa", "approve", "delivery", "export",
 )
 _BLOCKED_STAGES = frozenset(_ACTIVE_STAGE_ORDER)
 _LEGACY_STAGE_STATUS = {
     "ingest": EpisodeStatus.CREATED,
     "analyze": EpisodeStatus.INGESTED,
+    "story-mine": EpisodeStatus.INGESTED,
+    "direct": EpisodeStatus.CONTENT_READY,
+    "screen-plan": EpisodeStatus.CONTENT_READY,
+    "pilot": EpisodeStatus.TIMELINE_READY,
+    "pilot-review": EpisodeStatus.PILOT_APPROVED,
+    "pilot-revise": EpisodeStatus.TIMELINE_READY,
     "plan": EpisodeStatus.INGESTED,
     "preview": EpisodeStatus.CONTENT_READY,
     "visual-review": EpisodeStatus.TIMELINE_READY,
@@ -92,6 +100,11 @@ class EpisodeModel:
         return str(self._data.get("input_mode", "multimodal"))
 
     @property
+    def production_type(self) -> str:
+        """Production-specific constraints; absent legacy data remains STANDARD."""
+        return str(self._data.get("production_type", "STANDARD"))
+
+    @property
     def publishable(self) -> bool:
         return bool(self._data["publishable"])
 
@@ -126,6 +139,7 @@ class EpisodeModel:
         mode: str = "REFERENCE_ADAPT",
         platforms: list[str] | None = None,
         input_mode: str = "multimodal",
+        production_type: str = "STANDARD",
     ) -> "EpisodeModel":
         """构建全新 Episode 数据（不写磁盘）。"""
         if platforms is None:
@@ -138,6 +152,7 @@ class EpisodeModel:
             "id": episode_id,
             "mode": mode,
             "input_mode": input_mode,
+            "production_type": production_type,
             "publishable": publishable,
             "status": EpisodeStatus.CREATED,
             "platforms": platforms,

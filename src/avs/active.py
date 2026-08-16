@@ -79,6 +79,93 @@ def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
     return {"asset_intelligence": intelligence, "recording_analysis": recording, "document_analysis": documents, "transcription": transcription}
 
 
+def active_story_mine(ep_dir: Path, model: EpisodeModel) -> dict[str, str]:
+    """Use an already verified VCI package; never invoke ingest/transcription."""
+    if model.production_type != "SCREEN_DOCUMENTARY":
+        raise RuntimeError("story-mine 只适用于 SCREEN_DOCUMENTARY")
+    from avs.pilots import mine_story
+    if model.status == "CREATED":
+        model.ensure_stage("ingest", "INGESTED")
+        model.complete_stage("ingest")
+    output = mine_story(ep_dir)
+    model.clear_block(stage="story-mine")
+    model.complete_stage("story-mine")
+    model.save(ep_dir / "episode.json")
+    return {name: path.relative_to(ep_dir).as_posix() for name, path in output.items()}
+
+
+def active_direct(ep_dir: Path, model: EpisodeModel) -> str:
+    if model.production_type != "SCREEN_DOCUMENTARY":
+        raise RuntimeError("direct 只适用于 SCREEN_DOCUMENTARY")
+    if not (ep_dir / "work" / "director" / "录屏内容索引.json").is_file():
+        raise RuntimeError("请先完成 story-mine")
+    from avs.pilots import direct_story
+    path = direct_story(ep_dir)
+    if model.status == "INGESTED":
+        model.ensure_stage("content", "CONTENT_READY")
+    model.clear_block(stage="direct")
+    model.complete_stage("direct")
+    model.complete_stage("screen-plan")
+    model.save(ep_dir / "episode.json")
+    return path.relative_to(ep_dir).as_posix()
+
+
+def active_pilot(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
+    if model.production_type != "SCREEN_DOCUMENTARY":
+        raise RuntimeError("pilot 只适用于 SCREEN_DOCUMENTARY")
+    from avs.pilots import render_pilots
+    result = render_pilots(ep_dir, force=force)
+    if model.status == "CONTENT_READY":
+        model.ensure_stage("assets", "ASSETS_READY")
+        model.ensure_stage("timeline", "TIMELINE_READY")
+    model.clear_block(stage="pilot")
+    model.complete_stage("pilot")
+    model.save(ep_dir / "episode.json")
+    return result
+
+
+def active_pilot_review(
+    ep_dir: Path, model: EpisodeModel, reviewer_payloads: list[dict[str, Any]] | None = None, *, force: bool = False,
+) -> dict[str, Any]:
+    if model.production_type != "SCREEN_DOCUMENTARY":
+        raise RuntimeError("pilot-review 只适用于 SCREEN_DOCUMENTARY")
+    from avs.pilots import review_pilots
+    report = review_pilots(ep_dir, reviewer_payloads, force=force)
+    if report["decision"] == "PASS":
+        model.clear_block(stage="pilot-review")
+        model.ensure_stage("pilot-review", "PILOT_APPROVED")
+        model.complete_stage("pilot-review")
+    else:
+        reason = "Pilot 视觉审核未通过" if report["decision"] == "REJECT" else "Pilot 视觉审核被阻塞"
+        model.block(reason, stage="pilot-review")
+    model.save(ep_dir / "episode.json")
+    return report
+
+
+def active_pilot_revise(ep_dir: Path, model: EpisodeModel) -> dict[str, Any]:
+    """Apply a bounded, finding-targeted Pilot repair and rerender only Pilots."""
+    if model.production_type != "SCREEN_DOCUMENTARY":
+        raise RuntimeError("pilot-revise 只适用于 SCREEN_DOCUMENTARY")
+    if model.blocked_stage != "pilot-review":
+        raise RuntimeError("pilot-revise 只能处理被 Pilot Gate 拒绝的 Episode")
+
+    from avs.pilots import revise_pilots, render_pilots
+
+    revision = revise_pilots(ep_dir)
+    if revision["decision"] != "RENDER_REQUIRED":
+        model.block(str(revision.get("reason", "Pilot 自动返修不可执行")), stage="pilot-review")
+        model.save(ep_dir / "episode.json")
+        return revision
+
+    # Repair has an explicit target; clear only the matching block, rerender
+    # the pilot artifacts, then require two fresh independent reviews.
+    model.clear_block(stage="pilot-review")
+    model.complete_stage("pilot-revise")
+    render_pilots(ep_dir, force=True)
+    model.save(ep_dir / "episode.json")
+    return revision
+
+
 def active_plan(
     ep_dir: Path,
     model: EpisodeModel,
@@ -263,6 +350,9 @@ def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
 
 
 def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
+    if model.production_type == "SCREEN_DOCUMENTARY":
+        from avs.pilots import assert_screen_documentary_pilot_gate
+        assert_screen_documentary_pilot_gate(ep_dir, model)
     review_path = ep_dir / "work" / "qa" / "visual-review.json"
     if not review_path.is_file():
         raise RuntimeError("final-render 必须先完成 visual-review")
@@ -299,7 +389,7 @@ def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = Fals
         "preview_clean": rough["preview_clean"],
         "preview_with_captions": rough["preview_with_captions"],
     }
-    if model.status == "TIMELINE_READY":
+    if model.status in {"TIMELINE_READY", "PILOT_APPROVED"}:
         model.ensure_stage("rough_cut", "ROUGH_CUT_READY")
     model.complete_stage("final-render")
     model.save(ep_dir / "episode.json")

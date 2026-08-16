@@ -17,6 +17,7 @@ class EpisodeStatus(str, Enum):
     CONTENT_READY = "CONTENT_READY"
     ASSETS_READY = "ASSETS_READY"
     TIMELINE_READY = "TIMELINE_READY"
+    PILOT_APPROVED = "PILOT_APPROVED"
     ROUGH_CUT_READY = "ROUGH_CUT_READY"
     QA_PASSED = "QA_PASSED"
     DELIVERY_READY = "DELIVERY_READY"
@@ -63,7 +64,14 @@ _DEFAULT_TRANSITIONS: dict[str, frozenset[str]] = {
         EpisodeStatus.FAILED,
     }),
     EpisodeStatus.TIMELINE_READY: frozenset({
+        EpisodeStatus.PILOT_APPROVED,
         EpisodeStatus.ROUGH_CUT_READY,
+        EpisodeStatus.BLOCKED,
+        EpisodeStatus.FAILED,
+    }),
+    EpisodeStatus.PILOT_APPROVED: frozenset({
+        EpisodeStatus.ROUGH_CUT_READY,
+        EpisodeStatus.WAITING_FOR_REVIEW,
         EpisodeStatus.BLOCKED,
         EpisodeStatus.FAILED,
     }),

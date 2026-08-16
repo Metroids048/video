@@ -11,7 +11,8 @@
 2. `docs/Agent-Video-Studio-V1.md` — 项目规范快速参考
 3. `tools-manifest.yaml` — 工具版本约束
 4. **视频相关任务额外必读：** `docs/video-plugin-routing.md`，并按场景加载 `third_party_skills/` 中对应 Skill
-5. 当前模块的 Prompt（见 `docs/Agent_Video_Studio_V1_逐模块开发_Prompts.md`）
+5. **真人口播 + 录屏专题额外必读：** `docs/subtitle-driven-screen-documentary.md`；先做 SRT 驱动的 20-30 秒真人试片，不能把 FFmpeg 静态拼接当成成片。
+6. 当前模块的 Prompt（见 `docs/Agent_Video_Studio_V1_逐模块开发_Prompts.md`）
 
 ## 业务 CLI
 

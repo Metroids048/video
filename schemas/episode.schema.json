@@ -22,6 +22,12 @@
       "enum": ["multimodal", "screenshot_intro"],
       "description": "Active 输入路线；screenshot_intro 允许先生成待审阅的截图图文预览"
     },
+    "production_type": {
+      "type": "string",
+      "enum": ["STANDARD", "SCREEN_DOCUMENTARY"],
+      "default": "STANDARD",
+      "description": "制作类型；SCREEN_DOCUMENTARY 启用真实录屏与 Pilot Gate 硬约束"
+    },
     "publishable": {
       "type": "boolean",
       "description": "是否允许生成发布包；REFERENCE_CLONE 强制为 false"
@@ -35,6 +41,7 @@
         "CONTENT_READY",
         "ASSETS_READY",
         "TIMELINE_READY",
+        "PILOT_APPROVED",
         "ROUGH_CUT_READY",
         "QA_PASSED",
         "DELIVERY_READY",
@@ -54,7 +61,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["ingest", "reference", "content", "assets", "analyze", "plan", "preview", "visual-review", "final-render", "approve", "timeline", "rough_cut", "qa", "delivery", "export"]
+        "enum": ["ingest", "reference", "content", "assets", "analyze", "story-mine", "direct", "screen-plan", "pilot", "pilot-review", "pilot-revise", "plan", "preview", "visual-review", "final-render", "approve", "timeline", "rough_cut", "qa", "delivery", "export"]
       },
       "uniqueItems": true
     },
@@ -72,6 +79,12 @@
         null,
         "ingest",
         "analyze",
+        "story-mine",
+        "direct",
+        "screen-plan",
+        "pilot",
+        "pilot-review",
+        "pilot-revise",
         "plan",
         "preview",
         "visual-review",

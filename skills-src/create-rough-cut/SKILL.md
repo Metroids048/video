@@ -1,5 +1,5 @@
 ---
-trigger: "Episode 已有 Storyboard 和素材，需要生成 FFmpeg 基础粗剪"
+trigger: "Episode 已有字幕锚定的 Timeline 和素材，需要生成可检查的确定性装配"
 inputs:
   - "episodes/active/<ID>/work/content/storyboard.json"
   - "episodes/active/<ID>/work/asset-manifest.json"
@@ -43,14 +43,14 @@ report_format: |
 
 # create-rough-cut Skill
 
-使用 `timeline.json` 和 FFmpeg 生成不依赖 HyperFrames 的基础视频粗剪。
+使用 `timeline.json` 和 FFmpeg 生成不依赖 HyperFrames 的基础视频粗剪。真人口播专题必须先读取 `docs/subtitle-driven-screen-documentary.md`：SRT 是主时钟，FFmpeg 不能把长静态录屏 + 字幕当成成片。
 
 ## 约束
 
 - 画布：1080×1920，30fps，H.264/AAC/yuv420p
 - 输出路径使用相对路径
 - 不依赖 HyperFrames（此步骤是 HyperFrames 的降级基础）
-- 缺少素材使用占位卡，不使用无关内容
+- 缺少素材使用占位卡，不使用无关内容；但录屏专题应先从真实录屏池按语义映射，不因没有逐句同步录屏停住
 - 字幕默认在安全区（距边缘至少 80px）
 - 音量：旁白优先，BGM ducking，防止削波
 - 重复执行：`--force` 才覆盖已渲染产物

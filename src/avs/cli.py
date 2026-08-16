@@ -117,7 +117,14 @@ def episode() -> None:
     show_default=True,
     help="输入路线；screenshot_intro 先生成待审阅截图图文预览",
 )
-def episode_create(episode_id: str, mode: str, platforms: str, input_mode: str) -> None:
+@click.option(
+    "--production-type",
+    type=click.Choice(["STANDARD", "SCREEN_DOCUMENTARY"], case_sensitive=True),
+    default="STANDARD",
+    show_default=True,
+    help="制作类型；SCREEN_DOCUMENTARY 强制真实录屏与 Pilot Gate",
+)
+def episode_create(episode_id: str, mode: str, platforms: str, input_mode: str, production_type: str) -> None:
     """创建新 Episode，生成规范目录和 episode.json。"""
     from avs.config import Config
     from avs.models.episode import EpisodeModel
@@ -157,7 +164,10 @@ def episode_create(episode_id: str, mode: str, platforms: str, input_mode: str) 
 
     # 原子创建：先构造模型再落盘，失败时清理半成品
     try:
-        model = EpisodeModel.create(episode_id, mode=mode, platforms=platform_list, input_mode=input_mode)
+        model = EpisodeModel.create(
+            episode_id, mode=mode, platforms=platform_list, input_mode=input_mode,
+            production_type=production_type,
+        )
         ep_dir.mkdir(parents=True, exist_ok=False)
         create_episode_skeleton(ep_dir)
         model.save(ep_json)
@@ -173,7 +183,7 @@ def episode_create(episode_id: str, mode: str, platforms: str, input_mode: str) 
     console.print(
         f"[green]✓ Episode {episode_id!r} 创建成功[/green]{publishable_note}\n"
         f"  目录: {ep_dir}\n"
-        f"  模式: {mode}  平台: {', '.join(platform_list)}"
+        f"  模式: {mode}  制作类型: {production_type}  平台: {', '.join(platform_list)}"
     )
     sys.exit(0)
 

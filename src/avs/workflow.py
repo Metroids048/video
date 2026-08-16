@@ -96,6 +96,11 @@ def _agent_script_ready(ep_dir: Path) -> bool:
 _RETRY_COMMANDS: dict[str, tuple[str, ...]] = {
     "ingest": ("ingest",),
     "analyze": ("analyze",),
+    "story-mine": ("story-mine",),
+    "direct": ("direct",),
+    "pilot": ("pilot",),
+    "pilot-review": ("pilot-review",),
+    "pilot-revise": ("pilot-revise",),
     "preview": ("preview",),
     "visual-review": ("visual-review",),
     "final-render": ("final-render",),
@@ -126,6 +131,34 @@ def _visual_review_needs_human(ep_dir: Path) -> bool:
 
 def _blocked_action(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
     stage = model.blocked_stage
+    if model.production_type == "SCREEN_DOCUMENTARY" and stage == "pilot-review":
+        import json
+
+        review_path = ep_dir / "work" / "qa" / "pilots" / "pilot-review.json"
+        try:
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            review = {}
+        decision = review.get("decision")
+        repair_round = int(review.get("repair_round", 0) or 0)
+        if decision == "REJECT" and repair_round < 2:
+            return WorkflowAction(
+                kind="recovery",
+                stage="pilot-revise",
+                command=("pilot-revise",),
+                summary="Pilot 未通过视觉门禁；按 findings 的最小责任层返修后重新审查。",
+            )
+        if decision == "BLOCKED":
+            return WorkflowAction(
+                kind="human",
+                stage="pilot-review",
+                summary=model.last_error or "缺少两份真实看片的独立 Reviewer 评分；Pilot Gate 按 fail-closed 阻塞。",
+            )
+        return WorkflowAction(
+            kind="human",
+            stage="pilot-review",
+            summary=model.last_error or "Pilot 两轮返修后仍未通过；禁止继续渲染完整视频。",
+        )
     if stage == "ingest" or model.status == "WAITING_FOR_INPUT":
         return WorkflowAction(
             kind="input",
@@ -170,6 +203,40 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
         )
     if model.blocked:
         return _blocked_action(ep_dir, model)
+
+    # A SCREEN_DOCUMENTARY deliberately starts from a known VCI package instead
+    # of the generic ingest/analyse/script chain.  It still records every stage
+    # in episode.json and cannot reach final-render before the Pilot Gate passes.
+    if model.production_type == "SCREEN_DOCUMENTARY":
+        if "story-mine" not in stages:
+            return WorkflowAction(
+                "command", "story-mine", "复用冻结 VCI 包，建立可用证据镜头索引。", ("story-mine",),
+                required_artifacts=("work/director/录屏内容索引.json", "work/director/证据镜头索引.json"),
+            )
+        if "direct" not in stages:
+            return WorkflowAction(
+                "command", "direct", "选择唯一短视频故事并固定事实边界。", ("direct",),
+                required_artifacts=("work/director/short-video-brief.json",),
+            )
+        if "pilot" not in stages:
+            return WorkflowAction(
+                "command", "pilot", "渲染 A/B/C 三个 8-10 秒真实录屏 Pilot。", ("pilot",),
+                required_artifacts=("renders/pilots", "work/qa/pilots/pilot-manifest.json"),
+            )
+        if "pilot-review" not in stages:
+            return WorkflowAction(
+                "command", "pilot-review", "由两位独立 Reviewer 真实查看 Pilot 后执行门禁。", ("pilot-review",),
+                required_artifacts=("work/qa/pilots/pilot-review.json",),
+            )
+        if "final-render" not in stages:
+            return WorkflowAction(
+                "command", "final-render", "Pilot Gate 已通过；才允许创建并渲染完整 V2 时间线。", ("final-render",),
+            )
+        if "qa" not in stages:
+            return WorkflowAction("command", "qa", "执行完整视频技术与创作 QA。", ("qa",))
+        return WorkflowAction(
+            "human", "approve", "完整 V2 通过双 QA 后，人工完整播放并批准最终视频。", ("approve",),
+        )
 
     # The multimodal manifest switches publishable Episodes onto the only
     # active delivery path. Legacy actions below remain internal compatibility.

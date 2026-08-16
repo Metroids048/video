@@ -66,6 +66,16 @@ cache/
 logs/
 output/
 
+# ── Local runtimes and generated media (never commit) ───────────────────────
+tools/local-tts/
+work/
+work_tmp_frames/
+第一期视频_7x24自动交易/
+封面.png
+.mirasim/
+.apodex/
+docs/reference-research/workbuddy-samples/video-workshop/
+
 # ── Vendor large repo work copies (regenerate via npm run skills:vendor) ─────
 vendor/repos/
 
@@ -97,3 +107,11 @@ scratch/
 
 # Creative Loop 临时状态（每轮覆盖，不入库）
 .avs-loop/
+
+# ── VCI 独立仓库（video-content-intelligence 自带 .git，不进入 AVS 版本库）────
+/video-content-intelligence/
+
+# EP01 negative fixture keeps only compact review evidence; source media stays local.
+tests/visual-regression/negative/EP-20260812-01-v1/source-full/
+tests/visual-regression/negative/EP-20260812-01-v1/*.mp4
+!tests/visual-regression/negative/EP-20260812-01-v1/v1-first-10s.mp4

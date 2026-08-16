@@ -46,6 +46,92 @@ def register_commands(main_group: click.Group) -> None:
         if result["asset_intelligence"].get("blocked"):
             raise click.exceptions.Exit(2)
 
+    @main_group.command("story-mine")
+    @click.argument("episode_id")
+    def story_mine_cmd(episode_id: str) -> None:
+        """复用已验证 VCI 包，生成录屏/证据镜头索引。"""
+        from avs.active import active_story_mine
+        try:
+            ep_dir, model = _episode(episode_id)
+            result = active_story_mine(ep_dir, model)
+        except Exception as exc:
+            console.print(f"[red]✗ story-mine 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    @main_group.command("direct")
+    @click.argument("episode_id")
+    def direct_cmd(episode_id: str) -> None:
+        """为 SCREEN_DOCUMENTARY 选择唯一故事并生成事实边界。"""
+        from avs.active import active_direct
+        try:
+            ep_dir, model = _episode(episode_id)
+            result = active_direct(ep_dir, model)
+        except Exception as exc:
+            console.print(f"[red]✗ direct 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        console.print(f"[green]✓ direct 完成[/green]  {result}")
+
+    @main_group.command("pilot")
+    @click.argument("episode_id")
+    @click.option("--force", is_flag=True, help="覆盖可再生成的 Pilot 产物")
+    def pilot_cmd(episode_id: str, force: bool) -> None:
+        """生成 A/B/C 三个 8-10 秒真实录屏 Pilot。"""
+        from avs.active import active_pilot
+        try:
+            ep_dir, model = _episode(episode_id)
+            result = active_pilot(ep_dir, model, force=force)
+        except Exception as exc:
+            console.print(f"[red]✗ pilot 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    @main_group.command("pilot-review")
+    @click.argument("episode_id")
+    @click.option("--reviewers", required=False, help="两份 Reviewer JSON 数组，或 JSON 文件路径")
+    @click.option("--force", is_flag=True, help="覆盖已有 Pilot Review")
+    def pilot_review_cmd(episode_id: str, reviewers: str | None, force: bool) -> None:
+        """持久化两份独立视觉评分并执行 Pilot Gate。"""
+        from avs.active import active_pilot_review
+
+        def payload(raw: str) -> object:
+            candidate = Path(raw)
+            if candidate.is_file():
+                return json.loads(candidate.read_text(encoding="utf-8"))
+            return json.loads(raw)
+
+        try:
+            ep_dir, model = _episode(episode_id)
+            reviewer_payloads = None
+            if reviewers:
+                loaded = payload(reviewers)
+                if not isinstance(loaded, list):
+                    raise ValueError("--reviewers 必须是包含两份对象的 JSON 数组")
+                reviewer_payloads = loaded
+            report = active_pilot_review(ep_dir, model, reviewer_payloads, force=force)
+        except Exception as exc:
+            console.print(f"[red]✗ pilot-review 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        console.print(json.dumps(report, ensure_ascii=False, indent=2))
+        if report["decision"] != "PASS":
+            raise click.exceptions.Exit(2)
+
+    @main_group.command("pilot-revise")
+    @click.argument("episode_id")
+    def pilot_revise_cmd(episode_id: str) -> None:
+        """只按 Reviewer findings 的明确责任层返修 Pilot，最多两轮。"""
+        from avs.active import active_pilot_revise
+
+        try:
+            ep_dir, model = _episode(episode_id)
+            result = active_pilot_revise(ep_dir, model)
+        except Exception as exc:
+            console.print(f"[red]✗ pilot-revise 失败: {exc}[/red]")
+            raise click.exceptions.Exit(1)
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result["decision"] != "RENDER_REQUIRED":
+            raise click.exceptions.Exit(2)
+
     @main_group.command("plan")
     @click.argument("episode_id")
     @click.option("--platform", type=click.Choice(["douyin", "xiaohongshu"]), default="douyin")
@@ -205,11 +291,12 @@ def register_commands(main_group: click.Group) -> None:
     @click.option("--scores", "scores_json", required=True, help="JSON 对象或 .json 文件路径，含 10 个维度评分")
     @click.option("--reviewer-kind", type=click.Choice(["agent", "provider"]), default="agent")
     @click.option("--reviewer-id", default=None, help="审片人标识，例如 claude-opus-5")
+    @click.option("--reviewed-artifacts", required=True, help="审片人实际查看过的 MP4/联系表/关键帧 JSON 数组或文件路径")
     @click.option("--findings", "findings_json", default=None, help="JSON 数组或 .json 文件路径，补充主观失败点")
     @click.option("--repair-round", type=int, default=None, help="当前 Repair 轮次")
     def creative_score_cmd(
         episode_id: str, scores_json: str, reviewer_kind: str,
-        reviewer_id: str | None, findings_json: str | None, repair_round: int | None,
+        reviewer_id: str | None, reviewed_artifacts: str, findings_json: str | None, repair_round: int | None,
     ) -> None:
         """写入审片评分并重新判定闸门。"""
         from avs.qa.creative_review import record_scores
@@ -228,9 +315,13 @@ def register_commands(main_group: click.Group) -> None:
             extra = _payload(findings_json) if findings_json else None
             if extra is not None and not isinstance(extra, list):
                 raise ValueError("--findings 必须是 JSON 数组")
+            watched = _payload(reviewed_artifacts)
+            if not isinstance(watched, list) or not all(isinstance(item, str) for item in watched):
+                raise ValueError("--reviewed-artifacts 必须是字符串数组")
             review = record_scores(
                 ep_dir, scores, reviewer_kind=reviewer_kind,
-                reviewer_id=reviewer_id, findings=extra, repair_round=repair_round,
+                reviewer_id=reviewer_id, reviewed_artifacts=watched,
+                findings=extra, repair_round=repair_round,
             )
         except Exception as exc:
             console.print(f"[red]✗ creative score 失败: {exc}[/red]")

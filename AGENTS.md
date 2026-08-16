@@ -58,7 +58,7 @@ Agent Video Studio 是一个通用短视频辅助制作系统。
 3. 不虚构事实、数据、产品功能、运行结果或用户经历。
 4. 缺失素材必须标记，不使用明显无关内容硬凑。
 5. Codex 插件只能作为增强，核心流程必须能通过项目 CLI 运行。
-6. `timeline.json` 是渲染器共享的中间协议。
+6. `timeline.json` 是渲染器共享的中间协议；真人口播项目的 SRT/词级时间戳是时间线主时钟。
 7. HyperFrames 只负责动效和包装，不管理 Episode 状态。
 8. 不自动发布。
 9. 不将密钥、Cookie、Token 或登录状态写入仓库。
@@ -93,10 +93,10 @@ Agent Video Studio 是一个通用短视频辅助制作系统。
 4. 生成内容简报、脚本和分镜。
 5. 准备素材并列出缺口。
 6. 构建时间线。
-7. FFmpeg 生成基础粗剪。
-8. HyperFrames 生成必要动效并合成。
-9. 运行确定性 QA 和视觉 QA。
-10. 运行 Creative Review 并判定 Creative Gate；未过闸则定位最小责任层返工后重新渲染。
+7. 先生成 20-30 秒、字幕驱动的可审片 Pilot；录屏专题没有逐句同步录屏不得作为阻塞理由。
+8. Pilot 通过后构建以真人口播为主时钟的时间线；每段旁白必须映射到真实素材、证据页和 ROI。
+9. FFmpeg 负责确定性装配；Remotion / HyperFrames 只用于随字幕进入的必要微动效和包装。
+10. 运行确定性 QA、视觉 QA 与实际看片的 Creative Review；未过闸则定位最小责任层返工后重新渲染。
 11. 生成交付包。
 12. 等待用户发布（不自动发布）。
 
@@ -110,6 +110,7 @@ Agent Video Studio 是一个通用短视频辅助制作系统。
 - `CONTENT_READY`
 - `ASSETS_READY`
 - `TIMELINE_READY`
+- `PILOT_APPROVED`（仅录屏专题；20-30 秒真人口播试片已有真实审片记录）
 - `ROUGH_CUT_READY`
 - `QA_PASSED`
 - `DELIVERY_READY`
@@ -147,10 +148,10 @@ Agent Video Studio 是一个通用短视频辅助制作系统。
 
 ## 9. 媒体规则
 
-- V1 默认画布：1080×1920、30fps、H.264、AAC。
+- V1 默认画布：1080×1920、30fps、H.264、AAC；当横屏系统 UI 在 9:16 内不可读时，允许明确选择 16:9，不能为平台比例牺牲证据可读性。
 - 所有输入先用 FFprobe 检查。
 - 损坏文件不得进入渲染。
-- 横屏素材必须明确使用 contain、cover 或布局模板，不能静默拉伸。
+- 横屏素材必须明确使用全页建立场景或 ROI Screen Focus，不能静默拉伸、缩成细条或用全局 cover 裁掉证据。
 - 缺少音频时必须正常降级。
 - 字幕必须位于安全区。
 - 不同机器的视频输出不要求逐像素相等；测试元数据、解码和容差。
@@ -203,7 +204,7 @@ python -m avs creative compare <ID>    # Baseline vs Current 逐维度对比
 规则：
 
 1. `scores` 为 `null` 时创作闸门恒为 FAIL，不得视为通过。
-2. 评分只能来自真正看过成片的审片人（`reviewer_kind` = `agent` 或 `provider`），不得由代码推算或由确定性指标折算。
+2. 评分只能来自真正看过成片的审片人（`reviewer_kind` = `agent` 或 `provider`），必须列出实际查看的 `reviewed_artifacts`，不得由代码推算或由确定性指标折算。
 3. 确定性指标只提供可证伪的证据，不构成评分。
 4. 未过闸时按 `findings[].repair_target` 定位最小责任层返工，不得整体重做。
 5. 单条视频最多 3 轮 Repair；连续两轮 Overall 改善 < 0.3 时停止微调，重新做根因诊断。

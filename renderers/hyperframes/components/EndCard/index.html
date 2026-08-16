@@ -39,11 +39,14 @@
       document.getElementById("message").textContent = vars.message || "下一条，继续把创意做成片";
       document.getElementById("action").textContent = vars.action || "关注获取下一次制作模板";
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo(".mark", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.7)" }, 0.1);
-      tl.fromTo("#message", { opacity: 0, y: 48 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.45);
-      tl.fromTo("#action", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.9);
-      tl.fromTo(".footer", { opacity: 0, x: 28 }, { opacity: 1, x: 0, duration: 0.55 }, 1.2);
-      tl.to(".mark", { rotation: 360, duration: 1.4, ease: "none" }, 1.3);
+      // The first encoded frame is complete and readable; motion adds emphasis only.
+      tl.to(".mark", { scale: 1.08, duration: 0.42, ease: "power2.out" }, 0.05);
+      tl.to(".mark", { scale: 1, duration: 0.38, ease: "power2.inOut" }, 0.47);
+      tl.to("#message", { y: -12, duration: 0.45, ease: "power2.out" }, 0.22);
+      tl.to("#message", { y: 0, duration: 0.4, ease: "power2.inOut" }, 0.67);
+      tl.to("#action", { color: "#fff7ed", duration: 0.35, ease: "power2.out" }, 0.75);
+      tl.to(".footer", { y: -8, duration: 0.35, ease: "power2.out" }, 0.95);
+      tl.to(".mark", { rotation: 360, duration: 1.4, ease: "none" }, 1.25);
       window.__timelines = window.__timelines || {};
       window.__timelines["end-card"] = tl;
     </script>

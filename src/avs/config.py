@@ -40,6 +40,7 @@ class Config:
         "providers.yaml",
         "content-pillars.yaml",
         "creator-workflow.yaml",
+        "production-types.yaml",
     ]
 
     def __init__(self, root: Path) -> None:
@@ -86,6 +87,11 @@ class Config:
     def creator_workflow(self) -> dict[str, Any]:
         """Account-level content and monetization contract."""
         return self._get("creator-workflow.yaml")
+
+    @property
+    def production_types(self) -> dict[str, Any]:
+        """Production-type constraints shared by director, renderer, and QA."""
+        return self._get("production-types.yaml")
 
     @property
     def required_config_files(self) -> tuple[str, ...]:

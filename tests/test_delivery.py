@@ -76,6 +76,19 @@ def _episode(tmp_path: Path) -> Path:
     video_hash = hashlib.sha256(final_video.read_bytes()).hexdigest()
     video_relative = final_video.relative_to(episode).as_posix()
 
+    (episode / "work" / "qa").mkdir(parents=True, exist_ok=True)
+    (episode / "work" / "qa" / "creative-review.json").write_text(json.dumps({
+        "episode_id": "EP-DELIVERY-TEST",
+        "video_path": video_relative,
+        "video_sha256": video_hash,
+        "reviewed_at": "2025-01-01T00:00:00Z",
+        "reviewer_kind": "agent",
+        "reviewer_id": "test-reviewer",
+        "reviewed_artifacts": [video_relative, "work/qa/sheets/hook.jpg"],
+        "scores": {"overall": 8.5},
+        "gate": {"technical_passed": True, "creative_passed": True},
+    }), encoding="utf-8")
+
     approval = {
         "episode_id": "EP-DELIVERY-TEST",
         "approved": True,
@@ -151,3 +164,14 @@ def test_delivery_manifest_is_idempotent(tmp_path: Path) -> None:
     first = run_delivery(episode, model)
     second = run_delivery(episode, model)
     assert first == second
+
+
+def test_delivery_rejects_unscored_creative_review(tmp_path: Path) -> None:
+    episode = _episode(tmp_path)
+    review_path = episode / "work" / "qa" / "creative-review.json"
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["scores"] = None
+    review_path.write_text(json.dumps(review), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="尚未填写评分"):
+        run_delivery(episode, _model())

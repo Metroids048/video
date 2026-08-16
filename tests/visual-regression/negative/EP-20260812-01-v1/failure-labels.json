@@ -1,0 +1,23 @@
+{
+  "fixture": "EP-20260812-01-v1",
+  "source_video": "episodes/active/EP-20260812-01/delivery/preview-with-motion.mp4",
+  "review_scope_seconds": [0, 0.5, 1, 2, 3, 5, 6, 7, 8, 9, 10],
+  "failures": [
+    {"code": "FAIL_TITLE_CARD_FIRST_3S", "evidence": [0, 0.5, 1, 2], "expected": "first frame contains real evidence, never a logo/title PPT card"},
+    {"code": "FAIL_EMPTY_BACKGROUND", "evidence": [3, 5], "expected": "no blank/grid-only background longer than 0.3s"},
+    {"code": "FAIL_UI_TOO_SMALL", "evidence": [5, 6, 7], "expected": "key UI readable at 360x640"},
+    {"code": "FAIL_CAPTION_DOMINATES_FRAME", "evidence": [0, 1, 2, 8], "expected": "two-line restrained captions do not obscure evidence"},
+    {"code": "FAIL_GENERATED_CARD_OVERUSE", "evidence": [0, 2, 8], "expected": "at most two lightweight cards in a full episode"},
+    {"code": "FAIL_REAL_EVIDENCE_UNDERUSED", "evidence": [0, 5, 8], "expected": "real screen footage is the visual subject"},
+    {"code": "FAIL_PPT_STYLE", "evidence": [0, 2, 5], "expected": "no title-card/grid/card sequence"},
+    {"code": "FAIL_STATIC_SEGMENT_TOO_LONG", "evidence": [3, 5, 6], "expected": "static information has meaningful visual change"}
+  ],
+  "deterministic_metrics": {
+    "static_frame_ratio": 0.9281,
+    "longest_static_run_seconds": 17.5,
+    "hook_static_seconds": 2.5,
+    "max_black_border_ratio": 0.0833,
+    "creative_scores": null,
+    "creative_gate": "FAIL"
+  }
+}

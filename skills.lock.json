@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema": "https://avs.local/schemas/skills-lock/v1",
-  "locked_at": "2026-08-03T14:25:44.182332+00:00",
+  "locked_at": "2026-08-15T05:23:18.161369+00:00",
   "note": "项目自有 Skill 在 skills-src/ 修改，由 scripts/sync_skills.py 同步到 .claude/skills/ 和 .agents/skills/。第三方 Skill 通过 npx skills add 安装后更新本文件。",
   "project_skills": {
     "create-episode": {
@@ -68,7 +68,7 @@
       "status": "synced",
       "implemented_in_module": 6,
       "description": "从 timeline.json 调用 FFmpeg 生成基础粗剪",
-      "source_sha256": "4c318b4e94953732b8061e2d84c23cc87ca2b579393439e507d75278cb0c71e1"
+      "source_sha256": "3043c303f63fab22e9d04a878dd5b6d2064374e99f2603fd6689c6674b7f3ac3"
     },
     "revise-video": {
       "source": "skills-src/revise-video",
@@ -112,7 +112,7 @@
       "status": "synced",
       "implemented_in_module": 10,
       "description": "从 Episode 输入安全续跑确定性短视频步骤，并在 Agent 或人工关口停止",
-      "source_sha256": "bf98a1458d9e310f7c3937b9a54710e0b659a890023132b3eb247d1e759eb23e"
+      "source_sha256": "6074e35126870c1cc6be021ad043aaef9a098ac0840803d979cedbc4b9976898"
     },
     "creator-workflow": {
       "source": "skills-src/creator-workflow",
@@ -124,6 +124,94 @@
       "implemented_in_module": 10,
       "description": "账号级选题、变现假设、Skill 路由与 Episode 生产闭环",
       "source_sha256": "b6488dbd4a7612b44c8c62923b994bba6c2a644a8e26cea7d3474d1d0f603720"
+    },
+    "screen-story-miner": {
+      "source": "skills-src/screen-story-miner",
+      "targets": [
+        ".claude/skills/screen-story-miner",
+        ".agents/skills/screen-story-miner"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "从冻结 VCI 包建立真实录屏证据索引",
+      "source_sha256": "feb46a48b49f4946a603196daf352202ee7a4660c1f6491bcc527679924e82eb"
+    },
+    "short-video-director": {
+      "source": "skills-src/short-video-director",
+      "targets": [
+        ".claude/skills/short-video-director",
+        ".agents/skills/short-video-director"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "为屏幕纪录片选择唯一故事与事实边界",
+      "source_sha256": "4aa8fd7c76c235bdee48c5f3983d3f5d02d00491e3cea0eea76695f6af7dcf30"
+    },
+    "mobile-screen-director": {
+      "source": "skills-src/mobile-screen-director",
+      "targets": [
+        ".claude/skills/mobile-screen-director",
+        ".agents/skills/mobile-screen-director"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "为手机可读性规划录屏 ROI",
+      "source_sha256": "2109da28151c7fa1ce1f9106c2d26650cb19d917f55c27700cb192028afe8828"
+    },
+    "narration-director": {
+      "source": "skills-src/narration-director",
+      "targets": [
+        ".claude/skills/narration-director",
+        ".agents/skills/narration-director"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "生成自然中文 Pilot 旁白",
+      "source_sha256": "9c9c5c0a4d4f9b588937e2cba62a4bb280e0e979166848a782aca6cfde5c5a4d"
+    },
+    "hook-variant-generator": {
+      "source": "skills-src/hook-variant-generator",
+      "targets": [
+        ".claude/skills/hook-variant-generator",
+        ".agents/skills/hook-variant-generator"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "生成 A/B/C 真实录屏 Pilot",
+      "source_sha256": "4b769844f1882be5482507601fa26ca12a1ae4c121cfc06b09e412358cebe364"
+    },
+    "visual-critic": {
+      "source": "skills-src/visual-critic",
+      "targets": [
+        ".claude/skills/visual-critic",
+        ".agents/skills/visual-critic"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "独立上下文真实审看 Pilot",
+      "source_sha256": "0cd41ff769a314ef7f834babdd25b451b6a183ab1869ae8a7d9a4076154d79de"
+    },
+    "pilot-gate": {
+      "source": "skills-src/pilot-gate",
+      "targets": [
+        ".claude/skills/pilot-gate",
+        ".agents/skills/pilot-gate"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "仲裁双 Reviewer 并阻断完整渲染",
+      "source_sha256": "390509562fc4b4851450964ab86145fe0e4250afc3c69ff9249b6b44412b3c30"
+    },
+    "auto-video-reviser": {
+      "source": "skills-src/auto-video-reviser",
+      "targets": [
+        ".claude/skills/auto-video-reviser",
+        ".agents/skills/auto-video-reviser"
+      ],
+      "status": "synced",
+      "implemented_in_module": 11,
+      "description": "按 finding 最小返修 Pilot，最多两轮",
+      "source_sha256": "f3e0e21672153acceb666c2a9f37faa50aec103658d0c7f92dd84b3d647bc09f"
     }
   },
   "third_party_skills": {

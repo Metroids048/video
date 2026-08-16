@@ -10,6 +10,7 @@
     "video_sha256",
     "reviewed_at",
     "reviewer_kind",
+    "reviewed_artifacts",
     "metrics",
     "scores",
     "findings",
@@ -28,6 +29,11 @@
       "description": "pending=审片包已生成待评分；agent=由 Creative Runtime Agent 评分；provider=由外部 Vision API 评分"
     },
     "reviewer_id": { "type": ["string", "null"] },
+    "reviewed_artifacts": {
+      "type": "array",
+      "description": "审片人实际查看过的 MP4、联系表或关键帧相对路径；pending 阶段为空，评分后必须非空。",
+      "items": { "type": "string", "minLength": 1 }
+    },
     "baseline_ref": {
       "type": ["string", "null"],
       "description": "对比基线的 video_sha256；null 表示本次即为基线"

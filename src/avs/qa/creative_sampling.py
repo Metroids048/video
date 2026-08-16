@@ -160,7 +160,7 @@ def build_contact_sheets(
             with Image.open(path) as raw:
                 image = raw.convert("RGB")
             height = max(1, round(tile_width * image.height / image.width))
-            tiles.append((stamp, image.resize((tile_width, height), Image.LANCZOS)))
+            tiles.append((stamp, image.resize((tile_width, height), Image.Resampling.LANCZOS)))
         sheet_width = tile_width * len(tiles)
         sheet_height = max(tile.height for _, tile in tiles) + header
         sheet = Image.new("RGB", (sheet_width, sheet_height), (18, 18, 18))

@@ -11,6 +11,7 @@
 | `timeline/timeline.json` 和 `.csv` | 可审查的镜头与时间线 |
 | `assets-used/` | 成片实际使用的工作副本 |
 | `qa-report.*`、`visual-review.md` | 质量证据和人工复核记录 |
+| `work/qa/creative-review.json` | 当前视频哈希绑定的真实看片记录、评分和 Creative Gate |
 | `edit-notes.md` | 占位卡、发布前检查和待补素材 |
 
-发布前请完整播放并核对画面、音量、字幕安全区、事实、授权、标题和封面。替换所有占位卡后，由人手动发布；`REFERENCE_CLONE` 的交付包仅用于内部学习，禁止公开发布。
+发布前请完整播放并核对画面、音量、字幕安全区、事实、授权、标题和封面。发布包还要求 `creative-review.json` 记录审片人实际查看过的 MP4/关键帧以及通过的 Creative Gate；没有这份记录不是完成。替换所有占位卡后，由人手动发布；`REFERENCE_CLONE` 的交付包仅用于内部学习，禁止公开发布。
