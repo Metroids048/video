@@ -18,4 +18,4 @@ jobs:
       - name: Run publish media contract regression tests
         env:
           PYTHONPATH: src
-        run: pytest -q tests/test_publish_media_contract.py
+        run: pytest -q tests/test_publish_media_contract.py tests/test_audio_publishability_contract.py tests/test_publish_layout_contract.py tests/test_publish_audio_levels_parse.py tests/test_creator_os_v2_quality_regressions.py tests/test_render.py tests/test_creative_review.py tests/test_creator_os_v2_config.py
