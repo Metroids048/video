@@ -26,6 +26,7 @@ jobs:
           tests/test_canonical_audio_gate.py
           tests/test_screen_focus_single_view.py
           tests/test_ep01_focus_propagation.py
+          tests/test_production_loop_publishing_quality.py
           tests/test_creator_os_v2_quality_regressions.py
           tests/test_render.py
           tests/test_creative_review.py
