@@ -62,6 +62,8 @@ workflow:
     - assets
     - pilot
     - production
+    - source-inventory
+    - source-to-final-fidelity-review
     - technical-review
     - creative-review
     - continuous-video-review
@@ -76,8 +78,18 @@ workflow:
     input: "work/qa/video-release-review.input.json"
     validated_record: "work/qa/video-release-review.json"
     validator: "scripts/validate_video_release_review.py"
+    requires_source_inventory: true
+    requires_source_to_final_fidelity_review: true
+    requires_current_source_sha256s: true
+    requires_current_final_sha256: true
     missing_or_invalid_routes_to: REPAIRING
     stale_sha256_routes_to: REPAIRING
+    stale_source_sha256_routes_to: REPAIRING
+    unauthorized_destructive_crop_routes_to: REPAIRING
+    source_context_loss_routes_to: REPAIRING
+    spatial_continuity_break_routes_to: REPAIRING
+    temporal_continuity_break_routes_to: REPAIRING
+    opening_mid_action_routes_to: REPAIRING
     critical_findings_route_to: REPAIRING
     unresolved_after_3_repairs_routes_to: BLOCKED
     approval_must_happen_after_gate: true
@@ -88,8 +100,15 @@ workflow:
     max_rounds: 3
     localized: true
     full_rewatch_after_each_video_repair: true
+    repeat_source_to_final_after_layout_or_timeline_change: true
     invalidate_old_release_review_after_rerender: true
+    invalidate_old_release_review_after_source_change: true
     failure_routes:
+      SOURCE_FIDELITY_FAIL: layout_or_timeline
+      DESTRUCTIVE_CROP: visual_composition
+      SPATIAL_CONTINUITY_BROKEN: visual_composition
+      TEMPORAL_CONTINUITY_BROKEN: cut_structure
+      OPENING_MID_ACTION: cut_structure
       VOICE_BAD: audio
       HOOK_WEAK: pilot
       SCREEN_UNREADABLE: visual_composition
