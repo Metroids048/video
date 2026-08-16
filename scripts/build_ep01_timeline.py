@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import shutil
 import sys
 from pathlib import Path
@@ -24,38 +23,32 @@ def main() -> int:
     prepared_bgm = ep / "work" / "prepared" / "audio" / "bgm-tech-house.mp3"
     shutil.copy2(ep.parents[2] / "third_party_skills" / "video-shotcraft" / "assets" / "audio" / "bgm" / "bgm-tech-house.mp3", prepared_bgm)
 
+    # EP01 is evidence-led screen documentary footage.  Do not assign motion
+    # primitives by modulo/index: screenshot_compare duplicated the same frame,
+    # while pan/scroll cover-cropped 16:9 UI into 9:16 and destroyed evidence.
+    # Scene-map edits already define the semantic cuts.  Preserve each source
+    # segment and let screen_focus do the portrait adaptation without overriding
+    # it with a decorative primitive.
     video_clips: list[Clip] = []
-    clip_index = 0
     for index, shot in enumerate(scene_map):
         start = float(shot["output_start"])
         end = float(shot["output_end"])
         duration = end - start
-        target_chunk = 2.4 + (index % 3) * 0.7
-        chunk_count = max(1, math.ceil(duration / target_chunk))
-        chunk_duration = duration / chunk_count
-        for chunk in range(chunk_count):
-            chunk_start = start + chunk * chunk_duration
-            chunk_len = min(chunk_duration, end - chunk_start)
-            source_start = float(shot["source_start"]) + chunk * chunk_duration
-            video_clips.append(
-                Clip(
-                    clip_id=f"final-shot-{clip_index:02d}",
-                    start=round(chunk_start, 3),
-                    duration=round(chunk_len, 3),
-                    asset_ref="work/prepared/screen/原始录屏.mp4",
-                    in_point=source_start,
-                    out_point=source_start + chunk_len,
-                    transform={"layout": "screen_focus", "zoom": 1.08},
-                    primitive=(
-                        "screenshot_compare" if clip_index % 3 == 0
-                        else "screenshot_pan" if clip_index % 3 == 1
-                        else "screenshot_scroll"
-                    ),
-                    segment_id=f"scene-{index:02d}-chunk-{chunk}",
-                    reference_pattern_ids=["single-primary-douyin-reference"],
-                )
+        source_start = float(shot["source_start"])
+        video_clips.append(
+            Clip(
+                clip_id=f"final-shot-{index:02d}",
+                start=round(start, 3),
+                duration=round(duration, 3),
+                asset_ref="work/prepared/screen/原始录屏.mp4",
+                in_point=source_start,
+                out_point=source_start + duration,
+                transform={"layout": "screen_focus"},
+                primitive=None,
+                segment_id=f"scene-{index:02d}",
+                reference_pattern_ids=["single-primary-douyin-reference"],
             )
-            clip_index += 1
+        )
 
     duration = float(scene_map[-1]["output_end"])
     timeline = Timeline(
