@@ -1,0 +1,127 @@
+video_review:
+  version: "2026-08-16"
+  purpose: "Prevent technically valid but visually broken slideshow-like videos from being delivered."
+  source_of_truth: "actual rendered video pixels and audible audio"
+
+  required_review_views:
+    continuous_playback_1x:
+      required: true
+      watch_start_to_end: true
+      first_pass_no_pause_for_comprehension: true
+      rule: "A pass requires the reviewer to understand the intended story and key evidence at normal playback speed without pausing to rescue readability."
+    first_10s_dense_review:
+      required: true
+      rule: "Inspect 0-10s densely for hook continuity, abrupt jumps, fake motion, readability and whether the viewer can orient before the next change."
+    transition_scan:
+      required: true
+      rule: "Inspect every scene boundary and every high-contrast dark/light switch. Count alone is not the metric; repeated context-breaking jumps are a hard failure."
+    mobile_preview:
+      required: true
+      size: "360x640"
+      rule: "Key proof, captions and UI context must be readable on a phone without hunting across a desktop frame."
+    audio_listen:
+      required: true
+      rule: "Listen to the actual final mix for intelligibility, sync, natural phrasing, clipping, silence and abrupt audio edits."
+
+  hard_fail_conditions:
+    slideshow_feel:
+      fail: true
+      description: "The video feels like a sequence of screenshots/cards rather than a coherent moving piece."
+    static_screenshot_pan_zoom_dominant:
+      fail: true
+      description: "Ken-Burns-style pan/zoom on still screenshots is the primary source of motion or is used to fake a real process."
+    key_evidence_requires_pause:
+      fail: true
+      description: "A normal viewer must pause, scrub or replay to identify the key evidence being discussed."
+    repeated_unmotivated_hard_cuts:
+      fail: true
+      description: "Cuts repeatedly happen because of timing targets rather than a semantic change, causing loss of orientation."
+    rapid_dark_light_switching:
+      fail: true
+      description: "Repeated dark-exchange / bright-backend alternation creates flash-like interruption or context loss."
+    abrupt_context_loss:
+      fail: true
+      description: "Crop, zoom or cut removes the page title/tab/label needed to understand the proof."
+    visual_motion_without_semantic_reason:
+      fail: true
+      description: "Motion exists only to make the frame move; it does not follow cursor/action/data change/attention."
+    audio_visual_semantic_mismatch:
+      fail: true
+      description: "Narration discusses an order, fill, rejection, result or risk while unrelated proof is on screen."
+    caption_or_overlay_blocks_evidence:
+      fail: true
+      description: "Captions, banners or overlays cover balances, orders, charts, positions or other primary evidence."
+    known_critical_issue_at_delivery:
+      fail: true
+      description: "Any critical viewer-facing defect is still known when delivery is attempted."
+
+  continuity_rules:
+    prefer_real_screen_recording_for_process: true
+    no_forced_cut_rate: true
+    no_max_shot_duration_as_quality_target: true
+    no_minimum_shot_count_as_quality_target: true
+    semantic_change_may_happen_inside_one_continuous_shot: true
+    keep_orientation_before_detail: true
+    rule: "A longer coherent shot is better than several unreadable short shots. A shorter video is not better if compression destroys comprehension."
+
+  still_image_rules:
+    stills_are_allowed_as_stills: true
+    may_not_simulate_continuous_interaction: true
+    ken_burns_as_primary_motion_for_process: false
+    repeated_pan_zoom_on_ui_screenshots: false
+    rule: "If only a still exists, present it honestly and use one restrained semantic emphasis; do not pretend the system is operating through camera motion."
+
+  readability_rules:
+    key_evidence_understandable_at_1x: true
+    give_viewer_time_to_orient: true
+    one_primary_attention_target_at_a_time: true
+    context_then_roi: true
+    duration_is_semantic_not_fixed: true
+    rule: "Evidence stays on screen long enough to locate, read and understand. Do not enforce arbitrary 1.3s/1.8s shot caps."
+
+  pacing_rules:
+    duration_target_is_soft: true
+    never_compress_to_hit_duration_metric: true
+    remove_filler_before_shortening_evidence: true
+    cuts_require_semantic_reason: true
+    repeated_sub_two_second_high_contrast_cuts_require_manual_review: true
+    rule: "Fast pacing means no wasted seconds, not constant cutting."
+
+  review_evidence:
+    require_reviewed_video_path: true
+    require_video_sha256: true
+    require_continuous_playback_confirmation: true
+    require_timestamped_findings: true
+    require_transition_findings: true
+    require_mobile_preview_evidence: true
+    require_audio_review_confirmation: true
+    contact_sheet_is_supplementary_only: true
+    sparse_keyframes_are_supplementary_only: true
+    metadata_json_cannot_prove_visual_quality: true
+
+  repair_loop:
+    mandatory_when_failed: true
+    max_rounds_default: 3
+    order:
+      - "record timestamp -> viewer problem -> root cause"
+      - "repair the failing layer only"
+      - "rerender affected range"
+      - "rebuild candidate"
+      - "rewatch full candidate start-to-end at 1x"
+      - "rerun transition/mobile/audio checks"
+    full_rewatch_after_every_repair: true
+    cannot_reuse_old_pass_after_media_changes: true
+    if_still_failed_after_rounds: "BLOCKED"
+
+  scoring:
+    subjective_numeric_scores_are_advisory: true
+    pass_is_not_derived_from_average_score: true
+    any_hard_fail_overrides_numeric_score: true
+    self_authored_json_is_not_evidence_of_quality: true
+
+  delivery_gate:
+    only_status_allowed: "READY_TO_PUBLISH"
+    final_name_requires_pass: true
+    delivery_requires_zero_known_critical_findings: true
+    delivery_requires_current_review_for_current_sha256: true
+    on_failure: "REPAIRING"
