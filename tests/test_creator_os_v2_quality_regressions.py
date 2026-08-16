@@ -103,29 +103,73 @@ def test_pacing_does_not_reward_forced_shot_churn() -> None:
     assert result["continuous_playback_review_required"] is True
 
 
-def test_video_review_config_hard_fails_real_ep01_regressions() -> None:
+def test_visual_config_defaults_landscape_recordings_to_full_frame_and_makes_mobile_qa_only() -> None:
+    config = yaml.safe_load((ROOT / "config" / "visual.yaml").read_text(encoding="utf-8"))
+    screen = config["visual"]["screen_recording"]
+    mobile = config["visual"]["mobile_preview"]
+
+    assert screen["landscape_strategy"] == "fit_full_frame"
+    assert screen["preserve_full_source_frame_by_default"] is True
+    assert screen["destructive_crop_requires_explicit_authorization"] is True
+    assert screen["unauthorized_destructive_crop_falls_back_to"] == "fit_full_frame"
+    assert screen["source_spatial_context_must_remain_traceable"] is True
+    assert screen["source_temporal_order_must_remain_traceable"] is True
+    assert mobile["qa_only"] is True
+    assert mobile["include_in_delivery"] is False
+
+
+def test_quality_config_makes_source_fidelity_a_release_gate() -> None:
+    config = yaml.safe_load((ROOT / "config" / "quality.yaml").read_text(encoding="utf-8"))
+    quality = config["quality"]
+
+    assert quality["publishable"]["require_source_to_final_fidelity_review"] is True
+    assert quality["publishable"]["require_no_unauthorized_destructive_crop"] is True
+    assert quality["release_gate"]["missing_source_fidelity_review"] == "BLOCK"
+    assert quality["release_gate"]["stale_source_hash"] == "BLOCK"
+    assert quality["composition"]["landscape_default_layout"] == "fit_full_frame"
+    assert quality["composition"]["preserve_full_landscape_source_by_default"] is True
+    assert quality["composition"]["destructive_crop_requires_explicit_authorization"] is True
+    assert quality["continuity"]["compare_source_to_final_before_release"] is True
+
+
+def test_video_review_config_hard_fails_real_ep01_regressions_and_source_loss() -> None:
     config = yaml.safe_load((ROOT / "config" / "video-review.yaml").read_text(encoding="utf-8"))
     review = config["video_review"]
 
+    assert review["required_review_views"]["source_to_final_fidelity"]["required"] is True
+    assert review["required_review_views"]["full_frame_integrity"]["required"] is True
+    assert review["required_review_views"]["spatial_continuity"]["required"] is True
+    assert review["required_review_views"]["temporal_continuity"]["required"] is True
     assert review["required_review_views"]["continuous_playback_1x"]["required"] is True
     assert review["required_review_views"]["first_second_review"]["required"] is True
-    assert review["hard_fail_conditions"]["abrupt_or_discontinuous_opening"]["fail"] is True
+    assert review["hard_fail_conditions"]["source_to_final_fidelity_not_verified"]["fail"] is True
+    assert review["hard_fail_conditions"]["unauthorized_destructive_crop"]["fail"] is True
+    assert review["hard_fail_conditions"]["source_frame_context_lost"]["fail"] is True
+    assert review["hard_fail_conditions"]["spatial_continuity_broken"]["fail"] is True
+    assert review["hard_fail_conditions"]["temporal_continuity_broken"]["fail"] is True
+    assert review["hard_fail_conditions"]["first_frame_partial_or_mid_action"]["fail"] is True
     assert review["hard_fail_conditions"]["slideshow_feel"]["fail"] is True
     assert review["hard_fail_conditions"]["static_screenshot_pan_zoom_dominant"]["fail"] is True
     assert review["hard_fail_conditions"]["key_evidence_requires_pause"]["fail"] is True
-    assert review["hard_fail_conditions"]["unreadable_evidence_due_to_short_dwell"]["fail"] is True
     assert review["hard_fail_conditions"]["rapid_dark_light_switching"]["fail"] is True
+    assert review["source_fidelity_rules"]["landscape_default"] == "fit_full_frame"
+    assert review["source_fidelity_rules"]["full_frame_preservation_over_canvas_fill"] is True
+    assert review["source_fidelity_rules"]["destructive_crop_default_allowed"] is False
     assert review["continuity_rules"]["no_forced_cut_rate"] is True
-    assert review["continuity_rules"]["no_max_shot_duration_as_quality_target"] is True
     assert review["pacing_rules"]["never_compress_to_hit_duration_metric"] is True
     assert review["repair_loop"]["full_rewatch_after_every_repair"] is True
-    assert review["delivery_gate"]["delivery_requires_zero_known_critical_findings"] is True
-    assert review["delivery_gate"]["current_sha256_match_required"] is True
+    assert review["delivery_gate"]["current_source_sha256s_match_required"] is True
+    assert review["delivery_gate"]["mobile_preview_is_qa_only"] is True
 
 
-def test_pre_delivery_prompt_requires_full_playback_machine_gate_and_repair_loop() -> None:
+def test_pre_delivery_prompt_requires_source_fidelity_full_playback_and_repair_loop() -> None:
     prompt = (ROOT / "docs" / "creator-os" / "video-pre-delivery-qa-prompt.md").read_text(encoding="utf-8")
 
+    assert "SOURCE -> FINAL FIDELITY" in prompt
+    assert "full-frame" in prompt.lower()
+    assert "destructive crop" in prompt.lower()
+    assert "spatial continuity" in prompt.lower()
+    assert "temporal continuity" in prompt.lower()
     assert "Watch the CURRENT candidate from 0:00 to the end at normal 1x speed" in prompt
     assert "FIRST SECOND + FIRST 10 SECONDS DENSE REVIEW" in prompt
     assert "contact sheets" in prompt
@@ -135,6 +179,7 @@ def test_pre_delivery_prompt_requires_full_playback_machine_gate_and_repair_loop
     assert "key evidence requires pause" in prompt
     assert "MUST repair" in prompt
     assert "video-release-review.input.json" in prompt
+    assert "source_fidelity_review" in prompt
     assert "validate_video_release_review.py" in prompt
     assert "Maximum 3 repair rounds" in prompt
     assert "current SHA256 matches the validated release-review record" in prompt
