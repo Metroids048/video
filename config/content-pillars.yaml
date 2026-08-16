@@ -1,29 +1,40 @@
-# config/content-pillars.yaml — 内容方向配置
-
+# Creator OS V2 — content direction and reference strategy
 content_pillars:
-  # 视频制作模式
+  # Keep these compatibility mode keys for the existing engine, but ORIGINAL
+  # is now the default. Reference use is an optional creative input, not the
+  # definition of the product.
   modes:
-    REFERENCE_CLONE:
-      description: "仅供内部学习，临摹参考视频结构"
-      publishable: false          # 强制不可发布
-      requires_reference: true
-
-    REFERENCE_ADAPT:
-      description: "参考结构节奏，替换自有内容，默认生产模式"
-      publishable: true
-      requires_reference: true
-
     ORIGINAL:
-      description: "使用项目自有模板，不依赖参考视频"
+      description: "基于真实项目证据与 Creator OS 自有创意合同生产内容"
       publishable: true
       requires_reference: false
+    REFERENCE_ADAPT:
+      description: "学习参考内容的结构、节奏和镜头语法，再用自有事实与素材重做"
+      publishable: true
+      requires_reference: true
+    REFERENCE_CLONE:
+      description: "仅用于内部结构研究，不进入公开发布包"
+      publishable: false
+      requires_reference: true
 
-  default_mode: "REFERENCE_ADAPT"
+  default_mode: "ORIGINAL"
 
-  # 内容类别（供 Agent 参考）
   categories:
-    - tech_tutorial
-    - product_showcase
-    - screen_explainer
-    - knowledge_share
-    - story_vlog
+    project_log:
+      weight: 0.35
+      description: "真实项目节点、问题、过程、结果和下一步"
+    product_judgment:
+      weight: 0.25
+      description: "AI 产品设计、Agent/RAG/工作流等产品判断"
+    tool_skill_test:
+      weight: 0.15
+      description: "工具、模型、Skill、MCP 的真实体验与验证"
+    failure_and_qa:
+      weight: 0.15
+      description: "失败案例、返工、评测、验收和方法复盘"
+    monetization_experiment:
+      weight: 0.10
+      description: "真实变现实验与结果，不承诺收益"
+
+  format_independent: true
+  formats: [VIDEO, CAROUSEL, TEXT]

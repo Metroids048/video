@@ -27,87 +27,83 @@ PROTECTED = [
 
 FORBIDDEN = [
     "fixtures/golden-ai-quant",
+    "docs/ai-pm-media-business-plan.md",
     "AI量化交易视频项目完成报告.md",
     "AI量化交易账号完整方案.md",
     "FINAL_COMPLETION_REPORT.md",
     "FINAL_EXECUTION_REPORT.md",
     "FINAL_VIDEO_QUALITY_CLOSURE.md",
-    "scripts/build_ep01_v4.py",
-    "scripts/build_ep01_v5.py",
-    "scripts/build_ep01_v6.py",
-    "scripts/build_ep01_v7.py",
-    "scripts/build_ep01_v8.py",
-    "scripts/build_ep01_final.py",
+    "scripts/build_ep01_v4.py", "scripts/build_ep01_v5.py", "scripts/build_ep01_v6.py",
+    "scripts/build_ep01_v7.py", "scripts/build_ep01_v8.py", "scripts/build_ep01_final.py",
     "scripts/build_ep01_final_final_lock.py",
 ]
 
 
-def fail(message: str, errors: list[str]) -> None:
-    errors.append(message)
-
-
 def main() -> int:
     errors: list[str] = []
-
     loaded: dict[str, dict] = {}
+
     for name in REQUIRED_CONFIG:
         path = ROOT / "config" / name
         if not path.exists():
-            fail(f"missing config: {path.relative_to(ROOT)}", errors)
+            errors.append(f"missing config: {path.relative_to(ROOT)}")
             continue
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8"))
         except Exception as exc:
-            fail(f"invalid yaml {name}: {exc}", errors)
+            errors.append(f"invalid yaml {name}: {exc}")
             continue
         if not isinstance(data, dict):
-            fail(f"config root is not mapping: {name}", errors)
+            errors.append(f"config root is not mapping: {name}")
             continue
         loaded[name] = data
 
     for name in REQUIRED_SCHEMAS:
         path = ROOT / "schemas" / name
         if not path.exists():
-            fail(f"missing schema: {path.relative_to(ROOT)}", errors)
+            errors.append(f"missing schema: {path.relative_to(ROOT)}")
             continue
         try:
             json.loads(path.read_text(encoding="utf-8"))
         except Exception as exc:
-            fail(f"invalid json {name}: {exc}", errors)
+            errors.append(f"invalid json {name}: {exc}")
 
     for rel in PROTECTED:
         if not (ROOT / rel).exists():
-            fail(f"protected resource missing: {rel}", errors)
+            errors.append(f"protected resource missing: {rel}")
 
     for rel in FORBIDDEN:
         if (ROOT / rel).exists():
-            fail(f"legacy residue still present: {rel}", errors)
+            errors.append(f"legacy residue still present: {rel}")
 
     project = loaded.get("project.yaml", {}).get("project", {})
     if project.get("name") != "Creator OS" or str(project.get("version")) != "2.0":
-        fail("project.yaml is not Creator OS 2.0", errors)
+        errors.append("project.yaml is not Creator OS 2.0")
     if project.get("publish_success_state") != "READY_TO_PUBLISH":
-        fail("publish success state is not READY_TO_PUBLISH", errors)
+        errors.append("publish success state is not READY_TO_PUBLISH")
 
     workflow = loaded.get("workflow.yaml", {}).get("workflow", {})
     lifecycle = workflow.get("public_lifecycle", [])
     if not lifecycle or lifecycle[-1] != "READY_TO_PUBLISH":
-        fail("public lifecycle does not end in READY_TO_PUBLISH", errors)
+        errors.append("public lifecycle does not end in READY_TO_PUBLISH")
     if workflow.get("repair", {}).get("max_rounds") != 3:
-        fail("repair max_rounds must be 3", errors)
+        errors.append("repair max_rounds must be 3")
 
     formats = set(loaded.get("content-formats.yaml", {}).get("format_router", {}).get("allowed", []))
     if formats != {"VIDEO", "CAROUSEL", "TEXT"}:
-        fail(f"unexpected format set: {sorted(formats)}", errors)
+        errors.append(f"unexpected format set: {sorted(formats)}")
 
-    ref = loaded.get("reference-acquisition.yaml", {}).get("reference_acquisition", {})
-    douyin = ref.get("sources", {}).get("douyin_url", {})
+    pillars = loaded.get("content-pillars.yaml", {}).get("content_pillars", {})
+    if pillars.get("default_mode") != "ORIGINAL":
+        errors.append("content default_mode must be ORIGINAL")
+
+    douyin = loaded.get("reference-acquisition.yaml", {}).get("reference_acquisition", {}).get("sources", {}).get("douyin_url", {})
     if douyin.get("failure_behavior") != "degrade_honestly":
-        fail("Douyin acquisition must degrade_honestly", errors)
+        errors.append("Douyin acquisition must degrade_honestly")
 
-    voice = loaded.get("voice.yaml", {}).get("voice", {})
-    if not voice.get("video_timing", {}).get("forbid_character_count_timing"):
-        fail("voice contract must forbid character-count timing", errors)
+    timing = loaded.get("voice.yaml", {}).get("voice", {}).get("video_timing", {})
+    if not timing.get("narration_master_is_clock") or not timing.get("forbid_character_count_timing"):
+        errors.append("video timing contract is not narration-master/word-timestamp based")
 
     if errors:
         print("CREATOR OS V2 VALIDATION: FAIL")

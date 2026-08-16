@@ -1,6 +1,5 @@
 ---
-# media.mdc — Cursor 媒体处理规则
-description: 仅对媒体处理目录（renderers/, src/avs/render/, src/avs/ingest/）自动附加
+description: Creator OS V2 media-processing rules
 globs:
   - "renderers/**"
   - "src/avs/render/**"
@@ -9,54 +8,34 @@ globs:
   - "src/avs/delivery/**"
 ---
 
-# 媒体处理规则
+# Media rules
 
-## 规格（与 tools-manifest.yaml 保持同步）
+## Source safety
 
-- 画布：1080×1920 px，30fps
-- 编码：H.264（libx264）/ AAC / yuv420p
-- 字幕安全区：距边缘至少 80px
+- Probe input media before processing.
+- Never overwrite original Episode input/source files.
+- Record failures; never convert a non-zero media failure into publish success.
 
-## 输入安全
+## Canvas / mobile evidence
 
-1. 所有输入先用 FFprobe 检查（时长、尺寸、fps、codec、音轨、可解码性）
-2. 损坏文件不得进入渲染管道
-3. 原始文件计算 SHA-256 并记录，处理后验证不变
-4. 横屏素材明确使用 contain / cover / 布局模板，禁止静默拉伸
+- Default video canvas: 1080×1920, 30fps.
+- Horizontal recordings use `screen_focus`, `screen_stack`, `roi_crop` or another explicit mobile-readable composition.
+- Full landscape contain with black bars is not a publish layout.
+- ROI crops are allowed and expected when they improve evidence readability; use an establishing shot when surrounding context is necessary.
 
-## FFmpeg 调用规则
+## Audio / timing
 
-- 所有 FFmpeg 命令检查退出码（非零 = 失败，记录并停止）
-- 超时设置：单次渲染不超过 300 秒
-- 输出路径使用相对路径
-- 渲染前校验时间线无越界和重叠
+- Follow `config/voice.yaml`.
+- Do not pick a random TTS provider for final narration.
+- Accepted final narration is the timing master.
+- Generate subtitle/word timestamps from final audio; never estimate cue timing from text length.
+- Avoid clipping; duck BGM/SFX under narration.
 
-## HyperFrames 集成
+## Motion / renderers
 
-- 从 `timeline.json` 读取动效参数，不从聊天上下文获取
-- 渲染失败时降级：FFmpeg 静态文字卡 + 记录 warning
-- 不修改 `episode.json`，不管理 Episode 状态
-- 动效任务必须先读 `third_party_skills/hyperframes`（见 `docs/video-plugin-routing.md`）
+Read `docs/video-plugin-routing.md` to choose a capability **only when needed**.
+HyperFrames/Remotion/ChatCut/CapCut/Jianying/etc. are bounded tools, not workflow authorities.
 
-## 多渲染器（ADR-0006）
+## QA
 
-- Remotion / ChatCut / CapCut / video-use / OpenMontage / Pixelle-Video 允许进入正式链路
-- 开始前读 `docs/video-plugin-routing.md` 并加载对应 Skill
-- 旁路产物必须回挂 Episode `work/` 或 `output/`；失败不得静默成功
-
-## 其它视频插件（强制路由）
-
-处理剪辑/成片/提示词/策略前，按 `docs/video-plugin-routing.md` 加载：
-Remotion、video-use、Seedance、ChatCut、capcut-david、cut-skill、ip-strategist、openmontage、pixelle-video、moneyprinterturbo。
-禁止伪造 QA 状态。
-
-## 音频
-
-- 旁白优先，BGM ducking
-- 无音轨时正常处理（不崩溃）
-- 防止明显削波（峰值 < -1 dBFS）
-
-## 测试要求
-
-- 跨机器输出不要求逐像素一致
-- 比较：可解码性、分辨率、帧率、时长容差、音轨存在
+Technical validity is necessary but insufficient. Creator Review must inspect the actual artifact/mobile preview. Only `READY_TO_PUBLISH` permits `FINAL.*` naming.

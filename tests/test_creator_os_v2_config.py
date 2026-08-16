@@ -2,7 +2,6 @@ from pathlib import Path
 
 from avs.config import Config
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -16,11 +15,8 @@ def test_creator_os_v2_config_contract_loads():
 
 def test_creator_os_v2_formats_are_frozen():
     config = Config(ROOT)
-    assert set(config.content_formats["format_router"]["allowed"]) == {
-        "VIDEO",
-        "CAROUSEL",
-        "TEXT",
-    }
+    assert set(config.content_formats["format_router"]["allowed"]) == {"VIDEO", "CAROUSEL", "TEXT"}
+    assert config.content_pillars["content_pillars"]["default_mode"] == "ORIGINAL"
 
 
 def test_douyin_acquisition_degrades_honestly():

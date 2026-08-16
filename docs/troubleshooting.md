@@ -1,13 +1,19 @@
-# 排障
+# Creator OS V2 Troubleshooting
 
-| 现象 | 检查与处理 |
+| Symptom | Check / action |
 |---|---|
-| `WAITING_FOR_INPUT` | 补充 `input/` 中缺少的文本或媒体，再运行 `avs ingest <ID>` |
-| `workflow resume` 停在 `agent` | 使用 `write-video-script`、`create-storyboard`，随后运行 `avs content validate` 和 `avs content approve` |
-| 停在 `human` 的 assets | 检查 `missing-assets.md`、素材权利和版式，再运行 `avs assets approve` |
-| `reference analyze` 找不到参考 | 只支持放入 `input/reference/` 的本地视频；URL 仅作来源记录，不会下载 |
-| HyperFrames 失败 | 基础 FFmpeg 粗剪必须保留；运行 `npm run doctor`、`npx hyperframes lint renderers/hyperframes` 检查 |
-| QA 未通过 | 阅读 `delivery/qa-report.md` 和联系表，修正素材/时间线后按需使用 `--force` 重建 |
-| 状态为 `FAILED` | 阅读 `episode.json` 的 `last_error`，修复原因后使用受限的 `avs episode reset --to <状态> --force` |
+| `WAITING_FOR_RESOURCE` / engine `WAITING_FOR_INPUT` | Supply the missing factual source, privacy boundary, inaccessible required asset or provider credential. Do not manufacture filler evidence. |
+| Douyin reference cannot be acquired | Keep the URL/source metadata, mark it page-only, and continue with other usable references/original direction. Never infer audiovisual details that were not inspected. |
+| Reference analysis has a local video but fails | Check decode/ffprobe/transcription dependencies, then rerun only reference analysis. |
+| No voice profile exists | Run the one-time 15–20s audition for HUMAN_ENHANCED / HYBRID_S2S / PREMIUM_TTS. Do not silently choose a random final voice. |
+| Voice sounds synthetic or unnatural | Return `VOICE_BAD` and repair audio only; keep the Creative Contract unless the story itself failed. |
+| Desktop recording is unreadable on mobile | Return `SCREEN_UNREADABLE`; use establish → ROI focus/zoom or screen-stack. Do not use full 16:9 contain with black bars. |
+| Captions cover balances/charts/orders/primary proof | Return `CAPTION_BLOCKING`; change segmentation/position only. |
+| Hook is weak | Repair the Hook/Pilot before full rerender. Do not rebuild the whole workflow. |
+| Story is confusing | Return `STORY_CONFUSED`; create a new Creative Contract version before further production. |
+| HyperFrames/Remotion/other optional renderer fails | Use another appropriate execution route or deterministic FFmpeg assembly; record the failure. Never convert renderer failure into fake publish success. |
+| Technical QA fails | Fix the deterministic media problem and rerun the affected render/review stage. |
+| Three repair rounds are exhausted | Return `BLOCKED` with exact failure code and best candidate. Do not install more plugins or rebuild architecture as a reflex. |
+| Engine state is `FAILED` | Read `episode.json:last_error`; use supported reset/recovery commands. Never hand-edit state to skip gates. |
 
-不要手工修改 `episode.json` 来跳过状态，也不要覆盖 `input/` 原始媒体。若需要重新生成已有产物，显式使用对应命令的 `--force`。
+Original Episode input media is immutable. Derived crops, redactions, audio processing and renders belong in work/output locations, never overwriting the source.
