@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice-profile.schema.json",
+  "title": "Creator OS V2 Voice Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "profile_id", "mode", "provider", "voice_id", "audition_script_hash", "approved"],
+  "properties": {
+    "version": {"const": "2.0"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["HUMAN_ENHANCED", "HYBRID_S2S", "PREMIUM_TTS"]},
+    "provider": {"type": "string", "minLength": 1},
+    "voice_id": {"type": "string", "minLength": 1},
+    "settings": {"type": "object"},
+    "audition_script_hash": {"type": "string", "minLength": 8},
+    "audition_artifacts": {"type": "array", "items": {"type": "string"}},
+    "approved": {"type": "boolean"},
+    "approved_at": {"type": ["string", "null"]},
+    "notes": {"type": "string"}
+  }
+}

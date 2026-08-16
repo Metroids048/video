@@ -1,34 +1,24 @@
-# config/platforms.yaml — 目标平台配置
-
 platforms:
   douyin:
-    name: "抖音"
-    canvas:
+    priority: 1
+    video:
+      aspect_ratio: "9:16"
       width: 1080
       height: 1920
-      aspect_ratio: "9:16"
-    max_duration_seconds: 900   # 15 分钟
-    recommended_duration_seconds: 60
-    caption_safe_zone:
-      top: 0.05
-      bottom: 0.15
-      left: 0.03
-      right: 0.03
+      fps: 30
+    supported_formats: [VIDEO, CAROUSEL, TEXT]
+    video_deliverables: [video, cover, title_options, description, hashtags]
+    carousel_deliverables: [images, cover, title_options, description, hashtags]
+    text_deliverables: [title_options, body, hashtags]
 
   xiaohongshu:
-    name: "小红书"
-    canvas:
+    priority: 2
+    video:
+      aspect_ratio: "9:16"
       width: 1080
       height: 1920
-      aspect_ratio: "9:16"
-    max_duration_seconds: 300   # 5 分钟
-    recommended_duration_seconds: 90
-    caption_safe_zone:
-      top: 0.05
-      bottom: 0.18
-      left: 0.03
-      right: 0.03
-
-default_platforms:
-  - douyin
-  - xiaohongshu
+      fps: 30
+    supported_formats: [VIDEO, CAROUSEL, TEXT]
+    video_deliverables: [video, cover, title_options, note_copy, topic_tags]
+    carousel_deliverables: [images, cover, title_options, note_copy, topic_tags]
+    text_deliverables: [title_options, note_copy, topic_tags]

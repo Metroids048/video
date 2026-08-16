@@ -1,93 +1,80 @@
-# config/workflow.yaml — 工作流配置
-
+# Creator OS V2 workflow
+# Low-level AVS states stay compatible with the existing engine.
+# User-facing production uses public_lifecycle below.
 workflow:
-  # 状态转换允许表（正式流水线）
   transitions:
-    CREATED:
-      - INGESTED
-      - WAITING_FOR_INPUT
-      - BLOCKED
-      - FAILED
-    INGESTED:
-      - REFERENCE_READY
-      - CONTENT_READY      # 无参考视频时跳过
-      - WAITING_FOR_INPUT
-      - BLOCKED
-      - FAILED
-    REFERENCE_READY:
-      - CONTENT_READY
-      - WAITING_FOR_REVIEW
-      - BLOCKED
-      - FAILED
-    CONTENT_READY:
-      - ASSETS_READY
-      - WAITING_FOR_REVIEW
-      - BLOCKED
-      - FAILED
-    ASSETS_READY:
-      - TIMELINE_READY
-      - WAITING_FOR_INPUT
-      - BLOCKED
-      - FAILED
-    TIMELINE_READY:
-      - PILOT_APPROVED
-      - ROUGH_CUT_READY
-      - FAILED
-      - BLOCKED
-    PILOT_APPROVED:
-      - ROUGH_CUT_READY
-      - WAITING_FOR_REVIEW
-      - BLOCKED
-      - FAILED
-    ROUGH_CUT_READY:
-      - QA_PASSED
-      - WAITING_FOR_REVIEW
-      - BLOCKED
-      - FAILED
-    QA_PASSED:
-      - DELIVERY_READY
-      - BLOCKED
-      - FAILED
-    DELIVERY_READY: []       # 终态；只有 --force reset 可离开
-    WAITING_FOR_INPUT:
-      - INGESTED
-      - CREATED
-      - FAILED
-    WAITING_FOR_REVIEW:
-      - CONTENT_READY
-      - ASSETS_READY
-      - QA_PASSED
-      - FAILED
+    CREATED: [INGESTED, WAITING_FOR_INPUT, BLOCKED, FAILED]
+    INGESTED: [REFERENCE_READY, CONTENT_READY, WAITING_FOR_INPUT, BLOCKED, FAILED]
+    REFERENCE_READY: [CONTENT_READY, WAITING_FOR_REVIEW, BLOCKED, FAILED]
+    CONTENT_READY: [ASSETS_READY, WAITING_FOR_REVIEW, BLOCKED, FAILED]
+    ASSETS_READY: [TIMELINE_READY, WAITING_FOR_INPUT, BLOCKED, FAILED]
+    TIMELINE_READY: [PILOT_APPROVED, ROUGH_CUT_READY, BLOCKED, FAILED]
+    PILOT_APPROVED: [ROUGH_CUT_READY, WAITING_FOR_REVIEW, BLOCKED, FAILED]
+    ROUGH_CUT_READY: [QA_PASSED, WAITING_FOR_REVIEW, BLOCKED, FAILED]
+    QA_PASSED: [DELIVERY_READY, BLOCKED, FAILED]
+    DELIVERY_READY: []
+    WAITING_FOR_INPUT: [INGESTED, CREATED, FAILED]
+    WAITING_FOR_REVIEW: [CONTENT_READY, ASSETS_READY, QA_PASSED, FAILED]
     BLOCKED: []
-    FAILED:
-      - CREATED              # 通过 reset --to CREATED --force 重试
+    FAILED: [CREATED]
 
-  # reset --force 允许强制跳到的状态白名单
-  force_reset_targets:
+  force_reset_targets: [CREATED, INGESTED, CONTENT_READY]
+
+  public_lifecycle:
     - CREATED
-    - INGESTED
-    - CONTENT_READY
+    - INPUT_READY
+    - RESEARCH_READY
+    - CREATIVE_LOCKED
+    - PRODUCING
+    - REVIEWING
+    - REPAIRING
+    - READY_TO_PUBLISH
 
-  # 阶段名称（用于 completed_stages 追踪）
+  exceptional_public_states:
+    - WAITING_FOR_RESOURCE
+    - BLOCKED
+    - FAILED
+
+  engine_to_public:
+    CREATED: CREATED
+    INGESTED: INPUT_READY
+    REFERENCE_READY: RESEARCH_READY
+    CONTENT_READY: CREATIVE_LOCKED
+    ASSETS_READY: PRODUCING
+    TIMELINE_READY: PRODUCING
+    PILOT_APPROVED: PRODUCING
+    ROUGH_CUT_READY: REVIEWING
+    QA_PASSED: REVIEWING
+    DELIVERY_READY: READY_TO_PUBLISH
+    WAITING_FOR_INPUT: WAITING_FOR_RESOURCE
+    WAITING_FOR_REVIEW: REVIEWING
+    BLOCKED: BLOCKED
+    FAILED: FAILED
+
   stages:
     - ingest
-    - analyze
-    - story-mine
-    - direct
-    - screen-plan
-    - pilot
-    - pilot-review
-    - pilot-revise
-    - plan
-    - preview
-    - visual-review
-    - final-render
-    - approve
-    - reference
-    - content
+    - reference-acquire
+    - reference-analyze
+    - evidence-map
+    - creative-contract
+    - format-route
+    - voice-audition
     - assets
-    - timeline
-    - rough_cut
-    - qa
+    - pilot
+    - production
+    - technical-review
+    - creative-review
+    - repair
     - delivery
-    - export
+    - publish-pack
+
+  repair:
+    max_rounds: 3
+    localized: true
+    failure_routes:
+      VOICE_BAD: audio
+      HOOK_WEAK: pilot
+      SCREEN_UNREADABLE: visual_composition
+      CAPTION_BLOCKING: captions
+      STORY_CONFUSED: creative_director
+      FACT_UNSUPPORTED: evidence_map

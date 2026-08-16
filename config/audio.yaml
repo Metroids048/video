@@ -1,22 +1,20 @@
-# config/audio.yaml — 音频配置
-
 audio:
-  # 输出编码
-  codec: "aac"
+  codec: aac
   sample_rate: 44100
   channels: 2
-  bitrate: "192k"
-
-  # 归一化目标（LUFS）
-  loudness_target: -14.0
-  loudness_range: 7.0
-  true_peak: -1.0
-
-  # 无音频降级策略: silent_track | skip | warn
-  missing_audio_strategy: "warn"
-
-  # 转写（模块3+使用）
+  bitrate: 192k
+  loudness:
+    target_lufs: -14
+    loudness_range_lu: 7
+    true_peak_db: -1.0
+  narration:
+    priority: true
+    master_clock: true
+    remove_hard_clipping: true
+    max_leading_silence_seconds: 0.6
+  music:
+    duck_under_narration: true
+    optional: true
   transcription:
-    provider: "whisper"          # whisper | azure | none
-    language: "zh"
-    model: "base"
+    language: zh
+    require_word_timestamps_for_video: true

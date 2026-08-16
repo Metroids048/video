@@ -1,33 +1,45 @@
-# config/visual.yaml — 视觉配置
-
 visual:
-  # 字幕安全区（比例，0~1）
+  philosophy:
+    evidence_first: true
+    mobile_first: true
+    no_corporate_ppt_intro: true
+    no_logo_intro: true
+    no_empty_tech_cards: true
+    motion_must_direct_attention: true
+
   caption_safe_zone:
     top: 0.05
     bottom: 0.15
     left: 0.03
     right: 0.03
 
-  # 标题卡默认样式
-  title_card:
-    background: "#000000"
-    text_color: "#FFFFFF"
-    font_size: 72
-    padding: 40
-    duration_seconds: 2.0
+  captions:
+    max_lines: 2
+    keyword_highlight: true
+    avoid_evidence_regions: true
 
-  # 信息卡
-  info_card:
-    background: "#1A1A2E"
-    text_color: "#E0E0E0"
-    accent_color: "#E94560"
-    font_size: 48
-    padding: 32
+  screen_recording:
+    landscape_strategy: "screen_focus"
+    allowed_strategies: [screen_focus, screen_stack, roi_crop, cover]
+    forbid_full_landscape_contain_black_bars: true
+    establish_then_zoom: true
+    max_seconds_without_information_increment: 4.0
 
-  # 横屏素材处理策略: contain | cover | layout
-  landscape_strategy: "contain"
+  cards:
+    max_fullscreen_cards_per_short_video: 2
+    max_total_fullscreen_card_seconds: 5.0
+    use_only_when_no_better_real_evidence: true
 
-  # 代理视频（低码率预览）
+  motion:
+    intensity: medium
+    prefer_simple_transitions: true
+    avoid_excessive_effects: true
+
+  mobile_preview:
+    width: 360
+    height: 640
+    required_for_creative_review: true
+
   proxy:
     width: 540
     height: 960

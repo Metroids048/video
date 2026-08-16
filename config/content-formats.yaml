@@ -1,0 +1,37 @@
+format_router:
+  allowed: [VIDEO, CAROUSEL, TEXT]
+  default_preference: VIDEO
+  choose_by_evidence_not_preference: true
+
+formats:
+  VIDEO:
+    choose_when:
+      - "存在有意义的动态证据、操作过程或前后变化"
+      - "时间顺序本身是故事的一部分"
+      - "真实录屏/视频能明显提升可信度"
+    avoid_when:
+      - "只能用大量空卡片填充画面"
+      - "核心信息天然是清单/框架且动态展示没有增益"
+    target_duration_seconds: [25, 60]
+    pilot_seconds: [20, 30]
+    require_mobile_readability: true
+    require_real_evidence_first_3s_when_available: true
+
+  CAROUSEL:
+    choose_when:
+      - "结构化解释、对比、清单、复盘或方法论比动态过程更重要"
+      - "真实截图/图表可直接承担主要证据"
+    pages: [6, 9]
+    one_message_per_page: true
+    require_cover: true
+
+  TEXT:
+    choose_when:
+      - "观点、经验、结论或短清单本身最强"
+      - "没有足够动态证据且图文分页也没有额外价值"
+    require_title_variants: 3
+    require_final_body: true
+
+routing_rules:
+  never_use_non_video_as_fake_success_for_failed_video: true
+  format_change_after_creative_lock_requires_new_contract_version: true

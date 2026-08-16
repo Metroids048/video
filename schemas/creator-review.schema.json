@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "creator-review.schema.json",
+  "title": "Creator OS V2 Publish Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["episode_id", "format", "inspected_artifacts", "dimensions", "failure_codes", "decision", "repair_round"],
+  "properties": {
+    "episode_id": {"type": "string"},
+    "format": {"enum": ["VIDEO", "CAROUSEL", "TEXT"]},
+    "inspected_artifacts": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": {"type": ["number", "null"], "minimum": 0, "maximum": 10}
+    },
+    "failure_codes": {"type": "array", "items": {"enum": ["VOICE_BAD", "HOOK_WEAK", "SCREEN_UNREADABLE", "CAPTION_BLOCKING", "STORY_CONFUSED", "FACT_UNSUPPORTED", "TECHNICAL_FAILURE", "VISUAL_WEAK", "PACING_WEAK"]}},
+    "repair_target": {"type": ["string", "null"]},
+    "decision": {"enum": ["READY_TO_PUBLISH", "BLOCKED", "REPAIR"]},
+    "repair_round": {"type": "integer", "minimum": 0, "maximum": 3},
+    "notes": {"type": "string"}
+  }
+}

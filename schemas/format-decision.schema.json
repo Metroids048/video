@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "format-decision.schema.json",
+  "title": "Creator OS V2 Format Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["episode_id", "format", "reason", "evidence_refs", "decision_confidence"],
+  "properties": {
+    "episode_id": {"type": "string"},
+    "format": {"enum": ["VIDEO", "CAROUSEL", "TEXT"]},
+    "reason": {"type": "string", "minLength": 1},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "reference_refs": {"type": "array", "items": {"type": "string"}},
+    "decision_confidence": {"enum": ["high", "medium", "low"]},
+    "video_rejected_reasons": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,29 @@
+voice:
+  version: "2.0"
+  profile_path: "knowledge/voice/voice-profile.json"
+  require_locked_profile_for_repeat_production: true
+  audition_script_seconds: [15, 20]
+
+  modes:
+    HUMAN_ENHANCED:
+      description: "保留真人原声，通过降噪、去混响、EQ、de-esser、compression 和响度处理改善质感"
+      preserve_prosody: true
+    HYBRID_S2S:
+      description: "保留用户语速、停顿、重音和情绪，用授权 speech-to-speech/voice conversion 改善音色"
+      preserve_prosody: true
+      preferred_when_available: true
+    PREMIUM_TTS:
+      description: "通过多 Provider audition 后锁定的高质量 TTS 兜底方案"
+      preserve_prosody: false
+
+  audition:
+    compare_same_script: true
+    minimum_candidates: 2
+    preferred_candidates: 3
+    persist_winner: true
+    never_silently_change_voice_per_episode: true
+
+  video_timing:
+    narration_master_is_clock: true
+    subtitle_timestamps_source: final_narration_transcription
+    forbid_character_count_timing: true

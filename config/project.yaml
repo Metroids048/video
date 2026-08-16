@@ -1,16 +1,16 @@
-# config/project.yaml — 项目级全局配置
-# 修改后必须重启才能生效
-
+# Creator OS V2 — project contract
 project:
-  name: "Agent Video Studio"
-  version: "1.0"
-  # Episode 根目录（相对项目根）
+  name: "Creator OS"
+  version: "2.0"
+  product_contract: "creator_os_v2"
+  execution_engine: "avs"
   episodes_root: "episodes"
-  # 活跃 Episode 子目录
   active_dir: "active"
   completed_dir: "completed"
   archived_dir: "archived"
   inbox_dir: "inbox"
+  publish_success_state: "READY_TO_PUBLISH"
+  final_filename_requires_publish_success: true
 
 canvas:
   width: 1080
@@ -20,5 +20,11 @@ canvas:
   audio_codec: "aac"
   pixel_format: "yuv420p"
 
-# ID 合法格式：大写字母、数字、连字符，2–64字符
+principles:
+  evidence_first: true
+  format_agnostic: true
+  plugins_are_capabilities_not_workflow_owners: true
+  manual_reedit_is_not_complete: true
+  max_default_repair_rounds: 3
+
 episode_id_pattern: "^[A-Z0-9][A-Z0-9_-]{1,63}$"

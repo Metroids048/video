@@ -1,25 +1,26 @@
-# Single source of SCREEN_DOCUMENTARY visual constraints.  These values are
-# interpreted by pilot planning, render validation, and visual QA.
 production_types:
-  STANDARD: {}
   SCREEN_DOCUMENTARY:
-    duration_seconds: {min: 75, max: 115}
-    pilot_duration_seconds: {min: 20, max: 30}
-    real_screen_footage_ratio_min: 0.80
-    generated_card_count_max: 2
-    generated_motion_total_seconds_max: 6
-    intro_card_allowed: false
-    logo_intro_allowed: false
-    first_3_seconds_must_contain_real_evidence: true
-    blank_background_max_seconds: 0.3
+    target_duration_seconds: [25, 60]
+    pilot_seconds: [20, 30]
+    real_screen_footage_min_ratio: 0.70
+    generated_fullscreen_cards_max: 2
+    generated_fullscreen_cards_total_seconds_max: 5
+    no_intro_card: true
+    no_logo_intro: true
+    first_3_seconds_prefer_real_evidence: true
     full_landscape_fit_allowed: false
     mobile_readability_required: true
-    narration:
-      master_audio_required: true
-      allow_reordered_real_screen_footage: true
-      forbid_synthetic_voice: true
-      alignment_source: "word_timestamps"
-    subtitle:
-      max_lines: 2
-      max_chinese_chars_per_line: 18
-      forbidden_regions: ["balance", "chart", "orders", "positions", "why_no_trade"]
+    narration_master_required: true
+    subtitle_alignment_source: word_timestamps
+
+  VISUAL_EXPLAINER:
+    target_duration_seconds: [25, 60]
+    pilot_seconds: [15, 25]
+    real_evidence_required: true
+    decorative_motion_only: false
+
+  LONG_SCREEN_DOCUMENTARY:
+    target_duration_seconds: [60, 120]
+    use_only_when_story_requires_length: true
+    pilot_seconds: [20, 30]
+    mobile_readability_required: true

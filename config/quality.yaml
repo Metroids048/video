@@ -1,56 +1,47 @@
-# config/quality.yaml — 质量规则配置
-
 quality:
   publishable:
-    # 音频要求
-    require_non_silent_audio: true
-    audio_peak_min_dbfs: -45.0
-    max_total_silence_ratio: 0.40
-    max_leading_silence_seconds: 1.0
-
-    # 素材要求
+    require_non_silent_audio_for_video: true
     allow_placeholders: false
+    require_ai_visual_review: true
+    require_inspected_artifact_list: true
+    require_ready_to_publish_decision: true
+    require_human_reedit: false
 
-    # 人工审核要求
-    require_human_visual_approval: true
+  repair:
+    max_rounds: 3
+    localized: true
 
-  # Hook 要求
   hook:
     must_be_clear_within_seconds: 3.0
     first_visual_change_within_seconds: 2.5
 
-  # 节奏要求
   pacing:
     max_static_clip_seconds: 5.0
     screen_recording_max_static_seconds: 4.0
     min_visual_changes_per_10_seconds: 2
 
-  # 字幕要求
   captions:
     max_lines: 2
-    max_chars_per_line_cjk: 14
-    max_chars_per_cue_cjk: 24
+    max_chars_per_line_cjk: 16
+    max_chars_per_cue_cjk: 28
     min_cue_seconds: 0.8
     max_cue_seconds: 3.5
     max_cjk_chars_per_second: 12.0
     bottom_margin_px: 260
 
-  # 画面构图要求
   composition:
-    # 横屏可发布布局策略
-    landscape_publishable_layouts:
-      - screen_focus
-      - screen_stack
-      - cover
-    # 拒绝 contain 黑边
+    landscape_publishable_layouts: [screen_focus, screen_stack, roi_crop, cover]
     reject_landscape_contain: true
-    # 最小有效画面占比
     min_median_active_frame_ratio: 0.55
     min_sample_active_frame_ratio: 0.40
 
-  # 动效要求
-  motion:
-    preflight_timeout_seconds: 15
-    render_timeout_seconds: 120
-    allow_readable_static_fallback: true
-    require_cjk_font: true
+  creative_review:
+    dimensions: [hook, story, pacing, evidence_readability, visual_design, human_tone, audio, captions]
+    overall_min: 8.0
+    dimension_min: 7.0
+    null_score_is_fail: true
+    self_score_without_actual_view_is_fail: true
+
+  naming:
+    final_prefix_requires_ready_to_publish: true
+    candidate_names: [pilot, candidate-v1, blocked-preview]

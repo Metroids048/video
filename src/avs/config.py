@@ -1,7 +1,4 @@
-"""src/avs/config.py — 项目配置加载器。
-
-从 config/ 目录读取 YAML；缺文件时抛出明确错误，不静默忽略。
-"""
+"""Project configuration loader for Creator OS V2 / AVS engine."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,11 +8,10 @@ import yaml
 
 
 class ConfigError(Exception):
-    """配置加载或校验失败。"""
+    """Configuration loading or validation failed."""
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
-    """加载单个 YAML 文件；不存在时抛出 ConfigError。"""
     if not path.exists():
         raise ConfigError(f"配置文件缺失: {path}")
     try:
@@ -29,7 +25,7 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 class Config:
-    """项目配置聚合。懒加载，首次访问属性时读取文件。"""
+    """Lazy aggregate for the canonical Creator OS configuration surface."""
 
     _REQUIRED_FILES = [
         "project.yaml",
@@ -37,18 +33,20 @@ class Config:
         "platforms.yaml",
         "visual.yaml",
         "audio.yaml",
+        "quality.yaml",
         "providers.yaml",
         "content-pillars.yaml",
         "creator-workflow.yaml",
         "production-types.yaml",
+        "content-formats.yaml",
+        "reference-acquisition.yaml",
+        "voice.yaml",
     ]
 
     def __init__(self, root: Path) -> None:
         self._root = root
         self._config_dir = root / "config"
         self._cache: dict[str, dict[str, Any]] = {}
-
-    # ── 单文件访问 ────────────────────────────────────────────────────
 
     def _get(self, filename: str) -> dict[str, Any]:
         if filename not in self._cache:
@@ -76,6 +74,10 @@ class Config:
         return self._get("audio.yaml")
 
     @property
+    def quality(self) -> dict[str, Any]:
+        return self._get("quality.yaml")
+
+    @property
     def providers(self) -> dict[str, Any]:
         return self._get("providers.yaml")
 
@@ -85,20 +87,27 @@ class Config:
 
     @property
     def creator_workflow(self) -> dict[str, Any]:
-        """Account-level content and monetization contract."""
         return self._get("creator-workflow.yaml")
 
     @property
     def production_types(self) -> dict[str, Any]:
-        """Production-type constraints shared by director, renderer, and QA."""
         return self._get("production-types.yaml")
 
     @property
-    def required_config_files(self) -> tuple[str, ...]:
-        """Expose the canonical config contract for tests and diagnostics."""
-        return tuple(self._REQUIRED_FILES)
+    def content_formats(self) -> dict[str, Any]:
+        return self._get("content-formats.yaml")
 
-    # ── 便捷属性 ──────────────────────────────────────────────────────
+    @property
+    def reference_acquisition(self) -> dict[str, Any]:
+        return self._get("reference-acquisition.yaml")
+
+    @property
+    def voice(self) -> dict[str, Any]:
+        return self._get("voice.yaml")
+
+    @property
+    def required_config_files(self) -> tuple[str, ...]:
+        return tuple(self._REQUIRED_FILES)
 
     @property
     def episodes_root(self) -> Path:
@@ -113,10 +122,11 @@ class Config:
     def allowed_transitions(self) -> dict[str, list[str]]:
         return self.workflow.get("workflow", {}).get("transitions", {})
 
-    # ── 全量校验 ──────────────────────────────────────────────────────
+    @property
+    def public_lifecycle(self) -> tuple[str, ...]:
+        return tuple(self.workflow.get("workflow", {}).get("public_lifecycle", []))
 
     def validate_all(self) -> list[str]:
-        """加载所有必需配置文件，返回错误列表（空 = 全部通过）。"""
         errors: list[str] = []
         for filename in self._REQUIRED_FILES:
             try:
@@ -127,8 +137,7 @@ class Config:
 
 
 def load_config(root: Path | None = None) -> Config:
-    """获取 Config 实例。root 默认为当前目录向上查找 AGENTS.md 所在目录。"""
     if root is None:
-        from avs.cli import _find_project_root  # 避免循环导入
+        from avs.cli import _find_project_root
         root = _find_project_root()
     return Config(root)
