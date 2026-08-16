@@ -23,6 +23,7 @@ jobs:
           tests/test_audio_publishability_contract.py
           tests/test_publish_layout_contract.py
           tests/test_publish_audio_levels_parse.py
+          tests/test_canonical_audio_gate.py
           tests/test_creator_os_v2_quality_regressions.py
           tests/test_render.py
           tests/test_creative_review.py
