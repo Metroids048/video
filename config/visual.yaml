@@ -2,6 +2,8 @@ visual:
   philosophy:
     evidence_first: true
     mobile_first: true
+    source_fidelity_before_fill: true
+    preserve_context_before_emphasis: true
     no_corporate_ppt_intro: true
     no_logo_intro: true
     no_empty_tech_cards: true
@@ -23,10 +25,17 @@ visual:
     avoid_evidence_regions: true
 
   screen_recording:
-    landscape_strategy: "screen_focus"
-    allowed_strategies: [screen_focus, screen_stack, roi_crop, cover]
-    forbid_full_landscape_contain_black_bars: true
-    establish_then_zoom: true
+    landscape_strategy: "fit_full_frame"
+    allowed_strategies: [fit_full_frame, contain, screen_focus, roi_crop, cover, screen_stack]
+    preserve_full_source_frame_by_default: true
+    destructive_crop_requires_explicit_authorization: true
+    destructive_crop_authorization_flag: "allow_destructive_crop"
+    unauthorized_destructive_crop_falls_back_to: "fit_full_frame"
+    establish_full_context_before_roi: true
+    restore_full_context_after_roi_when_needed: true
+    source_spatial_context_must_remain_traceable: true
+    source_temporal_order_must_remain_traceable: true
+    first_frame_cannot_start_mid_action_without_context: true
     max_seconds_without_information_increment: 4.0
     max_seconds_without_information_increment_is_diagnostic_only: true
     prefer_real_continuous_recording: true
@@ -38,6 +47,7 @@ visual:
     do_not_fake_process_with_ken_burns: true
     keep_page_context_before_roi: true
     key_proof_must_remain_long_enough_to_understand_at_1x: true
+    never_crop_away_page_identity_or_primary_navigation_without_explicit_reason: true
 
   still_images:
     present_honestly_as_stills: true
@@ -49,6 +59,7 @@ visual:
   transitions:
     semantic_reason_required: true
     preserve_viewer_orientation: true
+    preserve_temporal_causality: true
     avoid_repeated_dark_light_flashing: true
     avoid_context_breaking_hard_cut_sequences: true
     avoid_repeated_sub_two_second_high_contrast_switches: true
@@ -71,6 +82,8 @@ visual:
     width: 360
     height: 640
     required_for_creative_review: true
+    qa_only: true
+    include_in_delivery: false
     key_evidence_must_be_readable_without_pause: true
     one_primary_attention_target_at_a_time: true
 
