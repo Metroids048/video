@@ -27,6 +27,7 @@ def artifact_fingerprint(ep_dir: Path, video_path: Path) -> str:
         ep_dir / "work" / "content" / "evidence-map.json",
         ep_dir / "work" / "content" / "shot-plan.json",
         ep_dir / "work" / "timeline.json",
+        ep_dir / "work" / "qa" / "video-release-review.json",
         video_path,
     )
     hasher = hashlib.sha256()
@@ -51,6 +52,18 @@ def _validate_approval(ep_dir: Path, approval: dict[str, Any]) -> None:
     jsonschema.Draft7Validator(schema, format_checker=jsonschema.FormatChecker()).validate(approval)
 
 
+def _require_current_release_review(ep_dir: Path, video_path: Path) -> None:
+    """Fail closed unless the exact MP4 passed continuous pre-delivery review."""
+    from avs.qa.video_release import verify_video_release_review_current
+
+    valid, reason = verify_video_release_review_current(ep_dir, video_path)
+    if not valid:
+        raise ValueError(
+            "视频发布验收未通过，不能批准/交付。"
+            + (reason or "请执行完整 1x 连续观看并生成当前 SHA256 的 release review")
+        )
+
+
 def create_approval(
     ep_dir: Path,
     episode_id: str,
@@ -62,28 +75,18 @@ def create_approval(
 ) -> dict[str, Any]:
     """Create a visual approval record bound to the current video hash.
 
-    Args:
-        ep_dir: Episode directory
-        episode_id: Episode ID
-        reviewer: Name of the human reviewer
-        video_path: Absolute path to the video being approved
-        checklist: Dict with required keys or None to use all True
-        notes: Optional review notes
-
-    Returns:
-        The approval record dict
-
-    Raises:
-        FileNotFoundError: If video does not exist
-        ValueError: If checklist is invalid or any item is False when approved=True
+    Human approval is downstream of the independent video-release gate.  The
+    exact MP4 must already have passed a full 1x start-to-end review; otherwise
+    approval is refused.
     """
     if not video_path.is_file():
         raise FileNotFoundError(f"视频不存在: {video_path}")
 
+    _require_current_release_review(ep_dir, video_path)
+
     video_sha256 = sha256_file(video_path)
     relative_path = video_path.relative_to(ep_dir).as_posix()
 
-    # Default checklist: all True
     if checklist is None:
         checklist = {
             "hook_clear_within_3s": True,
@@ -94,7 +97,6 @@ def create_approval(
             "facts_and_rights_checked": True,
         }
 
-    # Validate checklist has all required keys
     required_keys = {
         "hook_clear_within_3s",
         "captions_readable",
@@ -106,7 +108,6 @@ def create_approval(
     if set(checklist.keys()) != required_keys:
         raise ValueError(f"checklist 必须包含且仅包含以下键: {required_keys}")
 
-    # If any checklist item is False, cannot approve
     if not all(checklist.values()):
         raise ValueError("任一 checklist 项为 false 时不得 approved=True")
 
@@ -127,11 +128,7 @@ def create_approval(
 
 
 def load_approval(ep_dir: Path) -> dict[str, Any] | None:
-    """Load visual approval if it exists and is valid.
-
-    Returns:
-        Approval dict if exists and valid, None otherwise
-    """
+    """Load visual approval if it exists and is valid."""
     approval_path = ep_dir / "delivery" / "visual-approval.json"
     if not approval_path.is_file():
         return None
@@ -141,18 +138,11 @@ def load_approval(ep_dir: Path) -> dict[str, Any] | None:
         _validate_approval(ep_dir, approval)
         return approval
     except Exception:
-        # Invalid approval is treated as missing
         return None
 
 
 def verify_approval_current(ep_dir: Path, final_video: Path) -> tuple[bool, str | None]:
-    """Verify that approval matches the current final video hash.
-
-    Returns:
-        (is_valid, error_message)
-        - (True, None) if approval exists and hash matches
-        - (False, reason) otherwise
-    """
+    """Verify human approval AND machine release review match the current MP4."""
     approval = load_approval(ep_dir)
     if approval is None:
         return False, "缺少人工视觉批准文件"
@@ -162,6 +152,11 @@ def verify_approval_current(ep_dir: Path, final_video: Path) -> tuple[bool, str 
 
     if not final_video.is_file():
         return False, f"最终视频不存在: {final_video}"
+
+    try:
+        _require_current_release_review(ep_dir, final_video)
+    except ValueError as exc:
+        return False, str(exc)
 
     current_hash = sha256_file(final_video)
     approval_hash = approval.get("video_sha256", "")
@@ -176,21 +171,13 @@ def verify_approval_current(ep_dir: Path, final_video: Path) -> tuple[bool, str 
     if (ep_dir / "work" / "content" / "shot-plan.json").is_file() and not approved_fingerprint:
         return False, "Active Episode 的人工批准缺少完整 Artifact Fingerprint"
     if approved_fingerprint and approved_fingerprint != artifact_fingerprint(ep_dir, final_video):
-        return False, "输入、Script、Shot Plan、Timeline 或视频已变更，批准指纹失效"
+        return False, "输入、Script、Shot Plan、Timeline、Release Review 或视频已变更，批准指纹失效"
 
     return True, None
 
 
 def save_approval(ep_dir: Path, approval: dict[str, Any]) -> Path:
-    """Save approval to delivery/visual-approval.json.
-
-    Args:
-        ep_dir: Episode directory
-        approval: Validated approval dict
-
-    Returns:
-        Path to saved approval file
-    """
+    """Save approval to delivery/visual-approval.json."""
     _validate_approval(ep_dir, approval)
 
     delivery_dir = ep_dir / "delivery"
