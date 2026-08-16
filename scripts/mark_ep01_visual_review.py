@@ -1,175 +1,61 @@
+"""Legacy compatibility entrypoint for EP01 video review.
+
+Creator OS V2.2 has one canonical video release gate for every episode.  This
+script remains only so old commands fail safely instead of recreating a second
+EP01-specific approval path.
+"""
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 
-MAX_EP01_DURATION_SECONDS = 68.0
-REQUIRED_SCORE_KEYS = {
-    "hook",
-    "story",
-    "pacing",
-    "evidence",
-    "visual",
-    "human_tone",
-    "audio",
-    "captions",
-    "reference_fidelity",
-    "overall",
-}
-REQUIRED_CONTINUOUS_TRUE_KEYS = {
-    "watched_start_to_end_1x",
-    "first_pass_without_pause_for_comprehension",
-    "key_evidence_readable_without_pause",
-    "audio_listened_end_to_end",
-    "mobile_360x640_reviewed",
-    "transition_scan_completed",
-}
-REQUIRED_CONTINUOUS_FALSE_KEYS = {
-    "slideshow_like",
-    "static_screenshot_motion_dominant",
-    "rapid_dark_light_switching",
-    "unmotivated_abrupt_cuts",
-}
-
-
-def _resolve_inside_episode(ep: Path, relative: str) -> Path:
-    path = (ep / relative).resolve()
-    try:
-        path.relative_to(ep)
-    except ValueError as exc:
-        raise ValueError(f"review artifact escapes episode: {relative}") from exc
-    return path
-
-
-def _probe_duration(video: Path) -> float:
-    result = subprocess.run(
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=nw=1:nk=1",
-            str(video),
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    if result.returncode != 0:
-        raise ValueError(f"reviewed video is not ffprobe-decodable: {video}")
-    try:
-        return float(result.stdout.strip())
-    except ValueError as exc:
-        raise ValueError(f"invalid reviewed video duration: {result.stdout!r}") from exc
-
-
-def _validate_continuous_playback(payload: dict[str, Any]) -> None:
-    review = payload.get("continuous_playback_review")
-    if not isinstance(review, dict):
-        raise ValueError(
-            "continuous_playback_review is required; contact sheets/keyframes/metadata cannot replace a full 1x watch"
-        )
-
-    missing_true = sorted(key for key in REQUIRED_CONTINUOUS_TRUE_KEYS if review.get(key) is not True)
-    if missing_true:
-        raise ValueError(f"continuous playback requirements not confirmed: {missing_true}")
-
-    active_failures = sorted(key for key in REQUIRED_CONTINUOUS_FALSE_KEYS if review.get(key) is not False)
-    if active_failures:
-        raise ValueError(f"continuous playback hard-fail flags must be false: {active_failures}")
-
-    critical = review.get("critical_findings")
-    if not isinstance(critical, list):
-        raise ValueError("continuous_playback_review.critical_findings must be a list")
-    if critical:
-        raise ValueError(f"critical viewer-facing findings remain: {critical}")
-
-    findings = payload.get("timestamped_findings")
-    if not isinstance(findings, list):
-        raise ValueError("timestamped_findings is required for actual artifact review")
-
-
-def _validate_review(ep: Path, payload: dict[str, Any]) -> dict[str, Any]:
-    reviewer = payload.get("reviewer")
-    if not isinstance(reviewer, dict):
-        raise ValueError("reviewer provenance is required")
-    if reviewer.get("mode") != "actual_artifact_review":
-        raise ValueError("reviewer.mode must be actual_artifact_review; self-scoring is forbidden")
-    if reviewer.get("inspected_pixels") is not True:
-        raise ValueError("reviewer must explicitly confirm pixel inspection")
-    if not str(reviewer.get("reviewer_id") or "").strip():
-        raise ValueError("reviewer_id is required")
-
-    reviewed_video = payload.get("reviewed_video")
-    if not isinstance(reviewed_video, str) or not reviewed_video.strip():
-        raise ValueError("reviewed_video is required")
-    video_path = _resolve_inside_episode(ep, reviewed_video)
-    if not video_path.is_file():
-        raise ValueError(f"reviewed_video does not exist: {reviewed_video}")
-
-    reviewed_artifacts = payload.get("reviewed_artifacts")
-    if not isinstance(reviewed_artifacts, list) or not reviewed_artifacts:
-        raise ValueError("reviewed_artifacts must contain inspected frame/contact-sheet evidence")
-    for raw in reviewed_artifacts:
-        if not isinstance(raw, str) or not _resolve_inside_episode(ep, raw).is_file():
-            raise ValueError(f"review artifact does not exist: {raw}")
-
-    _validate_continuous_playback(payload)
-
-    scores = payload.get("scores")
-    if not isinstance(scores, dict) or not REQUIRED_SCORE_KEYS.issubset(scores):
-        missing = sorted(REQUIRED_SCORE_KEYS - set(scores or {}))
-        raise ValueError(f"review scores are incomplete: {missing}")
-    for name in REQUIRED_SCORE_KEYS:
-        value = float(scores[name])
-        if not 0.0 <= value <= 10.0:
-            raise ValueError(f"score out of range: {name}={value}")
-
-    if payload.get("passed") is not True or payload.get("blocked") is True:
-        raise ValueError("review input did not pass")
-
-    duration = _probe_duration(video_path)
-    if duration > MAX_EP01_DURATION_SECONDS:
-        raise ValueError(
-            f"reviewed video is {duration:.3f}s; EP01 publish contract is <= {MAX_EP01_DURATION_SECONDS:.0f}s"
-        )
-
-    output = dict(payload)
-    output["episode_id"] = ep.name
-    output["duration_seconds"] = round(duration, 3)
-    output["generated_at"] = datetime.now(timezone.utc).isoformat()
-    output["validated_from"] = "work/qa/visual-review.input.json"
-    return output
+from avs.qa.video_release import (  # noqa: E402
+    REVIEW_INPUT_RELATIVE,
+    VideoReleaseReviewError,
+    save_video_release_review,
+)
 
 
 def main() -> int:
     if len(sys.argv) != 2:
         raise SystemExit("usage: mark_ep01_visual_review.py <episode-dir>")
 
-    ep = Path(sys.argv[1]).resolve()
-    qa = ep / "work" / "qa"
-    source = qa / "visual-review.input.json"
-    if not source.is_file():
+    ep_dir = Path(sys.argv[1]).resolve()
+    legacy_input = ep_dir / "work" / "qa" / "visual-review.input.json"
+    canonical_input = ep_dir / REVIEW_INPUT_RELATIVE
+
+    if legacy_input.is_file() and not canonical_input.is_file():
         raise SystemExit(
-            "missing work/qa/visual-review.input.json; actual artifact review is mandatory and self-approval is forbidden"
+            "legacy work/qa/visual-review.input.json is no longer a release gate. "
+            "Watch the CURRENT MP4 start-to-end at 1x and write "
+            "work/qa/video-release-review.input.json, then run "
+            "python scripts/validate_video_release_review.py <episode-dir>."
+        )
+    if not canonical_input.is_file():
+        raise SystemExit(
+            "missing work/qa/video-release-review.input.json; "
+            "contact sheets/keyframes/metadata cannot replace a full 1x watch"
         )
 
     try:
-        payload = json.loads(source.read_text(encoding="utf-8"))
-        validated = _validate_review(ep, payload)
-    except (json.JSONDecodeError, OSError, TypeError, ValueError, subprocess.SubprocessError) as exc:
-        raise SystemExit(f"visual review rejected: {exc}") from exc
+        payload = json.loads(canonical_input.read_text(encoding="utf-8"))
+        output_path = save_video_release_review(ep_dir, payload)
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, TypeError, ValueError, VideoReleaseReviewError) as exc:
+        raise SystemExit(f"video release review rejected: {exc}") from exc
 
-    path = qa / "visual-review.json"
-    path.write_text(json.dumps(validated, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(path)
+    print(
+        "DEPRECATED: mark_ep01_visual_review.py now delegates to the canonical "
+        "Creator OS video release gate."
+    )
+    print(output_path)
+    if output.get("final_status") != "READY_TO_PUBLISH":
+        print("release gate not ready; repair/rerender/full rewatch required")
+        return 2
     return 0
 
 
