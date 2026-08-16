@@ -10,14 +10,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_CONFIG = [
     "project.yaml", "workflow.yaml", "platforms.yaml", "visual.yaml",
-    "audio.yaml", "quality.yaml", "providers.yaml", "content-pillars.yaml",
-    "creator-workflow.yaml", "production-types.yaml", "content-formats.yaml",
-    "reference-acquisition.yaml", "voice.yaml",
+    "audio.yaml", "quality.yaml", "video-review.yaml", "providers.yaml",
+    "content-pillars.yaml", "creator-workflow.yaml", "production-types.yaml",
+    "content-formats.yaml", "reference-acquisition.yaml", "voice.yaml",
 ]
 
 REQUIRED_SCHEMAS = [
     "creative-contract.schema.json", "format-decision.schema.json",
     "voice-profile.schema.json", "creator-review.schema.json",
+    "video-release-review.schema.json",
 ]
 
 PROTECTED = [
@@ -77,10 +78,16 @@ def main() -> int:
             errors.append(f"legacy residue still present: {rel}")
 
     project = loaded.get("project.yaml", {}).get("project", {})
-    if project.get("name") != "Creator OS" or str(project.get("version")) != "2.0":
-        errors.append("project.yaml is not Creator OS 2.0")
+    if project.get("name") != "Creator OS" or str(project.get("version")) != "2.2":
+        errors.append("project.yaml is not Creator OS 2.2")
     if project.get("publish_success_state") != "READY_TO_PUBLISH":
         errors.append("publish success state is not READY_TO_PUBLISH")
+    if project.get("release_gate_fail_closed") is not True:
+        errors.append("video release gate must fail closed")
+    if project.get("delivery_requires_current_video_release_review") is not True:
+        errors.append("delivery must require current video release review")
+    if project.get("release_review_must_match_current_sha256") is not True:
+        errors.append("release review must match current SHA256")
 
     workflow = loaded.get("workflow.yaml", {}).get("workflow", {})
     lifecycle = workflow.get("public_lifecycle", [])
@@ -88,6 +95,34 @@ def main() -> int:
         errors.append("public lifecycle does not end in READY_TO_PUBLISH")
     if workflow.get("repair", {}).get("max_rounds") != 3:
         errors.append("repair max_rounds must be 3")
+    release_gate = workflow.get("video_release_gate", {})
+    if release_gate.get("fail_closed") is not True:
+        errors.append("workflow video_release_gate must fail closed")
+    if release_gate.get("delivery_must_reverify_gate") is not True:
+        errors.append("delivery must reverify release gate")
+
+    review = loaded.get("video-review.yaml", {}).get("video_review", {})
+    if review.get("source_of_truth") != "actual rendered video pixels and audible audio":
+        errors.append("video-review source_of_truth must be actual rendered media")
+    hard_fails = review.get("hard_fail_conditions", {})
+    for key in (
+        "abrupt_or_discontinuous_opening",
+        "slideshow_feel",
+        "static_screenshot_pan_zoom_dominant",
+        "key_evidence_requires_pause",
+        "unreadable_evidence_due_to_short_dwell",
+        "rapid_dark_light_switching",
+    ):
+        if hard_fails.get(key, {}).get("fail") is not True:
+            errors.append(f"video-review hard fail missing: {key}")
+    if review.get("delivery_gate", {}).get("current_sha256_match_required") is not True:
+        errors.append("video release delivery gate must require current SHA256")
+
+    quality = loaded.get("quality.yaml", {}).get("quality", {})
+    if quality.get("release_gate", {}).get("fail_closed") is not True:
+        errors.append("quality release gate must fail closed")
+    if quality.get("publishable", {}).get("require_video_release_review_record") is not True:
+        errors.append("publishable video must require release-review record")
 
     formats = set(loaded.get("content-formats.yaml", {}).get("format_router", {}).get("allowed", []))
     if formats != {"VIDEO", "CAROUSEL", "TEXT"}:
@@ -114,6 +149,7 @@ def main() -> int:
     print("CREATOR OS V2 VALIDATION: PASS")
     print(f"configs: {len(REQUIRED_CONFIG)}")
     print(f"schemas: {len(REQUIRED_SCHEMAS)}")
+    print("video release gate: fail-closed + current SHA256 bound")
     print("protected capability resources: present")
     print("legacy quant/EP01 residue checks: clear")
     return 0
