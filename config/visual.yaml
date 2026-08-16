@@ -9,6 +9,7 @@ visual:
     continuity_over_cut_frequency: true
     comprehension_over_shortness: true
     real_process_motion_over_fake_camera_motion: true
+    first_second_must_feel_intentional_and_continuous: true
 
   caption_safe_zone:
     top: 0.05
@@ -27,22 +28,30 @@ visual:
     forbid_full_landscape_contain_black_bars: true
     establish_then_zoom: true
     max_seconds_without_information_increment: 4.0
+    max_seconds_without_information_increment_is_diagnostic_only: true
     prefer_real_continuous_recording: true
+    prefer_cursor_click_scroll_state_change: true
     allow_same_shot_to_progress_via_cursor_action_or_data_change: true
     do_not_cut_only_to_create_motion: true
+    do_not_cut_only_to_hit_duration: true
     do_not_use_static_screenshot_pan_zoom_as_process_video: true
+    do_not_fake_process_with_ken_burns: true
     keep_page_context_before_roi: true
+    key_proof_must_remain_long_enough_to_understand_at_1x: true
 
   still_images:
     present_honestly_as_stills: true
     max_semantic_emphasis_actions_per_still: 1
     forbid_repeated_ken_burns_ui_sequence: true
     forbid_fake_interaction_via_pan_zoom: true
+    forbid_slideshow_as_primary_motion_language_for_process_content: true
 
   transitions:
     semantic_reason_required: true
+    preserve_viewer_orientation: true
     avoid_repeated_dark_light_flashing: true
     avoid_context_breaking_hard_cut_sequences: true
+    avoid_repeated_sub_two_second_high_contrast_switches: true
     transition_count_is_not_quality: true
 
   cards:
@@ -56,12 +65,14 @@ visual:
     avoid_excessive_effects: true
     avoid_motion_for_motion_sake: true
     cursor_or_real_action_preferred_for_ui_process: true
+    static_camera_motion_cannot_substitute_for_real_process_motion: true
 
   mobile_preview:
     width: 360
     height: 640
     required_for_creative_review: true
     key_evidence_must_be_readable_without_pause: true
+    one_primary_attention_target_at_a_time: true
 
   proxy:
     width: 540
