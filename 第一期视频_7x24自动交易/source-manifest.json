@@ -1,0 +1,30 @@
+{
+  "episode": "EP01",
+  "name": "第一期视频_7x24自动交易",
+  "migration_status": "SOURCE_RECOVERED_OUTSIDE_GIT",
+  "source_master": {
+    "filename": "原始录屏.mp4",
+    "historical_filename": "20260812_131106.mp4",
+    "sha256": "dfc4edef0a19b3945e18bdc63825e2ff5f80149c59e6c485075589ac571f7dfd",
+    "duration_seconds": 184.088005,
+    "width": 2556,
+    "height": 1286,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "sample_rate_hz": 44100,
+    "channels": 2
+  },
+  "story_facts": {
+    "simulation_baseline": "约5000U",
+    "snapshot": "约7350U",
+    "disclaimer": "模拟盘阶段账户变化不等于策略稳定盈利",
+    "evidence": [
+      "本地自动交易系统",
+      "Why No Trade",
+      "策略判断与风控",
+      "Binance Demo Trading",
+      "交易所侧账户、订单与历史记录"
+    ]
+  },
+  "git_note": "历史 main 从未跟踪这份二进制录屏；Creator OS V2 的完整本地迁移包会携带原始母带。Git 分支只保存其不可变身份和生产合同，禁止用旧草稿冒充母带。"
+}
