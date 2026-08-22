@@ -33,7 +33,7 @@ def register_commands(main: click.Group) -> None:
 
     @research.group()
     def youtube() -> None:
-        """YouTube 研究语料 discovery 命令。"""
+        """YouTube 研究语料 discovery 与 transcript 命令。"""
 
     @youtube.command("discover")
     @click.argument("channel_url")
@@ -108,3 +108,34 @@ def register_commands(main: click.Group) -> None:
                                  ensure_ascii=False, indent=2))
         console.print("[green]YOUTUBE_DISCOVERY: PASS[/green]" if report.passed else "[red]YOUTUBE_DISCOVERY: NOT PASS[/red]")
         raise click.exceptions.Exit(0 if report.passed else 1)
+
+    @youtube.command("transcript")
+    @click.argument("channel")
+    @click.option("--video-id", required=True, help="要处理的 catalog video_id；M2 不执行全频道提取")
+    @click.option("--resume/--no-resume", default=True, show_default=True)
+    @click.option("--force-video", is_flag=True, help="覆盖该视频已有 transcript 产物")
+    @click.option("--force-asr", is_flag=True, help="跳过字幕 provider，强制真实媒体→faster-whisper smoke")
+    @click.option("--model", type=click.Choice(["tiny", "base", "small", "medium", "large-v3"]), default="small")
+    @click.option("--language", default="zh", show_default=True)
+    @click.option("--device", default="auto", show_default=True)
+    @click.option("--keep-media", is_flag=True, help="保留 Whisper 分析媒体；默认 QA 后删除")
+    def transcript_cmd(channel: str, video_id: str, resume: bool, force_video: bool, force_asr: bool,
+                       model: str, language: str, device: str, keep_media: bool) -> None:
+        """对单条视频执行 caption → QA → Whisper fallback transcript matrix。"""
+        from avs.research.youtube.extraction import extract_transcript
+
+        root = Path.cwd()
+        while root != root.parent and not (root / "AGENTS.md").exists():
+            root = root.parent
+        output = _channel_dir(root, channel)
+        try:
+            result = extract_transcript(output, video_id, force=(force_video or not resume), force_asr=force_asr,
+                                        model=model, language=language, device=device, keep_media=keep_media)
+        except Exception as exc:  # noqa: BLE001 - CLI boundary
+            raise click.ClickException(str(exc)) from exc
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result.get("status") in {"PASS", "SKIPPED"}:
+            console.print("[green]YOUTUBE_TRANSCRIPT: PASS[/green]")
+        else:
+            console.print("[red]YOUTUBE_TRANSCRIPT: NOT PASS[/red]")
+            raise click.exceptions.Exit(1)

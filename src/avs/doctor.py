@@ -201,6 +201,13 @@ def check_youtube_api_key() -> CheckResult:
                        message="未配置；将使用 yt-dlp flat-playlist fallback" if not configured else "")
 
 
+def check_faster_whisper() -> CheckResult:
+    """Whisper is optional for M1 and only a warning until M2 ASR is requested."""
+    available = importlib.util.find_spec("faster_whisper") is not None
+    return CheckResult("faster-whisper", required=False, passed=available,
+                       message="未安装；字幕路径仍可用，M2 ASR fallback 将不可用" if not available else "")
+
+
 def check_research_workspace(project_root: Path) -> CheckResult:
     """确认研究数据目录可创建且不会落入源码目录。"""
     target = project_root / "workspace" / "research" / "youtube"
@@ -445,6 +452,7 @@ def run_doctor(project_root: Path) -> DoctorReport:
     report.add(check_ffprobe())
     report.add(check_yt_dlp())
     report.add(check_youtube_api_key())
+    report.add(check_faster_whisper())
     report.add(check_research_workspace(project_root))
     report.add(check_hyperframes(project_root))
     report.add(check_hyperframes_browser(project_root))

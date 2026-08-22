@@ -50,6 +50,13 @@ def load_catalog(root: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def load_channel(root: Path) -> dict[str, Any]:
+    path = root / "channel.json"
+    if not path.exists():
+        raise FileNotFoundError(path)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def _merge_video(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
     merged = dict(existing)
     for key, value in incoming.items():
@@ -91,6 +98,12 @@ def write_corpus(
     _atomic_write(root / "channel.json", json.dumps(channel, ensure_ascii=False, indent=2) + "\n")
     _atomic_write(root / "catalog.jsonl", "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in catalog))
     status_counts = Counter(row.get("extraction_status", "FAILED_UNKNOWN") for row in catalog)
+    known_statuses = (
+        "DISCOVERED", "PRIVATE", "DELETED", "UNAVAILABLE", "BLOCKED_BY_YOUTUBE",
+        "RETRYABLE_FAILED", "FAILED_UNKNOWN", "CAPTION_PENDING", "CAPTION_OK",
+        "CAPTION_UNAVAILABLE", "MEDIA_PENDING", "MEDIA_OK", "ASR_PENDING", "ASR_OK",
+        "TRANSCRIPT_NORMALIZED", "TRANSCRIPT_QA_PASSED",
+    )
     manifest = {
         "schema_version": "1.0",
         "channel_slug": channel.get("handle") or channel.get("channel_id"),
@@ -104,10 +117,7 @@ def write_corpus(
             "unique_ids": len(catalog),
             "duplicates": duplicates + incoming_duplicates,
             "unknown": unknown_items,
-            **{key: status_counts.get(key, 0) for key in (
-                "DISCOVERED", "PRIVATE", "DELETED", "UNAVAILABLE", "BLOCKED_BY_YOUTUBE",
-                "RETRYABLE_FAILED", "FAILED_UNKNOWN",
-            )},
+            **{key: status_counts.get(key, 0) for key in known_statuses},
         },
         "videos": [
             {"video_id": row["video_id"], "status": row.get("extraction_status", "FAILED_UNKNOWN"),
@@ -140,10 +150,7 @@ def audit_corpus(root: Path) -> AuditReport:
     counts = Counter(row.get("extraction_status", "FAILED_UNKNOWN") for row in catalog)
     manifest_ids = [row.get("video_id") for row in manifest.get("videos", [])]
     manifest_counts = manifest.get("counts", {})
-    allowed_statuses = (
-        "DISCOVERED", "PRIVATE", "DELETED", "UNAVAILABLE", "BLOCKED_BY_YOUTUBE",
-        "RETRYABLE_FAILED", "FAILED_UNKNOWN",
-    )
+    allowed_statuses = tuple(key for key in manifest_counts if key not in {"discovered", "unique_ids", "duplicates", "unknown"})
     coverage_total = sum(int(manifest_counts.get(status, 0)) for status in allowed_statuses)
     checks = {
         "schema_valid": True,
@@ -158,3 +165,22 @@ def audit_corpus(root: Path) -> AuditReport:
         if not passed:
             errors.append(name)
     return AuditReport(all(checks.values()), checks, dict(counts), errors)
+
+
+def update_video_state(root: Path, video_id: str, *, extraction_status: str,
+                       attempts: list[dict[str, Any]] | None = None) -> None:
+    """Persist one video state without changing other discovery records."""
+    channel = load_channel(root)
+    rows = load_catalog(root)
+    changed = False
+    for row in rows:
+        if row.get("video_id") == video_id:
+            row["extraction_status"] = extraction_status
+            if attempts is not None:
+                row["attempts"] = attempts
+            changed = True
+            break
+    if not changed:
+        raise KeyError(f"video_id not found in catalog: {video_id}")
+    write_corpus(root, channel=channel, videos=rows, provider="transcript", force=True,
+                 pagination_complete=True, attempts=attempts or [])
