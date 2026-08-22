@@ -34,6 +34,13 @@ TOPIC_TERMS = {
     "市场展望": ("市场", "行情", "牛市", "熊市"), "交易系统": ("交易系统", "规则", "复盘"),
 }
 
+TRANSCRIPT_COMPLETED_STATES = {
+    "TRANSCRIPT_QA_PASSED", "VISUAL_EVIDENCE", "VISUAL_QA_PASSED", "SEMANTIC_EXTRACTION",
+    "CONTENT_BUILD", "CONTENT_QA", "CONTENT_QA_PASSED",
+}
+TRANSCRIPT_TERMINAL_STATUSES = {"PRIVATE", "DELETED", "UNAVAILABLE"}
+TRANSCRIPT_BLOCKED_STATUS = "BLOCKED_BY_YOUTUBE"
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -44,6 +51,143 @@ def _read_json(path: Path, default: Any = None) -> Any:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return default
+
+
+def _transcript_artifact_passed(root: Path, row: dict[str, Any]) -> bool:
+    video_root = root / "videos" / str(row.get("video_id")) / "transcript"
+    qa = _read_json(video_root / "qa.json", {}) or {}
+    return row.get("extraction_status") in TRANSCRIPT_COMPLETED_STATES and \
+        (video_root / "canonical.json").is_file() and qa.get("status") in {"PASS", "WARN"}
+
+
+def transcript_gate(root: Path, rows: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Compute the real transcript completion gate.
+
+    ``BLOCKED_BY_YOUTUBE`` is intentionally excluded from terminal statuses;
+    it is a provider failure and therefore keeps the gate open.
+    """
+    rows = rows if rows is not None else load_catalog(root)
+    counts = Counter(str(row.get("extraction_status", "FAILED_UNKNOWN")) for row in rows)
+    passed = sum(1 for row in rows if _transcript_artifact_passed(root, row))
+    private = counts.get("PRIVATE", 0)
+    deleted = counts.get("DELETED", 0)
+    unavailable = counts.get("UNAVAILABLE", 0)
+    blocked = counts.get(TRANSCRIPT_BLOCKED_STATUS, 0)
+    retryable = counts.get("RETRYABLE_FAILED", 0)
+    unknown = counts.get("FAILED_UNKNOWN", 0)
+    accounted = passed + private + deleted + unavailable
+    pending = max(0, len(rows) - accounted - blocked - retryable - unknown)
+    accessible = max(0, len(rows) - private - deleted - unavailable)
+    complete = (
+        accounted == len(rows)
+        and passed == accessible
+        and blocked == 0
+        and retryable == 0
+        and unknown == 0
+        and pending == 0
+    )
+    return {
+        "total": len(rows),
+        "transcript_passed": passed,
+        "private": private,
+        "deleted": deleted,
+        "unavailable": unavailable,
+        "blocked": blocked,
+        "retryable": retryable,
+        "unknown": unknown,
+        "pending": pending,
+        "accessible": accessible,
+        "percentage": round((passed / len(rows) * 100), 4) if rows else 100.0,
+        "pass": complete,
+        "gate": "YOUTUBE_ALL_TRANSCRIPTS",
+        "updated_at": _now(),
+    }
+
+
+def _write_transcript_index(root: Path, rows: list[dict[str, Any]]) -> None:
+    lines = ["# TRANSCRIPT_INDEX", "", "本索引只记录逐字稿提取状态；未包含 visual、semantic 或 content 产物。", ""]
+    for row in rows:
+        video_id = str(row.get("video_id"))
+        status = str(row.get("extraction_status", "FAILED_UNKNOWN"))
+        title = row.get("title") or video_id
+        transcript = root / "videos" / video_id / "transcript" / "canonical.json"
+        ref = f"[canonical.json](../videos/{video_id}/transcript/canonical.json)" if transcript.is_file() else "NONE"
+        lines.append(f"- **{title}** (`{video_id}`) — `{status}` — {ref}")
+    _write_text(root / "TRANSCRIPT_INDEX.md", "\n".join(lines) + "\n")
+
+
+def _transcript_progress(root: Path, rows: list[dict[str, Any]], *, last_video_id: str | None = None) -> dict[str, Any]:
+    gate = transcript_gate(root, rows)
+    payload = {
+        "videos_discovered": gate["total"],
+        "transcript_qa_passed": gate["transcript_passed"],
+        "private": gate["private"],
+        "deleted": gate["deleted"],
+        "unavailable": gate["unavailable"],
+        "blocked_by_youtube": gate["blocked"],
+        "retryable_failed": gate["retryable"],
+        "failed_unknown": gate["unknown"],
+        "pending": gate["pending"],
+        "accessible": gate["accessible"],
+        "transcript_coverage_percent": gate["percentage"],
+        "last_video_id": last_video_id,
+        "gate": gate["gate"],
+        "pass": gate["pass"],
+        "updated_at": gate["updated_at"],
+    }
+    _write_json(root / "reports" / "transcript-progress.json", payload)
+    _write_transcript_index(root, rows)
+    return payload
+
+
+def run_transcripts(root: Path, *, resume: bool = True, video_id: str | None = None,
+                    force_asr: bool = False, model: str = "small", language: str | None = "zh",
+                    device: str = "auto", keep_media: bool = False) -> dict[str, Any]:
+    """Run only the transcript stage across the catalog, one video at a time."""
+    rows = load_catalog(root)
+    if video_id:
+        rows = [row for row in rows if row.get("video_id") == video_id]
+    root.joinpath("reports").mkdir(parents=True, exist_ok=True)
+    _write_json(root / "reports" / "transcript-run.json", {"started_at": _now(), "total": len(rows)})
+    results: list[dict[str, Any]] = []
+    from .extraction import extract_transcript
+
+    for row in rows:
+        vid = str(row["video_id"])
+        current = next((item for item in load_catalog(root) if item.get("video_id") == vid), row)
+        status = str(current.get("extraction_status", "FAILED_UNKNOWN"))
+        if resume and _transcript_artifact_passed(root, current):
+            result = {"video_id": vid, "status": "SKIPPED", "reason": "TRANSCRIPT_QA_PASSED"}
+        elif resume and status in TRANSCRIPT_TERMINAL_STATUSES:
+            result = {"video_id": vid, "status": "SKIPPED", "reason": status}
+        else:
+            try:
+                result = extract_transcript(root, vid, force=not resume, force_asr=force_asr,
+                                            model=model, language=language, device=device,
+                                            keep_media=keep_media)
+            except Exception as exc:  # noqa: BLE001 - isolate one inaccessible video
+                _append_jsonl(root / "reports" / "failures.jsonl", {
+                    "video_id": vid, "status": "FAILED_RETRYABLE", "stage": "TRANSCRIPT",
+                    "error": str(exc), "at": _now(),
+                })
+                update_video_state(root, vid, extraction_status="RETRYABLE_FAILED")
+                result = {"video_id": vid, "status": "RETRYABLE_FAILED", "reason": str(exc)}
+        results.append(result)
+        _transcript_progress(root, load_catalog(root), last_video_id=vid)
+
+    all_rows = load_catalog(root)
+    progress = _transcript_progress(root, all_rows, last_video_id=(str(rows[-1]["video_id"]) if rows else None))
+    return {"gate": "YOUTUBE_ALL_TRANSCRIPTS", "pass": progress["pass"],
+            "total": progress["videos_discovered"],
+            "transcript_qa_passed": progress["transcript_qa_passed"],
+            "private": progress["private"], "deleted": progress["deleted"],
+            "unavailable": progress["unavailable"],
+            "blocked_by_youtube": progress["blocked_by_youtube"],
+            "retryable_failed": progress["retryable_failed"],
+            "failed_unknown": progress["failed_unknown"], "pending": progress["pending"],
+            "accessible": progress["accessible"],
+            "transcript_coverage_percent": progress["transcript_coverage_percent"],
+            "results": results, "generated_at": _now()}
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -320,7 +464,7 @@ def _progress(root: Path, rows: list[dict[str, Any]], last_video_id: str | None 
     counts = Counter(str(r.get("extraction_status", "FAILED_UNKNOWN")) for r in rows)
     payload = {"total": len(rows), "transcript_passed": sum(1 for r in rows if r.get("extraction_status") == "TRANSCRIPT_QA_PASSED"),
                "visual_passed": sum(1 for r in rows if (root / "videos" / str(r["video_id"]) / "visual" / "visual_evidence.jsonl").exists()),
-               "content_passed": counts.get("CONTENT_QA_PASSED", 0), "terminal_unavailable": sum(counts.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE", "BLOCKED_BY_YOUTUBE")),
+               "content_passed": counts.get("CONTENT_QA_PASSED", 0), "terminal_unavailable": sum(counts.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE")),
                "retryable_failed": counts.get("RETRYABLE_FAILED", 0), "unknown": counts.get("FAILED_UNKNOWN", 0), "last_video_id": last_video_id, "updated_at": _now()}
     _write_json(root / "reports" / "progress.json", payload)
     return payload
@@ -372,7 +516,7 @@ def run_corpus(root: Path, *, resume: bool = True, video_id: str | None = None) 
     all_rows = load_catalog(root)
     bundle = build_agent_bundle(root, all_rows)
     statuses = Counter(str(r.get("extraction_status", "FAILED_UNKNOWN")) for r in all_rows)
-    terminal = sum(statuses.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE", "BLOCKED_BY_YOUTUBE"))
+    terminal = sum(statuses.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE"))
     content = statuses.get("CONTENT_QA_PASSED", 0)
     payload = {"total": len(all_rows), "content_passed": content, "terminal_unavailable": terminal,
                "failed_unknown": statuses.get("FAILED_UNKNOWN", 0), "retryable_failed": statuses.get("RETRYABLE_FAILED", 0), "bundle": bundle,
@@ -406,7 +550,7 @@ def finalize_corpus(root: Path, *, sample_size: int = 20) -> dict[str, Any]:
     _write_json(root / "reports" / "sample-audit.json", sample_report)
     statuses = Counter(str(r.get("extraction_status", "FAILED_UNKNOWN")) for r in rows)
     content_count = statuses.get("CONTENT_QA_PASSED", 0)
-    terminal_count = sum(statuses.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE", "BLOCKED_BY_YOUTUBE"))
+    terminal_count = sum(statuses.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE"))
     total_units = 0; total_frames = 0; total_maps = 0
     for row in rows:
         vroot = root / "videos" / str(row["video_id"])
