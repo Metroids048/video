@@ -184,6 +184,36 @@ def check_ffprobe() -> CheckResult:
     return CheckResult("FFprobe", required=True, passed=passed, version=ver_str)
 
 
+def check_yt_dlp() -> CheckResult:
+    """检查 M1 fallback 所需的 yt-dlp CLI。"""
+    code, out = _run(["yt-dlp", "--version"])
+    if code == 127:
+        return CheckResult("yt-dlp", required=True, passed=False, message="未找到 yt-dlp；安装后才能运行无 API key 的 discovery fallback")
+    version = out.splitlines()[0].strip() if out else None
+    return CheckResult("yt-dlp", required=True, passed=code == 0, version=version,
+                       message="" if code == 0 else out[:200])
+
+
+def check_youtube_api_key() -> CheckResult:
+    """API key 是可选优化项，缺失时明确提示 fallback。"""
+    configured = bool(os.environ.get("YOUTUBE_API_KEY"))
+    return CheckResult("YouTube API key", required=False, passed=configured,
+                       message="未配置；将使用 yt-dlp flat-playlist fallback" if not configured else "")
+
+
+def check_research_workspace(project_root: Path) -> CheckResult:
+    """确认研究数据目录可创建且不会落入源码目录。"""
+    target = project_root / "workspace" / "research" / "youtube"
+    try:
+        target.mkdir(parents=True, exist_ok=True)
+        probe = target / ".write-probe"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        return CheckResult("YouTube research workspace", required=True, passed=True, version=str(target))
+    except OSError as exc:
+        return CheckResult("YouTube research workspace", required=True, passed=False, message=str(exc))
+
+
 def _hyperframes_command(project_root: Path) -> list[str]:
     cli = project_root / "node_modules" / "hyperframes" / "bin" / "hyperframes.mjs"
     return ["node", str(cli)]
@@ -413,6 +443,9 @@ def run_doctor(project_root: Path) -> DoctorReport:
     report.add(check_node())
     report.add(check_ffmpeg())
     report.add(check_ffprobe())
+    report.add(check_yt_dlp())
+    report.add(check_youtube_api_key())
+    report.add(check_research_workspace(project_root))
     report.add(check_hyperframes(project_root))
     report.add(check_hyperframes_browser(project_root))
     report.add(check_git_lfs())

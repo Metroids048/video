@@ -106,6 +106,16 @@ class Config:
         return self._root / rel
 
     @property
+    def project_root(self) -> Path:
+        """Absolute project root used by research and diagnostic subsystems."""
+        return self._root
+
+    @property
+    def youtube_research_root(self) -> Path:
+        """Git-ignored local root for YouTube research corpora."""
+        return self._root / "workspace" / "research" / "youtube"
+
+    @property
     def episode_id_pattern(self) -> str:
         return self.project.get("episode_id_pattern", r"^[A-Z0-9][A-Z0-9_-]{1,63}$")
 

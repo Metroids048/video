@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avs.local/schemas/youtube-corpus-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "channel_url", "generated_at", "extractor_version", "provider", "pagination_complete", "counts", "videos", "attempts"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "channel_slug": {"type": ["string", "null"]},
+    "channel_url": {"type": "string", "format": "uri"},
+    "generated_at": {"type": "string"},
+    "extractor_version": {"type": "string"},
+    "provider": {"type": "string"},
+    "pagination_complete": {"type": "boolean"},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "videos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["video_id", "status", "attempts"],
+        "properties": {
+          "video_id": {"type": "string"},
+          "status": {"type": "string"},
+          "attempts": {"type": "array"}
+        }
+      }
+    },
+    "attempts": {"type": "array"}
+  }
+}

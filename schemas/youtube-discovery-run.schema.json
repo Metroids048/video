@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avs.local/schemas/youtube-discovery-run.schema.json",
+  "type": "object",
+  "required": ["provider", "pagination_complete", "counts"],
+  "properties": {
+    "provider": {"type": "string"},
+    "pagination_complete": {"type": "boolean"},
+    "counts": {"type": "object"}
+  }
+}
