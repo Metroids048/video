@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avs.local/schemas/youtube-video.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["video_id", "url", "extraction_status", "availability"],
+  "properties": {
+    "video_id": {"type": "string", "minLength": 1},
+    "channel_id": {"type": ["string", "null"]},
+    "title": {"type": ["string", "null"]},
+    "url": {"type": "string", "format": "uri"},
+    "description": {"type": ["string", "null"]},
+    "published_at": {"type": ["string", "null"]},
+    "duration": {"type": ["number", "null"], "minimum": 0},
+    "availability": {"type": "string"},
+    "live_status": {"type": ["string", "null"]},
+    "thumbnail": {"type": ["string", "null"], "format": "uri"},
+    "discovered_at": {"type": ["string", "null"]},
+    "extraction_status": {"type": "string"},
+    "attempts": {"type": "array", "items": {"$ref": "#/$defs/attempt"}}
+  },
+  "$defs": {
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "started_at", "ended_at", "result"],
+      "properties": {
+        "provider": {"type": "string"},
+        "started_at": {"type": "string"},
+        "ended_at": {"type": "string"},
+        "exit_code": {"type": ["integer", "null"]},
+        "error_code": {"type": ["string", "null"]},
+        "message": {"type": ["string", "null"]},
+        "result": {"type": "string"}
+      }
+    }
+  }
+}
