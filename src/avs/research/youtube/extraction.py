@@ -11,7 +11,7 @@ import jsonschema
 
 from .asr import FasterWhisperProvider
 from .captions import YtDlpCaptionProvider
-from .media import YtDlpMediaProvider
+from .media import BrowserProfileMediaProvider, YtDlpMediaProvider
 from .storage import load_catalog, update_video_state
 from .transcript import canonical_from_captions, canonical_from_whisper, write_canonical, write_transcript_markdown
 from .transcript_quality import TranscriptQA, assess_transcript
@@ -42,11 +42,13 @@ def _find_video(root: Path, video_id: str) -> dict[str, Any]:
 def _failure_status(error: Any) -> str:
     if error is None:
         return "UNAVAILABLE"
-    if getattr(error, "blocked", False):
-        return "BLOCKED_BY_YOUTUBE"
-    if getattr(error, "retryable", False):
+    # A provider challenge is not a video-level terminal state.  It remains
+    # eligible for the browser-profile fallback and, if that also fails, for a
+    # later retry sweep.
+    if getattr(error, "blocked", False) or getattr(error, "retryable", False):
         return "RETRYABLE_FAILED"
-    return "UNAVAILABLE"
+    code = str(getattr(error, "code", "UNAVAILABLE"))
+    return code if code in {"PRIVATE", "DELETED", "UNAVAILABLE"} else "UNAVAILABLE"
 
 
 def _write_qa(path: Path, qa: TranscriptQA, *, forced_asr: bool = False) -> None:
@@ -65,6 +67,7 @@ def extract_transcript(root: Path, video_id: str, *, force: bool = False, force_
                        model: str = "small", language: str | None = "zh", device: str = "auto",
                        keep_media: bool = False, caption_provider: YtDlpCaptionProvider | None = None,
                        media_provider: YtDlpMediaProvider | None = None,
+                       browser_media_provider: BrowserProfileMediaProvider | None = None,
                        asr_provider: FasterWhisperProvider | None = None) -> dict[str, Any]:
     row = _find_video(root, video_id)
     video_root = root / "videos" / video_id
@@ -133,9 +136,25 @@ def extract_transcript(root: Path, video_id: str, *, force: bool = False, force_
         attempts.append(media_attempt)
         _append_attempt(attempts_path, media_attempt)
         if not media.ok or media.path is None:
-            status = _failure_status(media.error)
-            update_video_state(root, video_id, extraction_status=status, attempts=attempts)
-            return {"video_id": video_id, "status": status, "attempts": attempts}
+            # YouTube challenge/403/PO-token failures are acquisition failures;
+            # give the already-verified browser profile path one chance before
+            # classifying the video itself as unavailable.
+            blocked_or_retryable = bool(media.error and (media.error.blocked or media.error.retryable))
+            truly_terminal = bool(media.error and media.error.code in {"PRIVATE", "DELETED"})
+            if not truly_terminal and (blocked_or_retryable or media.error is None or media.error.code not in {"PRIVATE", "DELETED"}):
+                browser = (browser_media_provider or BrowserProfileMediaProvider()).download(row["url"], video_id, media_root)
+                browser_attempt = {"provider": "browser-profile-media-capture",
+                                   "result": "MEDIA_OK" if browser.ok else (browser.error.code if browser.error else "UNAVAILABLE"),
+                                   "message": browser.message, "started_at": browser.started_at, "ended_at": browser.ended_at,
+                                   "return_code": browser.return_code}
+                attempts.append(browser_attempt)
+                _append_attempt(attempts_path, browser_attempt)
+                if browser.ok and browser.path is not None:
+                    media = browser
+            if not media.ok or media.path is None:
+                status = _failure_status(media.error)
+                update_video_state(root, video_id, extraction_status=status, attempts=attempts)
+                return {"video_id": video_id, "status": status, "attempts": attempts}
         update_video_state(root, video_id, extraction_status="MEDIA_OK", attempts=attempts)
         update_video_state(root, video_id, extraction_status="ASR_PENDING", attempts=attempts)
         asr = (asr_provider or FasterWhisperProvider(model_size=model, language=language, device=device)).transcribe(

@@ -7,6 +7,7 @@ from pathlib import Path
 from avs.research.youtube.asr import ASRResult, FasterWhisperProvider
 from avs.research.youtube.captions import CaptionResult, YtDlpCaptionProvider
 from avs.research.youtube.extraction import extract_transcript
+from avs.research.youtube.errors import ClassifiedError
 from avs.research.youtube.media import MediaResult
 from avs.research.youtube.models import VideoRecord
 from avs.research.youtube.storage import load_catalog, write_corpus
@@ -109,6 +110,59 @@ def test_bad_caption_quality_falls_back_to_asr(tmp_path: Path) -> None:
     asr = FasterWhisperProvider(transcriber=lambda *a, **k: {"language_code": "zh", "segments": [{"start": 0, "end": 240, "text": "足够长的语音内容"}], "words": []})
     result = extract_transcript(tmp_path, "v1", caption_provider=Captions(), media_provider=Media(), asr_provider=asr)
     assert result["source_type"] == "ASR_WHISPER"
+
+
+def test_blocked_ytdlp_media_falls_back_to_browser_profile(tmp_path: Path) -> None:
+    _seed(tmp_path)
+
+    class Captions:
+        def fetch(self, *args, **kwargs):
+            return CaptionResult(False, error=ClassifiedError("CAPTION_UNAVAILABLE", False),
+                                 message="no captions", started_at="a", ended_at="b", attempts=[])
+
+    class YtDlpMedia:
+        def download(self, *args, **kwargs):
+            return MediaResult(False, error=ClassifiedError("SIGN_IN_CONFIRM_BOT", False, True),
+                               message="challenge", started_at="a", ended_at="b", return_code=1)
+
+    class BrowserMedia:
+        def download(self, *args, **kwargs):
+            path = tmp_path / "media" / "v1.browser.wav"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"real-browser-audio")
+            return MediaResult(True, path=path, message="BROWSER_PROFILE_MEDIA_CAPTURE",
+                               started_at="a", ended_at="b")
+
+    asr = FasterWhisperProvider(transcriber=lambda *a, **k: {
+        "language_code": "zh",
+        "segments": [{"start": 0, "end": 12, "text": "浏览器回退文本"}],
+        "words": [{"type": "word", "text": "浏览器", "start": 0, "end": 1}],
+    })
+    result = extract_transcript(tmp_path, "v1", caption_provider=Captions(), media_provider=YtDlpMedia(),
+                                browser_media_provider=BrowserMedia(), asr_provider=asr)
+    assert result["status"] == "PASS"
+    assert result["source_type"] == "ASR_WHISPER"
+    assert [item["provider"] for item in result["attempts"] if "provider" in item][-3:] == [
+        "yt-dlp-media", "browser-profile-media-capture", "faster-whisper"
+    ]
+
+
+def test_blocked_media_is_not_a_terminal_video_status(tmp_path: Path) -> None:
+    _seed(tmp_path)
+
+    class Captions:
+        def fetch(self, *args, **kwargs):
+            return CaptionResult(False, error=ClassifiedError("CAPTION_UNAVAILABLE", False), attempts=[])
+
+    class BlockedMedia:
+        def download(self, *args, **kwargs):
+            return MediaResult(False, error=ClassifiedError("SIGN_IN_CONFIRM_BOT", False, True),
+                               message="challenge")
+
+    result = extract_transcript(tmp_path, "v1", caption_provider=Captions(), media_provider=BlockedMedia(),
+                                browser_media_provider=BlockedMedia())
+    assert result["status"] == "RETRYABLE_FAILED"
+    assert load_catalog(tmp_path)[0]["extraction_status"] == "RETRYABLE_FAILED"
 
 
 def test_resume_skips_qa_passed_without_provider_calls(tmp_path: Path) -> None:
