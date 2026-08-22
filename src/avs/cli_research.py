@@ -140,6 +140,36 @@ def register_commands(main: click.Group) -> None:
             console.print("[red]YOUTUBE_TRANSCRIPT: NOT PASS[/red]")
             raise click.exceptions.Exit(1)
 
+    @youtube.command("transcripts")
+    @click.argument("channel")
+    @click.option("--resume/--no-resume", default=True, show_default=True)
+    @click.option("--video-id", default=None, help="只跑指定 video_id；默认逐条跑完整 catalog")
+    @click.option("--force-asr", is_flag=True, help="跳过字幕 provider，强制真实媒体→faster-whisper")
+    @click.option("--model", type=click.Choice(["tiny", "base", "small", "medium", "large-v3"]), default="small")
+    @click.option("--language", default="zh", show_default=True)
+    @click.option("--device", default="auto", show_default=True)
+    @click.option("--keep-media", is_flag=True, help="保留 Whisper 分析媒体")
+    def transcripts_cmd(channel: str, resume: bool, video_id: str | None, force_asr: bool,
+                        model: str, language: str, device: str, keep_media: bool) -> None:
+        """只执行全频道逐条 transcript；不会运行 visual/semantic/content。"""
+        from avs.research.youtube.corpus import run_transcripts
+
+        root = Path.cwd()
+        while root != root.parent and not (root / "AGENTS.md").exists():
+            root = root.parent
+        try:
+            result = run_transcripts(_channel_dir(root, channel), resume=resume, video_id=video_id,
+                                     force_asr=force_asr, model=model, language=language,
+                                     device=device, keep_media=keep_media)
+        except Exception as exc:  # noqa: BLE001 - CLI boundary
+            raise click.ClickException(str(exc)) from exc
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result.get("pass"):
+            console.print("[green]YOUTUBE_ALL_TRANSCRIPTS: PASS[/green]")
+        else:
+            console.print("[red]YOUTUBE_ALL_TRANSCRIPTS: NOT PASS[/red]")
+            raise click.exceptions.Exit(1)
+
     @youtube.command("content")
     @click.argument("channel")
     @click.option("--video-id", required=True, help="复用已有 TRANSCRIPT_QA_PASSED 的视频")
