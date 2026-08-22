@@ -139,3 +139,55 @@ def register_commands(main: click.Group) -> None:
         else:
             console.print("[red]YOUTUBE_TRANSCRIPT: NOT PASS[/red]")
             raise click.exceptions.Exit(1)
+
+    @youtube.command("content")
+    @click.argument("channel")
+    @click.option("--video-id", required=True, help="复用已有 TRANSCRIPT_QA_PASSED 的视频")
+    @click.option("--resume/--no-resume", default=True, show_default=True)
+    def content_cmd(channel: str, video_id: str, resume: bool) -> None:
+        """执行单视频 Visual -> Semantic -> Content -> QA。"""
+        from avs.research.youtube.corpus import run_corpus
+
+        root = Path.cwd()
+        while root != root.parent and not (root / "AGENTS.md").exists():
+            root = root.parent
+        result = run_corpus(_channel_dir(root, channel), resume=resume, video_id=video_id)
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result.get("content_passed", 0) >= 1:
+            console.print("[green]YOUTUBE_CONTENT: PASS[/green]")
+        else:
+            console.print("[red]YOUTUBE_CONTENT: NOT PASS[/red]")
+            raise click.exceptions.Exit(1)
+
+    @youtube.command("corpus")
+    @click.argument("channel")
+    @click.option("--resume/--no-resume", default=True, show_default=True)
+    def corpus_cmd(channel: str, resume: bool) -> None:
+        """持续执行全频道 transcript reuse -> visual -> content corpus。"""
+        from avs.research.youtube.corpus import run_corpus
+
+        root = Path.cwd()
+        while root != root.parent and not (root / "AGENTS.md").exists():
+            root = root.parent
+        result = run_corpus(_channel_dir(root, channel), resume=resume)
+        console.print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result.get("pass"):
+            console.print("[green]YOUTUBE_CONTENT_CORPUS: PASS[/green]")
+        else:
+            console.print("[yellow]YOUTUBE_CONTENT_CORPUS: IN_PROGRESS[/yellow]")
+
+    @youtube.command("corpus-status")
+    @click.argument("channel")
+    @click.option("--json", "as_json", is_flag=True)
+    def corpus_status_cmd(channel: str, as_json: bool) -> None:
+        """查看可恢复的 corpus progress、失败和最终状态。"""
+        from avs.research.youtube.corpus import corpus_status
+
+        root = Path.cwd()
+        while root != root.parent and not (root / "AGENTS.md").exists():
+            root = root.parent
+        payload = corpus_status(_channel_dir(root, channel))
+        if as_json:
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        else:
+            console.print(json.dumps(payload, ensure_ascii=False, indent=2))

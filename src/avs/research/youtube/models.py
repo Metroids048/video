@@ -23,6 +23,12 @@ class ExtractionStatus(StrEnum):
     ASR_OK = "ASR_OK"
     TRANSCRIPT_NORMALIZED = "TRANSCRIPT_NORMALIZED"
     TRANSCRIPT_QA_PASSED = "TRANSCRIPT_QA_PASSED"
+    VISUAL_EVIDENCE = "VISUAL_EVIDENCE"
+    VISUAL_QA_PASSED = "VISUAL_QA_PASSED"
+    SEMANTIC_EXTRACTION = "SEMANTIC_EXTRACTION"
+    CONTENT_BUILD = "CONTENT_BUILD"
+    CONTENT_QA = "CONTENT_QA"
+    CONTENT_QA_PASSED = "CONTENT_QA_PASSED"
 
 
 TERMINAL_STATUSES = {
@@ -42,6 +48,12 @@ TERMINAL_STATUSES = {
     ExtractionStatus.ASR_OK.value,
     ExtractionStatus.TRANSCRIPT_NORMALIZED.value,
     ExtractionStatus.TRANSCRIPT_QA_PASSED.value,
+    ExtractionStatus.VISUAL_EVIDENCE.value,
+    ExtractionStatus.VISUAL_QA_PASSED.value,
+    ExtractionStatus.SEMANTIC_EXTRACTION.value,
+    ExtractionStatus.CONTENT_BUILD.value,
+    ExtractionStatus.CONTENT_QA.value,
+    ExtractionStatus.CONTENT_QA_PASSED.value,
 }
 
 
