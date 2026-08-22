@@ -66,6 +66,9 @@ cache/
 logs/
 output/
 
+# YouTube research corpus (third-party transcripts/media/frames stay local)
+workspace/research/youtube/
+
 # ── Local runtimes and generated media (never commit) ───────────────────────
 tools/local-tts/
 work/
