@@ -26,9 +26,11 @@
       "required": ["provider", "started_at", "ended_at", "result"],
       "properties": {
         "provider": {"type": "string"},
+        "mode": {"type": ["string", "null"]},
         "started_at": {"type": "string"},
         "ended_at": {"type": "string"},
         "exit_code": {"type": ["integer", "null"]},
+        "return_code": {"type": ["integer", "null"]},
         "error_code": {"type": ["string", "null"]},
         "message": {"type": ["string", "null"]},
         "result": {"type": "string"}

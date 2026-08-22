@@ -14,6 +14,15 @@ class ExtractionStatus(StrEnum):
     BLOCKED_BY_YOUTUBE = "BLOCKED_BY_YOUTUBE"
     RETRYABLE_FAILED = "RETRYABLE_FAILED"
     FAILED_UNKNOWN = "FAILED_UNKNOWN"
+    CAPTION_PENDING = "CAPTION_PENDING"
+    CAPTION_OK = "CAPTION_OK"
+    CAPTION_UNAVAILABLE = "CAPTION_UNAVAILABLE"
+    MEDIA_PENDING = "MEDIA_PENDING"
+    MEDIA_OK = "MEDIA_OK"
+    ASR_PENDING = "ASR_PENDING"
+    ASR_OK = "ASR_OK"
+    TRANSCRIPT_NORMALIZED = "TRANSCRIPT_NORMALIZED"
+    TRANSCRIPT_QA_PASSED = "TRANSCRIPT_QA_PASSED"
 
 
 TERMINAL_STATUSES = {
@@ -24,6 +33,15 @@ TERMINAL_STATUSES = {
     ExtractionStatus.BLOCKED_BY_YOUTUBE.value,
     ExtractionStatus.RETRYABLE_FAILED.value,
     ExtractionStatus.FAILED_UNKNOWN.value,
+    ExtractionStatus.CAPTION_PENDING.value,
+    ExtractionStatus.CAPTION_OK.value,
+    ExtractionStatus.CAPTION_UNAVAILABLE.value,
+    ExtractionStatus.MEDIA_PENDING.value,
+    ExtractionStatus.MEDIA_OK.value,
+    ExtractionStatus.ASR_PENDING.value,
+    ExtractionStatus.ASR_OK.value,
+    ExtractionStatus.TRANSCRIPT_NORMALIZED.value,
+    ExtractionStatus.TRANSCRIPT_QA_PASSED.value,
 }
 
 
@@ -105,4 +123,3 @@ class AuditReport:
     checks: dict[str, bool]
     counts: dict[str, int]
     errors: list[str] = field(default_factory=list)
-

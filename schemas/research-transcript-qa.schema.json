@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avs.local/schemas/research-transcript-qa.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["status", "reasons", "segment_count", "word_count", "coverage_seconds", "forced_asr"],
+  "properties": {
+    "status": {"enum": ["PASS", "WARN", "FAIL"]},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "segment_count": {"type": "integer", "minimum": 0},
+    "word_count": {"type": "integer", "minimum": 0},
+    "coverage_seconds": {"type": "number", "minimum": 0},
+    "coverage_ratio": {"type": ["number", "null"], "minimum": 0},
+    "language_ok": {"type": "boolean"},
+    "forced_asr": {"type": "boolean"}
+  }
+}
