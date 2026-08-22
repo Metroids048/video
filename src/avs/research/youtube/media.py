@@ -97,6 +97,16 @@ class BrowserProfileMediaProvider:
     def _run(self, command: list[str]) -> subprocess.CompletedProcess:
         return subprocess.run(command, capture_output=True, text=True, timeout=self.timeout, shell=False)
 
+    def timeout_for_duration(self, duration: float | int | None) -> int:
+        """Allow realtime capture plus startup, ads and media conversion headroom."""
+        try:
+            seconds = float(duration) if duration is not None else 0.0
+        except (TypeError, ValueError):
+            seconds = 0.0
+        if seconds <= 0:
+            return self.timeout
+        return max(self.timeout, int(seconds * 1.35 + 300))
+
     @staticmethod
     def _error(code: str, message: str = "") -> ClassifiedError:
         if code in {"PRIVATE", "DELETED", "UNAVAILABLE"}:

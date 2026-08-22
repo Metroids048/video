@@ -142,13 +142,20 @@ def extract_transcript(root: Path, video_id: str, *, force: bool = False, force_
             blocked_or_retryable = bool(media.error and (media.error.blocked or media.error.retryable))
             truly_terminal = bool(media.error and media.error.code in {"PRIVATE", "DELETED"})
             if not truly_terminal and (blocked_or_retryable or media.error is None or media.error.code not in {"PRIVATE", "DELETED"}):
-                browser = (browser_media_provider or BrowserProfileMediaProvider()).download(row["url"], video_id, media_root)
+                browser_provider = browser_media_provider or BrowserProfileMediaProvider()
+                if isinstance(browser_provider, BrowserProfileMediaProvider):
+                    browser_provider.timeout = browser_provider.timeout_for_duration(row.get("duration"))
+                browser = browser_provider.download(row["url"], video_id, media_root)
                 browser_attempt = {"provider": "browser-profile-media-capture",
                                    "result": "MEDIA_OK" if browser.ok else (browser.error.code if browser.error else "UNAVAILABLE"),
                                    "message": browser.message, "started_at": browser.started_at, "ended_at": browser.ended_at,
                                    "return_code": browser.return_code}
                 attempts.append(browser_attempt)
                 _append_attempt(attempts_path, browser_attempt)
+                # Classification must use the last provider actually tried;
+                # otherwise a browser PRIVATE/timeout is masked by yt-dlp's
+                # earlier challenge error.
+                media = browser
                 if browser.ok and browser.path is not None:
                     media = browser
             if not media.ok or media.path is None:
