@@ -8,7 +8,7 @@ from avs.research.youtube.asr import ASRResult, FasterWhisperProvider
 from avs.research.youtube.captions import CaptionResult, YtDlpCaptionProvider
 from avs.research.youtube.extraction import extract_transcript
 from avs.research.youtube.errors import ClassifiedError
-from avs.research.youtube.media import MediaResult
+from avs.research.youtube.media import BrowserProfileMediaProvider, MediaResult
 from avs.research.youtube.models import VideoRecord
 from avs.research.youtube.storage import load_catalog, write_corpus
 from avs.research.youtube.transcript import TranscriptSegment, canonical_from_whisper, parse_vtt
@@ -163,6 +163,59 @@ def test_blocked_media_is_not_a_terminal_video_status(tmp_path: Path) -> None:
                                 browser_media_provider=BlockedMedia())
     assert result["status"] == "RETRYABLE_FAILED"
     assert load_catalog(tmp_path)[0]["extraction_status"] == "RETRYABLE_FAILED"
+
+
+def test_browser_private_error_wins_over_ytdlp_challenge(tmp_path: Path) -> None:
+    _seed(tmp_path)
+
+    class Captions:
+        def fetch(self, *args, **kwargs):
+            return CaptionResult(False, error=ClassifiedError("CAPTION_UNAVAILABLE", False), attempts=[])
+
+    class Challenge:
+        def download(self, *args, **kwargs):
+            return MediaResult(False, error=ClassifiedError("SIGN_IN_CONFIRM_BOT", False, True))
+
+    class BrowserPrivate:
+        def download(self, *args, **kwargs):
+            return MediaResult(False, error=ClassifiedError("PRIVATE", False), message="private")
+
+    result = extract_transcript(tmp_path, "v1", caption_provider=Captions(), media_provider=Challenge(),
+                                browser_media_provider=BrowserPrivate())
+
+    assert result["status"] == "PRIVATE"
+    assert load_catalog(tmp_path)[0]["extraction_status"] == "PRIVATE"
+
+
+def test_browser_timeout_remains_retryable_after_ytdlp_challenge(tmp_path: Path) -> None:
+    _seed(tmp_path)
+
+    class Captions:
+        def fetch(self, *args, **kwargs):
+            return CaptionResult(False, error=ClassifiedError("CAPTION_UNAVAILABLE", False), attempts=[])
+
+    class Challenge:
+        def download(self, *args, **kwargs):
+            return MediaResult(False, error=ClassifiedError("SIGN_IN_CONFIRM_BOT", False, True))
+
+    class BrowserTimeout:
+        def download(self, *args, **kwargs):
+            return MediaResult(False, error=ClassifiedError("BROWSER_CAPTURE_TIMEOUT", True), message="timeout")
+
+    result = extract_transcript(tmp_path, "v1", caption_provider=Captions(), media_provider=Challenge(),
+                                browser_media_provider=BrowserTimeout())
+
+    assert result["status"] == "RETRYABLE_FAILED"
+    assert load_catalog(tmp_path)[0]["extraction_status"] == "RETRYABLE_FAILED"
+    assert [item["provider"] for item in result["attempts"] if "provider" in item][-2:] == [
+        "yt-dlp-media", "browser-profile-media-capture"
+    ]
+
+
+def test_browser_timeout_scales_for_long_video() -> None:
+    provider = BrowserProfileMediaProvider(timeout=3600)
+    assert provider.timeout_for_duration(4000) == 5700
+    assert provider.timeout_for_duration(100) == 3600
 
 
 def test_resume_skips_qa_passed_without_provider_calls(tmp_path: Path) -> None:
