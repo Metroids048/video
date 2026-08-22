@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avs.local/schemas/research-transcript.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "video_id", "language", "source_type", "provider", "generated_at", "text", "segments", "words", "provenance"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "video_id": {"type": "string", "minLength": 1},
+    "language": {"type": "string"},
+    "source_type": {"enum": ["MANUAL_CAPTION", "AUTO_CAPTION", "ASR_WHISPER"]},
+    "provider": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "text": {"type": "string"},
+    "segments": {"type": "array", "items": {"$ref": "#/$defs/segment"}},
+    "words": {"type": "array", "items": {"$ref": "#/$defs/word"}},
+    "provenance": {"type": "object"}
+  },
+  "$defs": {
+    "segment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["segment_id", "start", "end", "text"],
+      "properties": {"segment_id": {"type": "string"}, "start": {"type": "number", "minimum": 0}, "end": {"type": "number", "minimum": 0}, "text": {"type": "string"}}
+    },
+    "word": {
+      "type": "object", "additionalProperties": false,
+      "required": ["text", "start", "end", "type"],
+      "properties": {"text": {"type": "string"}, "start": {"type": "number", "minimum": 0}, "end": {"type": "number", "minimum": 0}, "type": {"type": "string"}, "speaker_id": {"type": ["string", "null"]}}
+    }
+  }
+}
