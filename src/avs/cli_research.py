@@ -221,3 +221,25 @@ def register_commands(main: click.Group) -> None:
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
         else:
             console.print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+    @youtube.command("pipeline")
+    @click.argument("channel")
+    @click.option("--resume/--no-resume", default=True, show_default=True)
+    def pipeline_cmd(channel: str, resume: bool) -> None:
+        """连续执行 Clean Transcript → Agent Corpus → Rule → Quant Research。"""
+        from avs.research.youtube.pipeline import run_research_pipeline
+
+        root = Path.cwd()
+        while root != root.parent and not (root / "AGENTS.md").exists():
+            root = root.parent
+        try:
+            result = run_research_pipeline(_channel_dir(root, channel), resume=resume)
+        except Exception as exc:  # noqa: BLE001 - CLI boundary
+            raise click.ClickException(str(exc)) from exc
+        state = result["state"]
+        console.print(json.dumps(state, ensure_ascii=False, indent=2))
+        status = state.get("status")
+        if status == "COMPLETE":
+            console.print("[green]QINXIONGMAO_RESEARCH_PIPELINE: COMPLETE[/green]")
+        else:
+            console.print("[yellow]QINXIONGMAO_RESEARCH_PIPELINE: IN_PROGRESS[/yellow]")

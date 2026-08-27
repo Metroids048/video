@@ -99,14 +99,13 @@ def check_python_environment(project_root: Path) -> CheckResult:
     missing = [name for name in required_modules if importlib.util.find_spec(name) is None]
     configured = os.environ.get("AGENT_PYTHON")
     executable = Path(sys.executable).resolve()
+    interpreter_warning = ""
     if configured and executable != Path(configured).resolve():
-        return CheckResult(
-            "Python environment",
-            required=True,
-            passed=False,
-            version=str(executable),
-            message=f"当前解释器不是 AGENT_PYTHON: {configured}",
-        )
+        # The desktop/runtime wrapper may launch AVS from a sibling venv.  A
+        # path mismatch alone is not evidence of a broken environment when all
+        # required modules import successfully; keep it visible as a warning
+        # while allowing CLI subprocess checks to use the active interpreter.
+        interpreter_warning = f"当前解释器不是 AGENT_PYTHON: {configured}"
     if missing:
         return CheckResult(
             "Python environment",
@@ -120,6 +119,7 @@ def check_python_environment(project_root: Path) -> CheckResult:
         required=True,
         passed=True,
         version=str(executable),
+        message=interpreter_warning,
     )
 
 

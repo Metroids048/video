@@ -2,7 +2,7 @@
 
 本索引只记录逐字稿提取状态；未包含 visual、semantic 或 content 产物。
 
-- **【第263期】牛市避坑指南书 | 牛市 | 避坑 | 指南 | 陷阱** (`zlksxbDIKXc`) — `CONTENT_QA_PASSED` — [canonical.json](../videos/zlksxbDIKXc/transcript/canonical.json)
+- **【第263期】牛市避坑指南书 | 牛市 | 避坑 | 指南 | 陷阱** (`zlksxbDIKXc`) — `TRANSCRIPT_QA_PASSED` — [canonical.json](../videos/zlksxbDIKXc/transcript/canonical.json)
 - **《日内交易三步曲》第3讲：一定。实盘讲解我当前能不能入场交易？如何搭建我的第一套日内交易系统？光说不练假把式！** (`zf2QElxgITI`) — `TRANSCRIPT_QA_PASSED` — [canonical.json](../videos/zf2QElxgITI/transcript/canonical.json)
 - **【第223期】如何判断趋势是否到了末期 | 趋势 | 末期 | 什么是背驰 | 背离** (`zSci8LfYgNQ`) — `TRANSCRIPT_QA_PASSED` — [canonical.json](../videos/zSci8LfYgNQ/transcript/canonical.json)
 - **第2章（市场结构）第4讲：周期和级别（1-2-4）** (`zEWvVKABQ5w`) — `TRANSCRIPT_QA_PASSED` — [canonical.json](../videos/zEWvVKABQ5w/transcript/canonical.json)

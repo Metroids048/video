@@ -108,7 +108,15 @@ def _write_transcript_index(root: Path, rows: list[dict[str, Any]]) -> None:
     lines = ["# TRANSCRIPT_INDEX", "", "本索引只记录逐字稿提取状态；未包含 visual、semantic 或 content 产物。", ""]
     for row in rows:
         video_id = str(row.get("video_id"))
-        status = str(row.get("extraction_status", "FAILED_UNKNOWN"))
+        raw_status = str(row.get("extraction_status", "FAILED_UNKNOWN"))
+        # Transcript index is intentionally transcript-only; downstream content
+        # stages must never leak their status into this source-of-truth view.
+        if raw_status in TRANSCRIPT_COMPLETED_STATES:
+            status = "TRANSCRIPT_QA_PASSED"
+        elif raw_status in TRANSCRIPT_TERMINAL_STATUSES:
+            status = raw_status
+        else:
+            status = raw_status
         title = row.get("title") or video_id
         transcript = root / "videos" / video_id / "transcript" / "canonical.json"
         ref = f"[canonical.json](../videos/{video_id}/transcript/canonical.json)" if transcript.is_file() else "NONE"
@@ -471,6 +479,10 @@ def _progress(root: Path, rows: list[dict[str, Any]], last_video_id: str | None 
 
 
 def build_agent_bundle(root: Path, rows: list[dict[str, Any]]) -> dict[str, Any]:
+    # Compatibility mirror.  The authoritative Agent Corpus is agent_corpus/;
+    # this legacy directory is derived output and is never referenced by README.
+    from .agent_corpus import build_agent_corpus
+    summary = build_agent_corpus(root, rows)
     bundle = root / "agent_bundle"; topics: dict[str, list[dict[str, Any]]] = defaultdict(list); chunks: list[dict[str, Any]] = []
     video_lines = ["# VIDEO_INDEX", ""]
     for row in rows:
@@ -499,7 +511,7 @@ def build_agent_bundle(root: Path, rows: list[dict[str, Any]]) -> dict[str, Any]
     (bundle / "README.md").write_text("# Agent Bundle\n\n先读 CHANNEL_OVERVIEW.md、TOPIC_INDEX.md、VIDEO_INDEX.md；单视频详情读 videos/<id>/content.md。\n", encoding="utf-8")
     (bundle / "catalog.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     _write_text(bundle / "corpus_chunks.jsonl", "".join(json.dumps(c, ensure_ascii=False) + "\n" for c in chunks))
-    return {"topics": len(topics), "chunks": len(chunks)}
+    return {"topics": len(topics), "chunks": len(chunks), "authoritative": "agent_corpus", **summary}
 
 
 def run_corpus(root: Path, *, resume: bool = True, video_id: str | None = None) -> dict[str, Any]:
@@ -518,9 +530,15 @@ def run_corpus(root: Path, *, resume: bool = True, video_id: str | None = None) 
     statuses = Counter(str(r.get("extraction_status", "FAILED_UNKNOWN")) for r in all_rows)
     terminal = sum(statuses.get(x, 0) for x in ("PRIVATE", "DELETED", "UNAVAILABLE"))
     content = statuses.get("CONTENT_QA_PASSED", 0)
+    # The old content/terminal aggregate is no longer authoritative.  Run the
+    # continuous research pipeline and leave a clearly deprecated compatibility
+    # file so older callers do not mistake it for a current gate.
+    from .pipeline import run_research_pipeline
+    pipeline = run_research_pipeline(root, resume=resume)
     payload = {"total": len(all_rows), "content_passed": content, "terminal_unavailable": terminal,
                "failed_unknown": statuses.get("FAILED_UNKNOWN", 0), "retryable_failed": statuses.get("RETRYABLE_FAILED", 0), "bundle": bundle,
-               "generated_at": _now(), "pass": content + terminal == len(all_rows) and statuses.get("FAILED_UNKNOWN", 0) == 0 and statuses.get("RETRYABLE_FAILED", 0) == 0}
+               "generated_at": _now(), "pass": False, "deprecated": True,
+               "reason": "superseded by reports/current-state.json", "current_state": pipeline["state"]}
     _write_json(root / "reports" / "corpus-final.json", payload)
     return payload
 
@@ -565,11 +583,7 @@ def finalize_corpus(root: Path, *, sample_size: int = 20) -> dict[str, Any]:
                 f"- Retryable failed: {statuses.get('RETRYABLE_FAILED', 0)}", f"- Semantic units: {total_units}",
                 f"- Keyframes: {total_frames}", f"- Source maps: {total_maps}", "", "Only content QA passed videos have information-preserving content; terminal videos retain explicit catalog state and failure provenance."]
     (root / "reports" / "coverage.md").write_text("\n".join(coverage) + "\n", encoding="utf-8")
-    channel = load_channel(root)
-    (root / "README_FOR_AGENTS.md").write_text(
-        f"# {channel.get('title') or channel.get('handle') or 'YouTube Corpus'}\n\n"
-        "先读 `agent_bundle/CHANNEL_OVERVIEW.md`、`agent_bundle/TOPIC_INDEX.md`、`agent_bundle/VIDEO_INDEX.md`。\n"
-        "单视频详情读 `videos/<video_id>/content.md`；原话读 `videos/<video_id>/transcript/transcript.md`；\n"
-        "时间戳细节读 `semantic_units.jsonl` 与 `source_map.json`；画面证据读 `visual/`。\n\n"
-        "本目录是可恢复的研究语料 workspace，不应提交 Git。\n", encoding="utf-8")
+    from .pipeline import write_agent_readme
+    from .clean import clean_corpus_gate
+    write_agent_readme(root, agent_ready=clean_corpus_gate(root, rows)["status"] == "PASS")
     return sample_report
