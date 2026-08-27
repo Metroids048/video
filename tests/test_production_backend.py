@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from avs.production_backend import ProductionBackendError, build_mpt_command, build_mpt_request, run_mpt
+from avs.production_backend import (
+    ProductionBackendError,
+    build_mpt_command,
+    build_mpt_request,
+    run_mpt,
+)
 
 
 def _episode(tmp_path: Path) -> Path:
