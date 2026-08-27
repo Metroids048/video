@@ -6,8 +6,9 @@ used for internal filter tests, but these helpers are the publishable route.
 """
 from __future__ import annotations
 
-import json
 import hashlib
+import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -284,6 +285,124 @@ def active_plan(
     model.complete_stage("plan")
     model.save(ep_dir / "episode.json")
     return {"brief": brief, "selection": selection, "script": script, "evidence_map": evidence, "shot_plan": shot_plan}
+
+
+def _voice_metadata_paths(ep_dir: Path) -> tuple[Path, ...]:
+    return (
+        ep_dir / "work" / "voice-lock.json",
+        ep_dir / "work" / "narration.json",
+        ep_dir / "work" / "generated" / "narration.json",
+    )
+
+
+def _voice_audio_path(ep_dir: Path) -> Path | None:
+    for path in (
+        ep_dir / "work" / "final-narration.mp3",
+        ep_dir / "work" / "narration.mp3",
+        ep_dir / "work" / "audio" / "final-narration.mp3",
+    ):
+        if path.is_file() and path.stat().st_size > 0:
+            return path
+    manifest_path = ep_dir / "work" / "input-manifest.json"
+    if manifest_path.is_file():
+        try:
+            manifest = _read(manifest_path)
+        except (OSError, ValueError):
+            manifest = {}
+        for asset in manifest.get("assets", []):
+            if asset.get("source_type") != "audio" or asset.get("audio_role") not in {"narration", "original_voice"}:
+                continue
+            rel = asset.get("working_path") or asset.get("source_path")
+            if not rel:
+                continue
+            candidate = (ep_dir / str(rel)).resolve()
+            try:
+                candidate.relative_to(ep_dir.resolve())
+            except ValueError:
+                continue
+            if candidate.is_file() and candidate.stat().st_size > 0:
+                return candidate
+    return None
+
+
+def voice_lock_state(ep_dir: Path, *, publishable: bool = True) -> tuple[bool, str]:
+    """Return whether this Episode has current, approved, non-Edge locked audio."""
+    audio = _voice_audio_path(ep_dir)
+    if audio is None:
+        return False, "缺少当前 Episode 的 narration/original_voice 音频"
+    metadata: dict[str, Any] | None = None
+    for path in _voice_metadata_paths(ep_dir):
+        if path.is_file():
+            try:
+                candidate = _read(path)
+            except (OSError, ValueError):
+                continue
+            if isinstance(candidate, dict):
+                metadata = candidate
+                break
+    if metadata is None:
+        return False, "缺少 voice-lock.json/narration.json；需要一次 voice audition 批准"
+    provider = str(metadata.get("provider") or "").lower()
+    if publishable and provider == "edge_tts":
+        return False, "Edge TTS 仅允许 development，publishable Episode 必须使用批准声音"
+    if metadata.get("approved") is not True or not metadata.get("voice_profile"):
+        return False, "声音尚未由 voice audition 批准并锁定 voice_profile"
+    return True, "locked"
+
+
+def active_voice_lock(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, str]:
+    """Materialize the approved narration into the canonical Episode paths."""
+    ready, reason = voice_lock_state(ep_dir, publishable=model.publishable)
+    if not ready:
+        model.block(reason, stage="voice-lock")
+        model.save(ep_dir / "episode.json")
+        raise RuntimeError(reason)
+    source = _voice_audio_path(ep_dir)
+    assert source is not None
+    work = ep_dir / "work"
+    work.mkdir(parents=True, exist_ok=True)
+    target = work / "final-narration.mp3"
+    if source.resolve() != target.resolve() and (force or not target.exists()):
+        shutil.copy2(source, target)
+    metadata_path = next((p for p in _voice_metadata_paths(ep_dir) if p.is_file()), work / "voice-lock.json")
+    metadata = _read(metadata_path) if metadata_path.is_file() else {}
+    metadata.update({"approved": True, "locked": True, "locked_audio": target.relative_to(ep_dir).as_posix()})
+    _write(work / "voice-lock.json", metadata)
+    model.clear_block(stage="voice-lock")
+    model.complete_stage("voice-lock")
+    model.save(ep_dir / "episode.json")
+    return {"audio": target.relative_to(ep_dir).as_posix(), "provider": str(metadata.get("provider") or "user_audio")}
+
+
+def active_voice_audition(
+    ep_dir: Path,
+    model: EpisodeModel,
+    audio: Path,
+    *,
+    provider: str = "approved_voice_profile",
+    voice_profile: str = "audition-approved",
+) -> dict[str, str]:
+    """Persist a user-approved audition result; no synthesis or silent fallback."""
+    if not audio.is_file() or audio.stat().st_size == 0:
+        raise RuntimeError(f"试听音频不存在或为空: {audio}")
+    work = ep_dir / "work"
+    work.mkdir(parents=True, exist_ok=True)
+    target = work / "final-narration.mp3"
+    shutil.copy2(audio, target)
+    metadata = {
+        "version": "2.0",
+        "provider": provider,
+        "voice_profile": voice_profile,
+        "approved": True,
+        "locked": True,
+        "locked_audio": target.relative_to(ep_dir).as_posix(),
+    }
+    _write(work / "voice-lock.json", metadata)
+    model.clear_block(stage="voice-audition")
+    model.complete_stage("voice-audition")
+    model.complete_stage("voice-lock")
+    model.save(ep_dir / "episode.json")
+    return {"audio": target.relative_to(ep_dir).as_posix(), "provider": provider}
 
 
 def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> Timeline:

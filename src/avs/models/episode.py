@@ -32,7 +32,7 @@ _PIPELINE_ORDER = {
 }
 _ACTIVE_STAGE_ORDER = (
     "ingest", "analyze", "story-mine", "direct", "screen-plan", "pilot",
-    "pilot-review", "pilot-revise", "plan", "preview", "visual-review",
+    "pilot-review", "pilot-revise", "plan", "voice-audition", "voice-lock", "preview", "visual-review",
     "final-render", "qa", "approve", "delivery", "export",
 )
 _BLOCKED_STAGES = frozenset(_ACTIVE_STAGE_ORDER)
@@ -46,6 +46,8 @@ _LEGACY_STAGE_STATUS = {
     "pilot-review": EpisodeStatus.PILOT_APPROVED,
     "pilot-revise": EpisodeStatus.TIMELINE_READY,
     "plan": EpisodeStatus.INGESTED,
+    "voice-audition": EpisodeStatus.CONTENT_READY,
+    "voice-lock": EpisodeStatus.CONTENT_READY,
     "preview": EpisodeStatus.CONTENT_READY,
     "visual-review": EpisodeStatus.TIMELINE_READY,
     "final-render": EpisodeStatus.TIMELINE_READY,

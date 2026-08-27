@@ -111,6 +111,12 @@ def _release_review_current(ep_dir: Path) -> bool:
     return valid
 
 
+def _voice_lock_status(ep_dir: Path, model: EpisodeModel) -> tuple[bool, str]:
+    from avs.active import voice_lock_state
+
+    return voice_lock_state(ep_dir, publishable=model.publishable)
+
+
 _RETRY_COMMANDS: dict[str, tuple[str, ...]] = {
     "ingest": ("ingest",),
     "analyze": ("analyze",),
@@ -122,6 +128,7 @@ _RETRY_COMMANDS: dict[str, tuple[str, ...]] = {
     "preview": ("preview",),
     "visual-review": ("visual-review",),
     "final-render": ("final-render",),
+    "voice-lock": ("voice-lock",),
     "qa": ("qa",),
     "delivery": ("deliver",),
     "export": ("export",),
@@ -226,6 +233,10 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
     # of the generic ingest/analyse/script chain.  It still records every stage
     # in episode.json and cannot reach final-render before the Pilot Gate passes.
     if model.production_type == "SCREEN_DOCUMENTARY":
+        if "ingest" not in stages and active_manifest.is_file() and status in {"CREATED", "INGESTED"}:
+            return WorkflowAction("command", "ingest", "清点当前 Episode 的真实录屏与音频输入。", ("ingest",))
+        if "analyze" not in stages and active_manifest.is_file() and status in {"INGESTED", "REFERENCE_READY"}:
+            return WorkflowAction("command", "analyze", "分析当前 Episode 的录屏、音频和素材语义。", ("analyze",))
         if "story-mine" not in stages:
             return WorkflowAction(
                 "command", "story-mine", "复用冻结 VCI 包，建立可用证据镜头索引。", ("story-mine",),
@@ -235,6 +246,19 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
             return WorkflowAction(
                 "command", "direct", "选择唯一短视频故事并固定事实边界。", ("direct",),
                 required_artifacts=("work/director/short-video-brief.json",),
+            )
+        if "voice-lock" not in stages and "pilot" not in stages:
+            voice_ready, voice_reason = _voice_lock_status(ep_dir, model)
+            if voice_ready:
+                return WorkflowAction(
+                    "command", "voice-lock",
+                    "锁定当前 Episode 已批准旁白并生成 canonical narration artifact。",
+                    ("voice-lock",),
+                )
+            return WorkflowAction(
+                "human", "voice-audition",
+                f"{voice_reason}；完成一次试听并批准 voice profile 后再继续。",
+                required_artifacts=("work/voice-lock.json", "work/final-narration.mp3"),
             )
         if "pilot" not in stages:
             return WorkflowAction(
@@ -286,6 +310,19 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
                     "work/analysis/asset-intelligence.json",
                     "work/content/script.json",
                 ),
+            )
+        if "voice-lock" not in stages and "preview" not in stages:
+            voice_ready, voice_reason = _voice_lock_status(ep_dir, model)
+            if voice_ready:
+                return WorkflowAction(
+                    "command", "voice-lock",
+                    "锁定当前 Episode 已批准旁白并生成 canonical narration artifact。",
+                    ("voice-lock",),
+                )
+            return WorkflowAction(
+                "human", "voice-audition",
+                f"{voice_reason}；完成一次试听并批准 voice profile 后再继续。",
+                required_artifacts=("work/voice-lock.json", "work/final-narration.mp3"),
             )
         if "preview" not in stages:
             return WorkflowAction("command", "preview", "生成原子镜头时间线和低清预览。", ("preview",))

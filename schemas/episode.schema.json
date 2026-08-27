@@ -61,7 +61,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["ingest", "reference", "content", "assets", "analyze", "story-mine", "direct", "screen-plan", "pilot", "pilot-review", "pilot-revise", "plan", "preview", "visual-review", "final-render", "approve", "timeline", "rough_cut", "qa", "delivery", "export"]
+        "enum": ["ingest", "reference", "content", "assets", "analyze", "story-mine", "direct", "screen-plan", "pilot", "pilot-review", "pilot-revise", "plan", "voice-audition", "voice-lock", "preview", "visual-review", "final-render", "approve", "timeline", "rough_cut", "qa", "delivery", "export"]
       },
       "uniqueItems": true
     },

@@ -235,6 +235,38 @@ def register_commands(main_group: click.Group) -> None:
             raise click.exceptions.Exit(2)
         console.print("[green]✓ Agent 脚本通过校验，可进入 plan[/green]")
 
+    @main_group.command("voice-audition")
+    @click.argument("episode_id")
+    @click.option("--audio", "audio_path", required=True, type=click.Path(exists=True, dir_okay=False, path_type=Path))
+    @click.option("--provider", default="approved_voice_profile", show_default=True)
+    @click.option("--voice-profile", default="audition-approved", show_default=True)
+    def voice_audition_cmd(episode_id: str, audio_path: Path, provider: str, voice_profile: str) -> None:
+        """记录用户实际试听并批准的声音；不会自动合成或回退 Edge TTS。"""
+        from avs.active import active_voice_audition
+        try:
+            ep_dir, model = _episode(episode_id)
+            result = active_voice_audition(
+                ep_dir, model, audio_path, provider=provider, voice_profile=voice_profile,
+            )
+        except Exception as exc:
+            console.print(f"[red]✗ voice-audition 失败: {exc}[/red]")
+            raise click.exceptions.Exit(2)
+        console.print(f"[green]✓ voice audition 已锁定[/green]  {result}")
+
+    @main_group.command("voice-lock")
+    @click.argument("episode_id")
+    @click.option("--force", is_flag=True)
+    def voice_lock_cmd(episode_id: str, force: bool) -> None:
+        """验证并物化当前 Episode 已批准的锁定旁白。"""
+        from avs.active import active_voice_lock
+        try:
+            ep_dir, model = _episode(episode_id)
+            result = active_voice_lock(ep_dir, model, force=force)
+        except Exception as exc:
+            console.print(f"[red]✗ voice-lock 阻塞: {exc}[/red]")
+            raise click.exceptions.Exit(2)
+        console.print(f"[green]✓ voice-lock 完成[/green]  {result}")
+
     @main_group.command("preview")
     @click.argument("episode_id")
     @click.option("--force", is_flag=True)

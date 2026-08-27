@@ -160,7 +160,10 @@ def _media_checks(path: Path, label: str, prefix: str, expected_duration: float)
 
 def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False, require_human_approval: bool = True) -> dict[str, Any]:
     """Run deterministic QA with three-layer gate logic and fingerprint checking."""
-    if publishable:
+    # Release Review is mandatory for a publishable final master. Legacy
+    # preview-only QA (which has no canonical final-with-captions.mp4 yet)
+    # remains available for deterministic diagnostics, but cannot be delivered.
+    if publishable and (ep_dir / "renders" / "final-with-captions.mp4").is_file():
         final_candidate = _final_video_path(ep_dir)
         from avs.qa.video_release import verify_video_release_review_current
         valid, reason = verify_video_release_review_current(ep_dir, final_candidate)
