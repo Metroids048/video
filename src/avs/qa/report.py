@@ -160,6 +160,12 @@ def _media_checks(path: Path, label: str, prefix: str, expected_duration: float)
 
 def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False, require_human_approval: bool = True) -> dict[str, Any]:
     """Run deterministic QA with three-layer gate logic and fingerprint checking."""
+    if publishable:
+        final_candidate = _final_video_path(ep_dir)
+        from avs.qa.video_release import verify_video_release_review_current
+        valid, reason = verify_video_release_review_current(ep_dir, final_candidate)
+        if not valid:
+            raise ValueError("Release Review 未通过，禁止进入 QA。" + (reason or "请先执行 release-review"))
     delivery_dir = ep_dir / "delivery"
     report_path = delivery_dir / "qa-report.json"
 

@@ -30,6 +30,32 @@ def _episode(episode_id: str):
 
 
 def register_commands(main_group: click.Group) -> None:
+    @main_group.command("release-review")
+    @click.argument("episode_id")
+    def release_review_cmd(episode_id: str) -> None:
+        """Validate the reviewer-authored Release Review for the current MP4."""
+        from avs.qa.video_release import REVIEW_INPUT_RELATIVE, VideoReleaseReviewError, save_video_release_review
+        try:
+            ep_dir, model = _episode(episode_id)
+            input_path = ep_dir / REVIEW_INPUT_RELATIVE
+            if not input_path.is_file():
+                raise ValueError(
+                    "缺少 work/qa/video-release-review.input.json；请先完成完整 1x、首10秒、转场、移动端和音频审片"
+                )
+            payload = json.loads(input_path.read_text(encoding="utf-8"))
+            output = save_video_release_review(ep_dir, payload)
+            saved = json.loads(output.read_text(encoding="utf-8"))
+            if saved["final_status"] == "READY_TO_PUBLISH":
+                model.clear_block(stage="release-review")
+                model.complete_stage("release-review")
+                model.save(ep_dir / "episode.json")
+        except (OSError, json.JSONDecodeError, TypeError, ValueError, VideoReleaseReviewError) as exc:
+            console.print(f"[red]✗ release-review 失败: {exc}[/red]")
+            raise click.exceptions.Exit(2)
+        console.print(f"[green]✓ release-review 完成[/green]  {saved['final_status']}  {output}")
+        if saved["final_status"] != "READY_TO_PUBLISH":
+            raise click.exceptions.Exit(2)
+
     @main_group.command("analyze")
     @click.argument("episode_id")
     @click.option("--force", is_flag=True)

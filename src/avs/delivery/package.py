@@ -85,6 +85,13 @@ def run_delivery(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> d
     if model.status not in {"QA_PASSED", "DELIVERY_READY"}:
         raise ValueError(f"当前状态 {model.status}，必须先达到 QA_PASSED")
 
+    if model.publishable:
+        final_candidate = _final_video_path(ep_dir)
+        from avs.qa.video_release import verify_video_release_review_current
+        valid, reason = verify_video_release_review_current(ep_dir, final_candidate)
+        if not valid:
+            raise ValueError("Release Review 未通过，禁止生成交付包。" + (reason or "请先执行 release-review"))
+
     qa_report = _qa_report(ep_dir)
 
     # Verify QA report matches current state

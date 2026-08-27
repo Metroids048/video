@@ -93,6 +93,24 @@ def _agent_script_ready(ep_dir: Path) -> bool:
     )
 
 
+def _final_video_path(ep_dir: Path) -> Path:
+    for path in (
+        ep_dir / "renders" / "final-with-captions.mp4",
+        ep_dir / "renders" / "preview-with-motion.mp4",
+        ep_dir / "renders" / "preview-with-captions.mp4",
+    ):
+        if path.is_file():
+            return path
+    return ep_dir / "renders" / "final-with-captions.mp4"
+
+
+def _release_review_current(ep_dir: Path) -> bool:
+    from avs.qa.video_release import verify_video_release_review_current
+
+    valid, _reason = verify_video_release_review_current(ep_dir, _final_video_path(ep_dir))
+    return valid
+
+
 _RETRY_COMMANDS: dict[str, tuple[str, ...]] = {
     "ingest": ("ingest",),
     "analyze": ("analyze",),
@@ -232,6 +250,11 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
             return WorkflowAction(
                 "command", "final-render", "Pilot Gate 已通过；才允许创建并渲染完整 V2 时间线。", ("final-render",),
             )
+        if not _release_review_current(ep_dir):
+            return WorkflowAction(
+                "human", "release-review", "最终成片必须先完成当前 SHA256 绑定的完整 Release Review。",
+                ("release-review",), required_artifacts=("work/qa/video-release-review.input.json",),
+            )
         if "qa" not in stages:
             return WorkflowAction("command", "qa", "执行完整视频技术与创作 QA。", ("qa",))
         return WorkflowAction(
@@ -270,6 +293,11 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
             return WorkflowAction("command", "visual-review", "执行视觉语义审核。", ("visual-review",))
         if "final-render" not in stages:
             return WorkflowAction("command", "final-render", "渲染通过审核的最终视频。", ("final-render",))
+        if not _release_review_current(ep_dir):
+            return WorkflowAction(
+                "human", "release-review", "最终成片必须先完成当前 SHA256 绑定的完整 Release Review。",
+                ("release-review",), required_artifacts=("work/qa/video-release-review.input.json",),
+            )
         if "qa" not in stages:
             return WorkflowAction("command", "qa", "执行技术与发布质量 Gate。", ("qa",))
         if "approve" not in stages:
