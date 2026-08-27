@@ -17,6 +17,7 @@ import yaml
 
 from avs.qa.creative_sampling import build_contact_sheets, extract_frames, extract_uniform_frames
 from avs.render.captions import build_srt_from_words
+from avs.render.layouts import choose_layout, is_landscape
 
 
 PILOT_IDS = ("primary",)
@@ -66,64 +67,219 @@ def screen_documentary_rules() -> dict[str, Any]:
     return raw
 
 
-def _vci_package() -> Path:
-    return _root() / "video-content-intelligence" / "workspace" / "packages" / "VID-20260812-FDA0"
-
-
 def _source_recording(ep_dir: Path) -> Path:
-    source = _root() / "第一期视频_7x24自动交易" / "原始录屏.mp4"
+    """Resolve the one explicitly selected recording from this Episode only."""
+    manifest_path = ep_dir / "work" / "input-manifest.json"
+    if not manifest_path.is_file():
+        raise RuntimeError("SCREEN_DOCUMENTARY 缺少当前 Episode 的 input-manifest.json")
+    manifest = _read(manifest_path)
+    recordings = [
+        asset for asset in manifest.get("assets", [])
+        if asset.get("source_type") in {"recording", "video"}
+        and asset.get("status", "ok") == "ok"
+        and asset.get("working_path")
+    ]
+    selected = [asset for asset in recordings if asset.get("must_use") is True]
+    if len(selected) != 1:
+        raise RuntimeError(
+            "SCREEN_DOCUMENTARY 必须明确唯一 must_use 主录屏；"
+            f"当前可用录屏 {len(recordings)} 个，must_use 主录屏 {len(selected)} 个"
+        )
+    working_path = Path(str(selected[0]["working_path"]))
+    if working_path.is_absolute() or ".." in working_path.parts or not working_path.as_posix().startswith("work/prepared/"):
+        raise RuntimeError("SCREEN_DOCUMENTARY 主录屏必须引用 Episode 内的 work/prepared 工作副本")
+    source = (ep_dir / working_path).resolve()
+    try:
+        source.relative_to((ep_dir / "work" / "prepared").resolve())
+    except ValueError as exc:
+        raise RuntimeError("SCREEN_DOCUMENTARY 主录屏路径越过 Episode 工作副本边界") from exc
     if not source.is_file():
-        raise RuntimeError("找不到冻结的 EP01 原始录屏母带")
-    expected = "dfc4edef0a19b3945e18bdc63825e2ff5f80149c59e6c485075589ac571f7dfd"
-    if _sha256(source) != expected:
-        raise RuntimeError("EP01 原始录屏 SHA256 与冻结 source identity 不一致")
+        raise RuntimeError(f"SCREEN_DOCUMENTARY 主录屏工作副本不存在: {working_path.as_posix()}")
     return source
 
 
 def _prepared_source(ep_dir: Path) -> Path:
-    source = _source_recording(ep_dir)
-    target = ep_dir / "work" / "prepared" / "screen" / "原始录屏.mp4"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if not target.exists():
-        shutil.copy2(source, target)
-    return target
+    # Ingest already created this Episode-local immutable working copy.
+    return _source_recording(ep_dir)
 
 
 def mine_story(ep_dir: Path) -> dict[str, Path]:
-    """Reuse the verified VCI result, without invoking ingest or transcription."""
-    package = _vci_package()
-    structured = _read(package / "structured" / "content.json")
-    if structured.get("source_id") != "VID-20260812-FDA0":
-        raise RuntimeError("EP01 必须复用已验证的 VID-20260812-FDA0 VCI 包")
+    """Mine a screen story from the current Episode's analyzed artifacts."""
     source = _prepared_source(ep_dir)
-    scenes = [
-        {"id": "binance-order-history", "source_start": 129.0, "source_end": 136.0, "label": "Binance Demo Order History", "target": "Balance + Order History", "region": [0.05, 0.42, 0.92, 0.50], "evidence": "SOURCE_INFERRED"},
-        {"id": "binance-balance", "source_start": 136.0, "source_end": 140.0, "label": "Binance Demo Balance", "target": "Balance", "region": [0.80, 0.55, 0.19, 0.37], "evidence": "SOURCE_INFERRED"},
-        {"id": "dashboard-overview", "source_start": 1.0, "source_end": 5.0, "label": "AI Quant dashboard", "target": "Simulated balance + chart", "region": [0.02, 0.05, 0.72, 0.90], "evidence": "SOURCE_INFERRED"},
-        {"id": "why-no-trade", "source_start": 84.0, "source_end": 90.0, "label": "Why No Trade", "target": "Why No Trade", "region": [0.69, 0.30, 0.30, 0.42], "evidence": "SOURCE_EXPLICIT"},
-        {"id": "decision-risk", "source_start": 68.0, "source_end": 75.0, "label": "Decision and risk", "target": "Decision / Risk", "region": [0.05, 0.07, 0.90, 0.80], "evidence": "SOURCE_EXPLICIT"},
-        {"id": "research-validation", "source_start": 55.0, "source_end": 65.0, "label": "Strategy and validation", "target": "Strategy / Validation", "region": [0.02, 0.05, 0.96, 0.88], "evidence": "SOURCE_EXPLICIT"},
+    manifest_path = ep_dir / "work" / "input-manifest.json"
+    recording_analysis_path = ep_dir / "work" / "analysis" / "recording-analysis.json"
+    intelligence_path = ep_dir / "work" / "analysis" / "asset-intelligence.json"
+    for required in (manifest_path, recording_analysis_path, intelligence_path):
+        if not required.is_file():
+            raise RuntimeError(f"SCREEN_DOCUMENTARY 缺少当前 Episode 分析产物: {required.relative_to(ep_dir).as_posix()}")
+    manifest = _read(manifest_path)
+    analysis = _read(recording_analysis_path)
+    intelligence = _read(intelligence_path)
+    if analysis.get("episode_id") != ep_dir.name or intelligence.get("episode_id") != ep_dir.name:
+        raise RuntimeError("SCREEN_DOCUMENTARY 分析产物 episode_id 与当前 Episode 不一致")
+    recording_assets = [
+        asset for asset in manifest.get("assets", [])
+        if asset.get("source_type") in {"recording", "video"} and asset.get("must_use") is True
     ]
+    if len(recording_assets) != 1:
+        raise RuntimeError("SCREEN_DOCUMENTARY 必须从当前 Episode 唯一主录屏建立故事")
+    asset_id = str(recording_assets[0]["asset_id"])
+    analyzed = next((item for item in analysis.get("recordings", []) if item.get("asset_id") == asset_id), None)
+    if not isinstance(analyzed, dict):
+        raise RuntimeError(f"当前 Episode 没有主录屏分析结果: {asset_id}")
+    dimensions = (recording_assets[0].get("original_width"), recording_assets[0].get("original_height"))
+    landscape = is_landscape(*dimensions)
+    intelligence_item = next((item for item in intelligence.get("assets", []) if item.get("asset_id") == asset_id), {})
+    regions = intelligence_item.get("regions", []) if isinstance(intelligence_item, dict) else []
+    usable = analyzed.get("usable_segments", [])
+    if not usable:
+        raise RuntimeError("当前 Episode 主录屏没有可用 source timeline")
+    scenes: list[dict[str, Any]] = []
+    for index, segment in enumerate(usable, start=1):
+        start, end = float(segment.get("start", 0.0)), float(segment.get("end", 0.0))
+        if end <= start:
+            continue
+        scenes.append({
+            "id": f"{asset_id}-segment-{index:03d}",
+            "source_start": start,
+            "source_end": end,
+            "label": str(intelligence_item.get("summary") or f"screen segment {index}"),
+            "target": str(regions[0].get("meaning") if regions and isinstance(regions[0], dict) else "full page context"),
+            "region": [0.0, 0.0, 1.0, 1.0],
+            "layout": "fit_full_frame",
+            "landscape": landscape,
+            "evidence": "SOURCE_ANALYZED",
+        })
+    validate_source_order(scenes)
+    validate_context_first(scenes)
     output = ep_dir / "work" / "director"
-    screen_index = {"episode_id": ep_dir.name, "vci_source_id": structured["source_id"], "source_recording": source.relative_to(ep_dir).as_posix(), "scenes": scenes, "generated_at": _now(), "reused_vci": True}
-    evidence_index = {"episode_id": ep_dir.name, "facts": structured.get("claims", []) + structured.get("numbers", []), "scenes": scenes}
+    screen_index = {
+        "episode_id": ep_dir.name,
+        "source_asset_id": asset_id,
+        "source_recording": source.relative_to(ep_dir).as_posix(),
+        "source_sha256": _sha256(source),
+        "source_dimensions": {"width": dimensions[0], "height": dimensions[1]},
+        "scenes": scenes,
+        "context_first": True,
+        "source_order": "monotonic_after_optional_cold_open",
+        "generated_at": _now(),
+    }
+    evidence_index = {
+        "episode_id": ep_dir.name,
+        "source_asset_id": asset_id,
+        "facts": intelligence_item.get("visible_facts", []) if isinstance(intelligence_item, dict) else [],
+        "scenes": scenes,
+    }
     _write(output / "录屏内容索引.json", screen_index)
     _write(output / "证据镜头索引.json", evidence_index)
-    (output / "推荐片段.md").write_text("# 推荐片段\n\n- Binance Demo 129-136s：订单历史和余额是开场与真实性证据。\n- Dashboard 1-5s：系统总览与 K 线。\n- Why No Trade 84-90s：差异化解释能力。\n", encoding="utf-8")
-    (output / "禁止使用片段.md").write_text("# 禁止使用片段\n\n- 125-128s Binance 页面加载骨架屏。\n- 任意整页横屏缩小、空背景、PPT 卡或旧 V1 时间线镜头。\n", encoding="utf-8")
+    (output / "推荐片段.md").write_text(
+        "# 推荐片段\n\n" + "\n".join(
+            f"- {scene['source_start']:.3f}-{scene['source_end']:.3f}s：{scene['target']}（先保留完整页面上下文）。"
+            for scene in scenes
+        ) + "\n",
+        encoding="utf-8",
+    )
+    (output / "禁止使用片段.md").write_text(
+        "# 禁止使用片段\n\n- 未经分析的录屏区间。\n- 未建立完整页面上下文就进入局部 ROI。\n- 为制造变化而添加人工镜头运动。\n",
+        encoding="utf-8",
+    )
     return {"screen_index": output / "录屏内容索引.json", "evidence_index": output / "证据镜头索引.json", "recommended": output / "推荐片段.md", "forbidden": output / "禁止使用片段.md"}
 
 
 def direct_story(ep_dir: Path) -> Path:
+    index_path = ep_dir / "work" / "director" / "录屏内容索引.json"
+    evidence_path = ep_dir / "work" / "director" / "证据镜头索引.json"
+    if not index_path.is_file() or not evidence_path.is_file():
+        raise RuntimeError("请先完成当前 Episode 的 story-mine")
+    index, evidence = _read(index_path), _read(evidence_path)
+    scenes = index.get("scenes", [])
+    if not scenes:
+        raise RuntimeError("当前 Episode 没有可用于 direct 的真实录屏镜头")
     payload = {
-        "episode_id": ep_dir.name, "production_type": "SCREEN_DOCUMENTARY",
-        "core_story": "5000U 到当前约7355U是钩子；AI 产品经理用 Agent 做出连接 Binance Demo 的自动交易系统；阶段账户变化不等于策略成功。",
-        "fact_boundary": ["5000U 为用户提供的初始基准，未由资金流水独立验证。", "约7355U 为画面快照，不能归因成策略收益。", "当前环境是 Binance Demo/Testnet 模拟盘。"],
-        "target_duration_seconds": {"min": 45, "max": 55},
-        "excluded": ["旧 V1 PPT 卡", "功能全量罗列", "收益承诺", "无关 B-roll"],
-        "structure": ["Binance 真实证据与结果/反转", "AI 构建的系统", "K线-决策-风控", "Why No Trade", "交易所对账", "谨慎结论与下一集"], "generated_at": _now(),
+        "episode_id": ep_dir.name,
+        "production_type": "SCREEN_DOCUMENTARY",
+        "source_asset_id": index.get("source_asset_id"),
+        "core_story": str(evidence.get("facts", [])[0] if evidence.get("facts") else "从真实录屏过程解释一个可验证的问题"),
+        "fact_boundary": [str(fact) for fact in evidence.get("facts", [])],
+        "target_duration_seconds": {"min": 25, "max": 60},
+        "excluded": ["未出现在当前 Episode 分析中的事实", "未经授权的局部裁切", "人工镜头运动"],
+        "structure": [scene.get("target", "full page context") for scene in scenes],
+        "generated_at": _now(),
     }
     return _write(ep_dir / "work" / "director" / "short-video-brief.json", payload)
+
+
+def validate_source_order(clips: list[dict[str, Any]], *, cold_open_max_seconds: float = 4.0) -> None:
+    """Reject source-time teleportation while allowing one short cold open.
+
+    ``source_start``/``source_end`` describe offsets in the original recording,
+    while ``start``/``duration`` describe output time.  The first clip may be an
+    explicitly marked cold open up to four seconds; all following source clips
+    must move forward (or continue at the same offset) in source time.
+    """
+    if not isinstance(clips, list) or not clips:
+        raise ValueError("source timeline 不能为空")
+    previous_end: float | None = None
+    for index, clip in enumerate(clips):
+        if not isinstance(clip, dict):
+            raise ValueError(f"source timeline 第 {index + 1} 项无效")
+        try:
+            start = float(clip["source_start"])
+            end = float(clip["source_end"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"source timeline 第 {index + 1} 项缺少 source_start/source_end") from exc
+        if start < 0 or end <= start:
+            raise ValueError(f"source timeline 第 {index + 1} 项区间无效")
+        if index == 0 and bool(clip.get("cold_open")):
+            output_duration = float(clip.get("duration", end - start))
+            if output_duration > cold_open_max_seconds:
+                raise ValueError(f"cold open 不得超过 {cold_open_max_seconds:g} 秒")
+        elif previous_end is not None and start < previous_end:
+            raise ValueError(
+                "source timeline 必须 monotonic："
+                f"第 {index + 1} 镜 source_start={start:g} < 前镜 source_end={previous_end:g}"
+            )
+        previous_end = end
+
+
+def validate_context_first(clips: list[dict[str, Any]]) -> None:
+    """Require full-page context before any landscape destructive ROI crop."""
+    if not isinstance(clips, list) or not clips:
+        raise ValueError("screen timeline 不能为空")
+    context_seen = False
+    for index, clip in enumerate(clips):
+        if not isinstance(clip, dict):
+            raise ValueError(f"screen timeline 第 {index + 1} 项无效")
+        landscape = bool(clip.get("landscape"))
+        layout = str(clip.get("layout") or "fit_full_frame")
+        destructive = layout in {"screen_focus", "roi_crop", "cover", "screen_stack"}
+        authorized = clip.get("allow_destructive_crop") is True and clip.get("roi_authorized") is True
+        is_full_frame = layout in {"fit_full_frame", "contain", "full_frame", "context"} or not destructive
+        if landscape and destructive:
+            if not context_seen:
+                raise ValueError("landscape ROI 必须先建立完整页面 context")
+            if not authorized:
+                raise ValueError("landscape ROI 必须显式授权 allow_destructive_crop=true 且 roi_authorized=true")
+        if landscape and is_full_frame:
+            context_seen = True
+
+
+def _pilot_filter(spec: dict[str, Any], source_width: int | None, source_height: int | None) -> tuple[str, dict[str, Any]]:
+    """Build a context-preserving filter and normalized clip metadata."""
+    landscape = is_landscape(source_width, source_height)
+    requested_layout = str(spec.get("layout") or ("fit_full_frame" if landscape else "contain"))
+    transform = {
+        "layout": requested_layout,
+        "region": spec.get("region"),
+        "allow_destructive_crop": spec.get("allow_destructive_crop") is True,
+    }
+    if spec.get("roi_authorized") is True:
+        transform["roi_authorized"] = True
+    vf = choose_layout(transform, source_width, source_height)
+    # For a landscape source, choose_layout safely falls back to full-frame when
+    # authorization/context is absent.  The contract validator catches an ROI
+    # requested as the first shot before FFmpeg is invoked.
+    return vf, transform
 
 
 def _pilot_spec(ep_dir: Path, variant: str) -> list[dict[str, Any]]:
@@ -136,12 +292,34 @@ def _pilot_spec(ep_dir: Path, variant: str) -> list[dict[str, Any]]:
     specs = variants.get(variant)
     if not isinstance(specs, list) or not specs:
         raise RuntimeError(f"pilot-shot-plan.json 缺少 variant={variant}")
-    required = {"start", "duration", "in", "region", "target", "spoken"}
+    required = {"start", "duration", "in", "target", "spoken"}
+    source_index_path = ep_dir / "work" / "director" / "录屏内容索引.json"
+    if not source_index_path.is_file():
+        raise RuntimeError("缺少当前 Episode 的录屏内容索引")
+    source_index = _read(source_index_path)
+    source_asset_id = source_index.get("source_asset_id")
+    source_dimensions = source_index.get("source_dimensions", {})
+    normalized: list[dict[str, Any]] = []
     for index, spec in enumerate(specs):
         if not isinstance(spec, dict) or not required.issubset(spec):
             missing = sorted(required - set(spec)) if isinstance(spec, dict) else sorted(required)
             raise RuntimeError(f"pilot-shot-plan.json 第 {index + 1} 镜缺少字段: {missing}")
-    return specs
+        item = dict(spec)
+        item["source_start"] = float(item["in"])
+        item["source_end"] = float(item["in"]) + float(item["duration"])
+        item.setdefault("source_asset_id", source_asset_id)
+        item.setdefault(
+            "landscape",
+            is_landscape(source_dimensions.get("width"), source_dimensions.get("height")),
+        )
+        item.setdefault("layout", "fit_full_frame" if item["landscape"] else "contain")
+        item.setdefault("region", [0.0, 0.0, 1.0, 1.0])
+        normalized.append(item)
+    if any(item.get("source_asset_id") != source_asset_id for item in normalized):
+        raise RuntimeError("pilot-shot-plan.json 引用了当前 Episode 主录屏之外的素材")
+    validate_source_order(normalized)
+    validate_context_first(normalized)
+    return normalized
 
 
 def _srt_timestamp(seconds: float) -> str:
@@ -193,18 +371,33 @@ def _render_pilot(ep_dir: Path, variant: str, specs: list[dict[str, Any]], *, fo
         return {"video": output, "srt": srt, "timeline": timeline_path}
     work.mkdir(parents=True, exist_ok=True)
     renders.mkdir(parents=True, exist_ok=True)
-    overrides_path = ep_dir / "work" / "pilots" / "pilot-overrides.json"
-    overrides = _read(overrides_path) if overrides_path.is_file() else {}
-    zoom = float(overrides.get(variant, {}).get("zoom", 1.0))
+    screen_index = _read(ep_dir / "work" / "director" / "录屏内容索引.json")
+    dimensions = screen_index.get("source_dimensions", {})
+    source_width, source_height = dimensions.get("width"), dimensions.get("height")
+    validate_source_order(specs)
+    validate_context_first(specs)
     segments: list[Path] = []
     clips: list[dict[str, Any]] = []
     for index, spec in enumerate(specs):
         segment = work / f"segment-{index:02}.mp4"
-        x, y, w, h = _adjust_region(list(spec["region"]), zoom)
-        vf = f"crop=iw*{w:g}:ih*{h:g}:iw*{x:g}:ih*{y:g},scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30"
+        vf, transform = _pilot_filter(spec, source_width, source_height)
         _run(["ffmpeg", "-y", "-ss", str(spec["in"]), "-i", str(source), "-t", str(spec["duration"]), "-vf", vf, "-an", "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-pix_fmt", "yuv420p", str(segment)], timeout=180, error=f"Pilot {variant} 镜头渲染失败")
         segments.append(segment)
-        clips.append({"source_start": spec["in"], "source_end": spec["in"] + spec["duration"], "target": spec["target"], "region": {"x": x, "y": y, "w": w, "h": h}, "zoom": zoom, "pan": None, "caption_safe_zone": "bottom", "minimum_mobile_readability": True})
+        clips.append({
+            "source_asset_id": screen_index.get("source_asset_id"),
+            "source_start": float(spec["in"]),
+            "source_end": float(spec["in"]) + float(spec["duration"]),
+            "target": spec["target"],
+            "layout": transform["layout"],
+            "region": spec.get("region", [0.0, 0.0, 1.0, 1.0]),
+            "landscape": is_landscape(source_width, source_height),
+            "allow_destructive_crop": transform.get("allow_destructive_crop") is True,
+            "roi_authorized": transform.get("roi_authorized") is True,
+            "zoom": 1.0,
+            "pan": None,
+            "caption_safe_zone": "bottom",
+            "minimum_mobile_readability": True,
+        })
     concat = work / "concat.txt"
     concat.write_text("".join(f"file '{part.resolve().as_posix()}'\n" for part in segments), encoding="utf-8")
     narration = _ensure_narration(work, specs, force=force)
@@ -213,7 +406,21 @@ def _render_pilot(ep_dir: Path, variant: str, specs: list[dict[str, Any]], *, fo
     # apad preserves the visual duration when narration ends before the last shot.
     _run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-i", str(narration), "-filter_complex", "[1:a]apad=pad_dur=12[a]", "-map", "0:v:0", "-map", "[a]", "-vf", _subtitles_filter(srt), "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "-pix_fmt", "yuv420p", str(output)], timeout=240, error=f"Pilot {variant} 合并、字幕或旁白失败")
     _run(["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height", "-of", "json", str(output)], timeout=30, error=f"Pilot {variant} 解码验证失败")
-    timeline = {"episode_id": ep_dir.name, "variant": variant, "production_type": "SCREEN_DOCUMENTARY", "total_duration": total, "real_screen_footage_ratio": 1.0, "generated_card_count": 0, "generated_motion_seconds": 0.0, "spoken_lines": [item["spoken"] for item in specs], "clips": clips, "source_sha256": _sha256(source), "generated_at": _now()}
+    timeline = {
+        "episode_id": ep_dir.name,
+        "variant": variant,
+        "production_type": "SCREEN_DOCUMENTARY",
+        "total_duration": total,
+        "real_screen_footage_ratio": 1.0,
+        "generated_card_count": 0,
+        "generated_motion_seconds": 0.0,
+        "spoken_lines": [item["spoken"] for item in specs],
+        "clips": clips,
+        "source_asset_id": screen_index.get("source_asset_id"),
+        "source_recording": source.relative_to(ep_dir).as_posix(),
+        "source_sha256": _sha256(source),
+        "generated_at": _now(),
+    }
     _write(timeline_path, timeline)
     return {"video": output, "srt": srt, "timeline": timeline_path}
 
@@ -230,8 +437,14 @@ def _validate_pilot_timeline(timeline: dict[str, Any]) -> None:
         raise RuntimeError("Pilot 真实录屏占比不足")
     if timeline["generated_card_count"] > rules["generated_card_count_max"] or timeline["generated_motion_seconds"] > rules["generated_motion_total_seconds_max"]:
         raise RuntimeError("Pilot 生成包装超出 SCREEN_DOCUMENTARY 限制")
-    if not timeline["clips"] or not timeline["clips"][0].get("region"):
-        raise RuntimeError("Pilot 第一帧必须是带 ROI 的真实录屏")
+    try:
+        validate_source_order(timeline["clips"])
+        validate_context_first(timeline["clips"])
+    except ValueError as exc:
+        raise RuntimeError(f"Pilot source contract 失败: {exc}") from exc
+    first = timeline["clips"][0] if timeline["clips"] else {}
+    if first.get("landscape") and first.get("layout") not in {"fit_full_frame", "contain", "full_frame", "context"}:
+        raise RuntimeError("Pilot 第一帧必须先建立完整页面 context")
 
 
 def render_pilots(ep_dir: Path, *, force: bool = False) -> dict[str, Any]:

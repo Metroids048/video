@@ -8,7 +8,18 @@ production_types:
     no_intro_card: true
     no_logo_intro: true
     first_3_seconds_prefer_real_evidence: true
-    full_landscape_fit_allowed: false
+    full_landscape_fit_allowed: true
+    landscape_default_layout: fit_full_frame
+    preserve_full_landscape_source_by_default: true
+    full_frame_context_required_before_roi: true
+    destructive_crop_requires_explicit_authorization: true
+    destructive_crop_authorization_flag: allow_destructive_crop
+    roi_requires_context: true
+    source_temporal_order: monotonic_after_optional_cold_open
+    cold_open_max_seconds: 4
+    forbid_fake_cursor: true
+    forbid_ken_burns_process_motion: true
+    forbid_unmotivated_pan_zoom: true
     mobile_readability_required: true
     narration_master_required: true
     subtitle_alignment_source: word_timestamps

@@ -207,10 +207,10 @@ def review_video(
             if _has_large_black_border(frame):
                 failures.append({
                     "timestamp": float(index),
-                    "failure_code": "LARGE_BLACK_BORDER",
+                    "failure_code": "FULL_FRAME_CONTEXT_REVIEW_REQUIRED",
                     "spoken_text": "",
                     "visible_content": frame.name,
-                    "required_fix": "使用 ROI cover/focus 布局重做该镜头",
+                    "required_fix": "对照源录屏确认完整页面上下文；允许保留竖屏未使用空间，不得仅为填满画布裁切",
                 })
         duplicate_run = 0
         for index in range(1, len(frames)):
@@ -222,10 +222,10 @@ def review_video(
             if duplicate_run >= 3:
                 failures.append({
                     "timestamp": float(index - 2),
-                    "failure_code": "PPT_STATIC_SEQUENCE",
+                    "failure_code": "SCREEN_ACTION_STALLED",
                     "spoken_text": "",
                     "visible_content": frames[index].name,
-                    "required_fix": "加入局部放大、平移、高亮或切换素材",
+                    "required_fix": "核对源录屏是否有真实点击、滚动或状态变化；没有真实过程时保持诚实静帧并调整叙事",
                 })
                 break
     provider = vision_provider_name()
@@ -268,7 +268,7 @@ def review_video(
                     "failure_code": "PPT_STATIC_SHOT",
                     "spoken_text": "",
                     "visible_content": shot.get("asset_refs", []),
-                    "required_fix": "拆分截图为 focus/pan/callout 原子镜头",
+                    "required_fix": "优先换成真实连续录屏；若只有静态证据则如实呈现，不得用人工镜头运动伪装过程",
                 })
             elapsed += duration
     if evidence_map:

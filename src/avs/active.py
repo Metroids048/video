@@ -80,13 +80,23 @@ def active_analyze(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
 
 
 def active_story_mine(ep_dir: Path, model: EpisodeModel) -> dict[str, str]:
-    """Use an already verified VCI package; never invoke ingest/transcription."""
+    """Mine the current Episode after real ingest/analyze stages have completed."""
     if model.production_type != "SCREEN_DOCUMENTARY":
         raise RuntimeError("story-mine 只适用于 SCREEN_DOCUMENTARY")
+    required = (
+        ep_dir / "work" / "input-manifest.json",
+        ep_dir / "work" / "analysis" / "recording-analysis.json",
+        ep_dir / "work" / "analysis" / "asset-intelligence.json",
+    )
+    missing = [path.relative_to(ep_dir).as_posix() for path in required if not path.is_file()]
+    if missing:
+        raise RuntimeError(
+            "SCREEN_DOCUMENTARY 必须先完成当前 Episode 的 ingest/analyze；缺少: "
+            + ", ".join(missing)
+        )
+    if "ingest" not in model.completed_stages or "analyze" not in model.completed_stages:
+        raise RuntimeError("SCREEN_DOCUMENTARY 不得在未完成真实 ingest/analyze 时进入 story-mine")
     from avs.pilots import mine_story
-    if model.status == "CREATED":
-        model.ensure_stage("ingest", "INGESTED")
-        model.complete_stage("ingest")
     output = mine_story(ep_dir)
     model.clear_block(stage="story-mine")
     model.complete_stage("story-mine")
@@ -346,8 +356,34 @@ def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
 
 def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
     if model.production_type == "SCREEN_DOCUMENTARY":
-        from avs.pilots import assert_screen_documentary_pilot_gate
+        from avs.pilots import assert_screen_documentary_pilot_gate, validate_context_first, validate_source_order
         assert_screen_documentary_pilot_gate(ep_dir, model)
+        index_path = ep_dir / "work" / "director" / "录屏内容索引.json"
+        if not index_path.is_file():
+            raise RuntimeError("SCREEN_DOCUMENTARY final-render 缺少当前 Episode 录屏索引")
+        index = _read(index_path)
+        source_asset_id = index.get("source_asset_id")
+        timeline_path = ep_dir / "work" / "timeline.json"
+        if timeline_path.is_file():
+            current_timeline = _read(timeline_path)
+            screen_clips = [
+                clip for track in current_timeline.get("tracks", [])
+                for clip in track.get("clips", [])
+                if track.get("kind") == "video" and clip.get("asset_id")
+            ]
+            if screen_clips:
+                if any(clip.get("asset_id") != source_asset_id for clip in screen_clips):
+                    raise RuntimeError("SCREEN_DOCUMENTARY timeline 引用了当前主录屏之外的素材")
+                source_clips = [
+                    {
+                        "source_start": clip.get("in_point", 0.0),
+                        "source_end": clip.get("out_point", clip.get("in_point", 0.0) + clip.get("duration", 0.0)),
+                        **(clip.get("transform") or {}),
+                    }
+                    for clip in screen_clips
+                ]
+                validate_source_order(source_clips)
+                validate_context_first(source_clips)
     review_path = ep_dir / "work" / "qa" / "visual-review.json"
     if not review_path.is_file():
         raise RuntimeError("final-render 必须先完成 visual-review")
