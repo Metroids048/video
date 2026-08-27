@@ -475,11 +475,16 @@ def register_commands(main_group: click.Group) -> None:
         from avs.qa.approval import create_approval, save_approval
         try:
             ep_dir, model = _episode(episode_id)
+            from avs.qa.video_release import verify_video_release_review_current
             video = ep_dir / "renders" / "final-with-captions.mp4"
             if not video.is_file():
                 video = ep_dir / "renders" / "preview-with-motion.mp4"
             if not video.is_file():
                 video = ep_dir / "renders" / "preview-with-captions.mp4"
+            if model.publishable:
+                valid, reason = verify_video_release_review_current(ep_dir, video)
+                if not valid:
+                    raise RuntimeError("必须先通过当前视频的 Release Review 才能 approve: " + (reason or "review missing/stale"))
             approval = create_approval(ep_dir, model.id, reviewer, video)
             save_approval(ep_dir, approval)
             model.complete_stage("approve")

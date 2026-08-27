@@ -279,11 +279,17 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
                 "human", "release-review", "最终成片必须先完成当前 SHA256 绑定的完整 Release Review。",
                 ("release-review",), required_artifacts=("work/qa/video-release-review.input.json",),
             )
+        if "approve" not in stages:
+            return WorkflowAction(
+                "human", "approve", "Release Review 已通过；人工完整播放并批准当前最终视频。", ("approve",),
+            )
         if "qa" not in stages:
             return WorkflowAction("command", "qa", "执行完整视频技术与创作 QA。", ("qa",))
-        return WorkflowAction(
-            "human", "approve", "完整 V2 通过双 QA 后，人工完整播放并批准最终视频。", ("approve",),
-        )
+        if "delivery" not in stages:
+            return WorkflowAction("command", "delivery", "QA 已通过；生成完整交付包。", ("deliver",))
+        if "export" not in stages:
+            return WorkflowAction("command", "export", "导出可复验 Episode 包。", ("export",))
+        return WorkflowAction("complete", "complete", "Active workflow 已完成并导出。")
 
     # The multimodal manifest switches publishable Episodes onto the only
     # active delivery path. Legacy actions below remain internal compatibility.
@@ -335,10 +341,10 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
                 "human", "release-review", "最终成片必须先完成当前 SHA256 绑定的完整 Release Review。",
                 ("release-review",), required_artifacts=("work/qa/video-release-review.input.json",),
             )
+        if "approve" not in stages:
+            return WorkflowAction("human", "approve", "Release Review 已通过；人工完整播放后批准最终视频哈希。", ("approve",))
         if "qa" not in stages:
             return WorkflowAction("command", "qa", "执行技术与发布质量 Gate。", ("qa",))
-        if "approve" not in stages:
-            return WorkflowAction("human", "approve", "人工完整播放后批准最终视频哈希。", ("approve",))
         if "delivery" not in stages:
             return WorkflowAction("command", "deliver", "生成完整交付包。", ("deliver",))
         if "export" not in stages:

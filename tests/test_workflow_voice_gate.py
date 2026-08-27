@@ -86,3 +86,13 @@ def test_user_manifest_voice_can_be_locked_without_edge_or_hidden_fallback(tmp_p
     assert action_for_episode(ep, model).stage == "voice-lock"
     active_voice_lock(ep, model)
     assert json.loads((ep / "work" / "voice-lock.json").read_text(encoding="utf-8"))["provider"] == "user_audio"
+
+
+def test_release_order_requires_approve_before_qa(tmp_path: Path) -> None:
+    ep, model = _episode(tmp_path)
+    model.complete_stage("voice-lock")
+    model.complete_stage("preview")
+    model.complete_stage("visual-review")
+    model.complete_stage("final-render")
+    model.save(ep / "episode.json")
+    assert action_for_episode(ep, model).stage == "release-review"
