@@ -514,7 +514,7 @@ def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
 
 
 def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
-    if model.publishable and model.production_type in {"STANDARD", "VISUAL_EXPLAINER", "SCREEN_DOCUMENTARY"}:
+    if model.publishable and model.production_type in {"STANDARD", "VISUAL_EXPLAINER"}:
         ready, reason = voice_lock_state(ep_dir, publishable=True)
         if not ready:
             raise RuntimeError("publishable final-render 必须先通过 voice-lock: " + reason)
@@ -541,6 +541,10 @@ def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = Fals
     if model.production_type == "SCREEN_DOCUMENTARY":
         from avs.pilots import assert_screen_documentary_pilot_gate, validate_context_first, validate_source_order
         assert_screen_documentary_pilot_gate(ep_dir, model)
+        if model.publishable:
+            ready, reason = voice_lock_state(ep_dir, publishable=True)
+            if not ready:
+                raise RuntimeError("publishable final-render 必须先通过 voice-lock: " + reason)
         index_path = ep_dir / "work" / "director" / "录屏内容索引.json"
         if not index_path.is_file():
             raise RuntimeError("SCREEN_DOCUMENTARY final-render 缺少当前 Episode 录屏索引")
