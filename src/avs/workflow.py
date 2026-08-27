@@ -239,7 +239,7 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
             return WorkflowAction("command", "analyze", "分析当前 Episode 的录屏、音频和素材语义。", ("analyze",))
         if "story-mine" not in stages:
             return WorkflowAction(
-                "command", "story-mine", "复用冻结 VCI 包，建立可用证据镜头索引。", ("story-mine",),
+                "command", "story-mine", "读取当前 Episode 的真实录屏分析，建立证据镜头索引。", ("story-mine",),
                 required_artifacts=("work/director/录屏内容索引.json", "work/director/证据镜头索引.json"),
             )
         if "direct" not in stages:
@@ -262,7 +262,7 @@ def action_for_episode(ep_dir: Path, model: EpisodeModel) -> WorkflowAction:
             )
         if "pilot" not in stages:
             return WorkflowAction(
-                "command", "pilot", "渲染 A/B/C 三个 8-10 秒真实录屏 Pilot。", ("pilot",),
+                "command", "pilot", "渲染一个 20-30 秒、字幕驱动的 primary Pilot。", ("pilot",),
                 required_artifacts=("renders/pilots", "work/qa/pilots/pilot-manifest.json"),
             )
         if "pilot-review" not in stages:
