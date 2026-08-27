@@ -325,6 +325,22 @@ def _voice_audio_path(ep_dir: Path) -> Path | None:
     return None
 
 
+def _has_manifest_voice_asset(ep_dir: Path) -> bool:
+    manifest_path = ep_dir / "work" / "input-manifest.json"
+    if not manifest_path.is_file():
+        return False
+    try:
+        manifest = _read(manifest_path)
+    except (OSError, ValueError):
+        return False
+    return any(
+        asset.get("source_type") == "audio"
+        and asset.get("audio_role") in {"narration", "original_voice"}
+        and asset.get("status", "ok") == "ok"
+        for asset in manifest.get("assets", [])
+    )
+
+
 def voice_lock_state(ep_dir: Path, *, publishable: bool = True) -> tuple[bool, str]:
     """Return whether this Episode has current, approved, non-Edge locked audio."""
     audio = _voice_audio_path(ep_dir)
@@ -341,12 +357,17 @@ def voice_lock_state(ep_dir: Path, *, publishable: bool = True) -> tuple[bool, s
                 metadata = candidate
                 break
     if metadata is None:
+        if _has_manifest_voice_asset(ep_dir):
+            return True, "user_audio"
         return False, "缺少 voice-lock.json/narration.json；需要一次 voice audition 批准"
     provider = str(metadata.get("provider") or "").lower()
     if publishable and provider == "edge_tts":
         return False, "Edge TTS 仅允许 development，publishable Episode 必须使用批准声音"
     if metadata.get("approved") is not True or not metadata.get("voice_profile"):
         return False, "声音尚未由 voice audition 批准并锁定 voice_profile"
+    recorded_sha = metadata.get("audio_sha256")
+    if recorded_sha and recorded_sha != hashlib.sha256(audio.read_bytes()).hexdigest():
+        return False, "锁定旁白已变化；必须重新试听或重新锁定当前音频"
     return True, "locked"
 
 
@@ -366,7 +387,10 @@ def active_voice_lock(ep_dir: Path, model: EpisodeModel, *, force: bool = False)
         shutil.copy2(source, target)
     metadata_path = next((p for p in _voice_metadata_paths(ep_dir) if p.is_file()), work / "voice-lock.json")
     metadata = _read(metadata_path) if metadata_path.is_file() else {}
+    metadata.setdefault("provider", "user_audio")
+    metadata.setdefault("voice_profile", "user-audio")
     metadata.update({"approved": True, "locked": True, "locked_audio": target.relative_to(ep_dir).as_posix()})
+    metadata.setdefault("audio_sha256", hashlib.sha256(target.read_bytes()).hexdigest())
     _write(work / "voice-lock.json", metadata)
     model.clear_block(stage="voice-lock")
     model.complete_stage("voice-lock")
@@ -385,6 +409,8 @@ def active_voice_audition(
     """Persist a user-approved audition result; no synthesis or silent fallback."""
     if not audio.is_file() or audio.stat().st_size == 0:
         raise RuntimeError(f"试听音频不存在或为空: {audio}")
+    if model.publishable and provider.lower() == "edge_tts":
+        raise RuntimeError("Edge TTS 仅允许 development，不能批准为 publishable voice")
     work = ep_dir / "work"
     work.mkdir(parents=True, exist_ok=True)
     target = work / "final-narration.mp3"
@@ -396,6 +422,7 @@ def active_voice_audition(
         "approved": True,
         "locked": True,
         "locked_audio": target.relative_to(ep_dir).as_posix(),
+        "audio_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
     }
     _write(work / "voice-lock.json", metadata)
     model.clear_block(stage="voice-audition")

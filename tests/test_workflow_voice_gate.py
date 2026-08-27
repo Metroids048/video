@@ -73,3 +73,16 @@ def test_voice_lock_is_idempotent_and_copies_current_audio(tmp_path: Path) -> No
     result = active_voice_lock(ep, model)
     assert result["provider"] == "user_audio"
     assert (ep / "work" / "final-narration.mp3").read_bytes() == b"approved"
+
+
+def test_user_manifest_voice_can_be_locked_without_edge_or_hidden_fallback(tmp_path: Path) -> None:
+    ep, model = _episode(tmp_path)
+    source = ep / "work" / "user.wav"
+    source.write_bytes(b"user-voice")
+    (ep / "work" / "input-manifest.json").write_text(
+        json.dumps({"episode_id": ep.name, "assets": [{"source_type": "audio", "audio_role": "original_voice", "working_path": "work/user.wav", "status": "ok"}]}),
+        encoding="utf-8",
+    )
+    assert action_for_episode(ep, model).stage == "voice-lock"
+    active_voice_lock(ep, model)
+    assert json.loads((ep / "work" / "voice-lock.json").read_text(encoding="utf-8"))["provider"] == "user_audio"
