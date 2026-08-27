@@ -278,6 +278,12 @@ def active_plan(
         ),
     })
     _write(ep_dir / "work" / "content" / "script.json", script)
+    approved_script = "\n\n".join(
+        f"## {index}. {segment.get('narrative_beat') or segment.get('segment_id') or 'Segment'}\n\n"
+        f"{segment.get('spoken_text', '').strip()}"
+        for index, segment in enumerate(script.get("segments", []), start=1)
+    ).strip() + "\n"
+    (ep_dir / "work" / "content" / "approved-script.md").write_text(approved_script, encoding="utf-8")
     _write(ep_dir / "work" / "content" / "evidence-map.json", evidence)
     _write(ep_dir / "work" / "content" / "shot-plan.json", shot_plan)
     if model.status == "INGESTED":
@@ -296,13 +302,6 @@ def _voice_metadata_paths(ep_dir: Path) -> tuple[Path, ...]:
 
 
 def _voice_audio_path(ep_dir: Path) -> Path | None:
-    for path in (
-        ep_dir / "work" / "final-narration.mp3",
-        ep_dir / "work" / "narration.mp3",
-        ep_dir / "work" / "audio" / "final-narration.mp3",
-    ):
-        if path.is_file() and path.stat().st_size > 0:
-            return path
     manifest_path = ep_dir / "work" / "input-manifest.json"
     if manifest_path.is_file():
         try:
@@ -322,6 +321,13 @@ def _voice_audio_path(ep_dir: Path) -> Path | None:
                 continue
             if candidate.is_file() and candidate.stat().st_size > 0:
                 return candidate
+    for path in (
+        ep_dir / "work" / "final-narration.mp3",
+        ep_dir / "work" / "narration.mp3",
+        ep_dir / "work" / "audio" / "final-narration.mp3",
+    ):
+        if path.is_file() and path.stat().st_size > 0:
+            return path
     return None
 
 
@@ -392,6 +398,13 @@ def active_voice_lock(ep_dir: Path, model: EpisodeModel, *, force: bool = False)
     metadata.update({"approved": True, "locked": True, "locked_audio": target.relative_to(ep_dir).as_posix()})
     metadata.setdefault("audio_sha256", hashlib.sha256(target.read_bytes()).hexdigest())
     _write(work / "voice-lock.json", metadata)
+    narration = work / "narration.mp3"
+    if force or not narration.exists():
+        shutil.copy2(target, narration)
+    _write(work / "narration.json", metadata)
+    words = work / "final-narration.words.json"
+    if words.is_file() and (force or not (work / "narration.words.json").is_file()):
+        shutil.copy2(words, work / "narration.words.json")
     model.clear_block(stage="voice-lock")
     model.complete_stage("voice-lock")
     model.save(ep_dir / "episode.json")
@@ -501,6 +514,22 @@ def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
 
 
 def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
+    if model.publishable and model.production_type in {"STANDARD", "VISUAL_EXPLAINER", "SCREEN_DOCUMENTARY"}:
+        ready, reason = voice_lock_state(ep_dir, publishable=True)
+        if not ready:
+            raise RuntimeError("publishable final-render 必须先通过 voice-lock: " + reason)
+
+    # A new final render invalidates every downstream approval/review artifact.
+    # Keep episode.json as the sole state source while removing stale stage marks.
+    stale_stages = {"approve", "qa", "delivery", "export"}
+    model.retain_completed_stages(set(model.completed_stages) - stale_stages)
+    for relative in (
+        "work/qa/video-release-review.json",
+        "delivery/visual-approval.json",
+        "delivery/qa-report.json",
+        "delivery/qa-report.md",
+    ):
+        (ep_dir / relative).unlink(missing_ok=True)
     if model.production_type in {"STANDARD", "VISUAL_EXPLAINER"}:
         from avs.production_backend import produce_publishable_video
         result = produce_publishable_video(ep_dir, model.production_type, force=force)
