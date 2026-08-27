@@ -355,6 +355,14 @@ def active_preview(ep_dir: Path, model: EpisodeModel, *, force: bool = False) ->
 
 
 def active_final_render(ep_dir: Path, model: EpisodeModel, *, force: bool = False) -> dict[str, Any]:
+    if model.production_type in {"STANDARD", "VISUAL_EXPLAINER"}:
+        from avs.production_backend import produce_publishable_video
+        result = produce_publishable_video(ep_dir, model.production_type, force=force)
+        if model.status in {"TIMELINE_READY", "PILOT_APPROVED"}:
+            model.ensure_stage("rough_cut", "ROUGH_CUT_READY")
+        model.complete_stage("final-render")
+        model.save(ep_dir / "episode.json")
+        return result
     if model.production_type == "SCREEN_DOCUMENTARY":
         from avs.pilots import assert_screen_documentary_pilot_gate, validate_context_first, validate_source_order
         assert_screen_documentary_pilot_gate(ep_dir, model)

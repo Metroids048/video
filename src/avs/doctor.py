@@ -397,6 +397,26 @@ def check_capcut_david_cli() -> CheckResult:
     )
 
 
+def check_production_backend(project_root: Path) -> CheckResult:
+    """Check the pinned STANDARD production backend contract."""
+    config_path = project_root / "config" / "production-backends.yaml"
+    if not config_path.is_file():
+        return CheckResult("Production backend", required=True, passed=False, message="缺少 config/production-backends.yaml")
+    try:
+        import yaml
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        backend = config["production_backends"]["moneyprinterturbo"]
+        version = str(backend["version"])
+        runtime = project_root / Path(str(backend["runtime"]))
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        return CheckResult("Production backend", required=True, passed=False, message=f"配置无效: {exc}")
+    if version != "1.2.7":
+        return CheckResult("Production backend", required=True, passed=False, version=version, message="必须锁定 MoneyPrinterTurbo v1.2.7")
+    if not runtime.is_dir():
+        return CheckResult("Production backend", required=False, passed=False, version=f"MPT v{version}", message=f"runtime 未安装: {runtime}")
+    return CheckResult("Production backend", required=True, passed=True, version=f"MPT v{version}")
+
+
 def check_skill_sync(project_root: Path) -> CheckResult:
     """检查 skills-src 与 Codex/Claude 项目目标是否逐文件一致。"""
     source_root = project_root / "skills-src"
@@ -461,6 +481,7 @@ def run_doctor(project_root: Path) -> DoctorReport:
     report.add(check_skills(project_root))
     report.add(check_third_party_video_skills(project_root))
     report.add(check_capcut_david_cli())
+    report.add(check_production_backend(project_root))
     report.add(check_skill_sync(project_root))
     report.add(check_disk_space(project_root))
     return report

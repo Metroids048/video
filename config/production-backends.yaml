@@ -1,0 +1,13 @@
+production_backends:
+  moneyprinterturbo:
+    version: "1.2.7"
+    runtime: ".runtime/moneyprinterturbo"
+    command: "uv run python cli.py"
+    required_args:
+      - "--video-script"
+      - "--video-source local"
+      - "--video-materials"
+      - "--custom-audio-file"
+      - "--video-aspect 9:16"
+      - "--stop-at video"
+    fallback: forbidden
