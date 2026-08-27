@@ -1,0 +1,11 @@
+{
+  "source": "youtube",
+  "channel_id": "UC1",
+  "handle": "fixture",
+  "title": "Fixture",
+  "canonical_url": "https://www.youtube.com/@fixture",
+  "uploads_playlist_id": "UU1",
+  "discovered_at": "2026-08-22T00:00:00Z",
+  "public_video_count": 1,
+  "extractor_version": "test"
+}

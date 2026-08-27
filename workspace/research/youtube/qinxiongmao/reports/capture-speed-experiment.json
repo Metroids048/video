@@ -1,0 +1,24 @@
+{
+  "video_id": "zlksxbDIKXc",
+  "experiment": "single controlled 2x proxy using preserved real browser capture audio",
+  "baseline": {
+    "capture_speed": "1x",
+    "source": "existing canonical.json",
+    "words": 1570,
+    "text_length": 3434,
+    "coverage_ratio": 0.9575066312997347
+  },
+  "two_x": {
+    "capture_speed": "2x",
+    "source": "browser-concat.wav -> atempo=2 -> faster-whisper small",
+    "words": 6,
+    "text_length": 12,
+    "normalized_text_similarity": 0.0011648223645894002,
+    "professional_terms_retained": false,
+    "numeric_retention": false,
+    "segment_coverage": null
+  },
+  "decision": "REJECT_2X_USE_1X",
+  "reason": "2x proxy output retained only a short unrelated phrase and materially degraded text/numeric/professional-term quality.",
+  "generated_at": "2026-08-22T12:50:00Z"
+}

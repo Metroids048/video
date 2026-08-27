@@ -1,0 +1,188 @@
+{
+  "sampled": 20,
+  "passed": 0,
+  "issues": [],
+  "items": [
+    {
+      "video_id": "-MfUGsa8RK4",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "-PFO8Uophfg",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "-mmcYoK0ooE",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "-u6L7hpJDgQ",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "0UtoLgVIyQI",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "0dgPdbFNS44",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "0lsTNIqqe58",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "19op6-S6dvg",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "1Oq1gkYO5BI",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "1Y-vd5iPXyA",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "1mPcxbz0cqA",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "2JG6r9kzhMs",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "2lAQBpeTIbc",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "2mO-BJ_Ils4",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "2oxQXSRdJ34",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "2rsbRtNSK0o",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "32l6VKEOGys",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "3BCGxiIZIak",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "3LeDRfQwgeM",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    },
+    {
+      "video_id": "3_HdojX8zcc",
+      "status": "BLOCKED_BY_YOUTUBE",
+      "qa_status": null,
+      "content_present": false,
+      "semantic_units_present": false,
+      "source_map_present": false,
+      "visual_evidence_present": false
+    }
+  ],
+  "generated_at": "2026-08-22T12:46:11Z"
+}

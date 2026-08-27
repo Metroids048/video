@@ -1,0 +1,1607 @@
+{
+  "gate": "YOUTUBE_ALL_TRANSCRIPTS",
+  "pass": true,
+  "total": 275,
+  "transcript_qa_passed": 273,
+  "private": 0,
+  "deleted": 0,
+  "unavailable": 2,
+  "blocked_by_youtube": 0,
+  "retryable_failed": 0,
+  "failed_unknown": 0,
+  "pending": 0,
+  "accessible": 273,
+  "transcript_coverage_percent": 99.2727,
+  "results": [
+    {
+      "video_id": "zlksxbDIKXc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "zf2QElxgITI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "zSci8LfYgNQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "zEWvVKABQ5w",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "xn-c8uIDawQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "xKeaYnH2rdY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "x8vAn6PTz-0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "wlVQ3UXaG4I",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "wXox41twkhc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "wUSevcuKRRI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "wNdKyGZDlgA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "vzF8aJiD154",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "voW1WZx5sGY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "vPnmY3tM2Hs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "vJfel1c2w4g",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "uzmBWpAgzLI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "uwivvl05wD0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "uXHXgfblywU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "uJyeYFSk9Eo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ty2Jynnj0H4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ttGyITKM3UA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "trk-1VRzsuw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "tltrvIothA8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "tNDAzHSOyUA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "t5UZtolc5Jg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ssXy5Xu4wuk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "smyCrLe7gAs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "sWm90DsrsTg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "sBZFSCiHHV0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "rTx46G8QGF4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "rEkcOlGp9tI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "rEJcmBag3WQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "qmH3rHr8R9c",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "qZeJG5vP5I0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "pwgdyVExS6g",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "pY_EwUntX4Q",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "oMtKDwdJgQA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "o9AHKEH5tF8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "o996W1rgKDA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "o66RWeF4Ylc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "nJd_nvNFBT8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "nF5UVrEa0W0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "nBXW1ZpMPC0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "nAW1RJhFI00",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "n-tpuzh8IK8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "mcKGK1XiWLI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "mYjWXtAAiD8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "mGnjsXQIB6U",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "mG0nDxzF5yE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "m9zObSnljCg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "lVmaRcubJfQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "lS26hf9i5qI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "lPESXxyg3Nc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "lKejWChUW9w",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "l82O0bheEJU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "kvviN4YgbM8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "kunwV1LYeU0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ksGD8bqze2M",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "kC-jqFUpjqE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "jj-VoERhzis",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "jcjWfE0EdJI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "j_AxzdRzFYo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "jGuimLjTZ24",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "iaEHqwlzmLM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "iDy2P1JBtaQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "hi246JgdwZM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "hAdlNogOCjk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "h98slxaoxu8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "h7OaxJ24XnM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "h2dqC0P8JAo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "glkjSqEyhpk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "gMA6RpT_QIw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "g6y1otj8V3E",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "fj-Mc9ltkf4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "eliOdG_Z9q4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ehGJDqOpS_w",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ebbZV_a8Rw8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "eTDGHZyw5Pk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "eNvQFOLFl6s",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "e8sff6PH4mc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "e2MH9AeMJuU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "czsXfxoaKaY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "cpCfBFG8cbk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "clYzv9w10KY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "cSfOOeu6kVU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "cKwfhyOnj_8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "cJXRtTlXixQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "c88rpx8FBjQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "c7YVD0z3L2E",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bmKffnctSMs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bifgst-Oht8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bfinRDEGcQE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bbp9HC0krbQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bTQtPEVrIxE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bSnja3z7N9E",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "bHFfUnxO2p4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "arGZnwFnCvk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "aomcgft54YE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ak3k6s4Z1wo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "aONxIQmcSis",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "aK3nQ-WiCKA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "aASRhISOvVo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "_qFHZqvSSkA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "_635QRjJh64",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "_4B8U6ytXdU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "_3cwXCPXlDE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ZizVOlf4Aeo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ZVv7IhmbXCI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "ZFUbvxdIBo4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Z3w_AZwTZYI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "YuiG9ZAo5-o",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "YG1Wavp3_SQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "YEvYhWvSHiM",
+      "status": "PASS",
+      "source_type": "ASR_WHISPER",
+      "qa": {
+        "status": "PASS",
+        "reasons": [],
+        "segment_count": 17,
+        "word_count": 4650,
+        "coverage_seconds": 1157.12,
+        "coverage_ratio": 0.8120140350877192,
+        "language_ok": true
+      },
+      "attempts": [
+        {
+          "provider": "yt-dlp-caption",
+          "mode": "manual",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "started_at": "2026-08-26T23:13:22Z",
+          "ended_at": "2026-08-26T23:13:26Z",
+          "return_code": 1,
+          "message": "ERROR:  YEvYhWvSHiM: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies"
+        },
+        {
+          "provider": "yt-dlp-caption",
+          "mode": "auto",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "started_at": "2026-08-26T23:13:26Z",
+          "ended_at": "2026-08-26T23:13:30Z",
+          "return_code": 1,
+          "message": "ERROR:  YEvYhWvSHiM: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies"
+        },
+        {
+          "provider": "yt-dlp-media",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "message": "ERROR:  YEvYhWvSHiM: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies",
+          "started_at": "2026-08-26T23:13:30Z",
+          "ended_at": "2026-08-26T23:13:34Z",
+          "return_code": 1
+        },
+        {
+          "provider": "browser-profile-media-capture",
+          "result": "MEDIA_OK",
+          "message": "{\"ok\": true, \"source\": \"REAL_MEDIA\", 
+\"access_mode\": \"BROWSER_PROFILE_MEDIA_CAPTURE\", \"duration\": 1385.4, 
+\"video_duration\": 1425, \"ad_detected\": true, \"ad_skipped\": false, 
+\"segments\": 16}",
+          "started_at": "2026-08-26T23:13:34Z",
+          "ended_at": "2026-08-26T23:41:37Z",
+          "return_code": null
+        },
+        {
+          "provider": "faster-whisper",
+          "result": "ASR_OK",
+          "message": "",
+          "started_at": "2026-08-26T23:45:24Z",
+          "ended_at": "2026-08-26T23:45:24Z"
+        }
+      ],
+      "forced_asr": false
+    },
+    {
+      "video_id": "XxgpH-THrro",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Xs61NKFCwT8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "XgRLbS85yws",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "XNdvBBWjtRQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "X7z-nSJpl1g",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "WakCmAvWjCo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "WIiKPNUbvfE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "VshrmkUKMsE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Vd3RBcZ6xPQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "VKL013Czw3M",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "V456V4oB9Ww",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "V1gVw4gYRo8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "UzOzMOYj_D8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "UuiCmkqoxFY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "UebWWMXcUek",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "UYvZMHsLle8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "U3K0LvxCG5I",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Tw3kpA4gJMM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "TOEGieCTAeM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "T69uom_FOeU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Szw2F42CJ6w",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "SvN_LI8c8RE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Smx0szgNJEE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "SgsVQkBtcCo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Sa2ptWaJYPI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "SX70CmArfmE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "SWSNOom0uh8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "SNt6DfojptA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "S9fomLTicIA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "S2xx2IBq5KQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "RlFVV_QZ5co",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "R_3SCxFPVxw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "RU1Xc57iydI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "RGqk7bA1F24",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "REfHNS4YvLI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "R-wvpWJydyI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "QNRjpDouJfc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Q7xTckahoM0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Q4yp2WilVPI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "PQ2gezTH_vE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "PI5StS6CExo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "PHtaqz_BP4U",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "P9P5VTIHfOw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "P7L_nAfWoe4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "P7-hriv_e74",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "OwoSE-rM7oU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Op16on_EYcc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "OltZzlH8jDA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "OFscVOT8AQA",
+      "status": "PASS",
+      "source_type": "ASR_WHISPER",
+      "qa": {
+        "status": "PASS",
+        "reasons": [],
+        "segment_count": 2,
+        "word_count": 1596,
+        "coverage_seconds": 347.1,
+        "coverage_ratio": 0.9722689075630251,
+        "language_ok": true
+      },
+      "attempts": [
+        {
+          "provider": "yt-dlp-caption",
+          "mode": "manual",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "started_at": "2026-08-26T23:45:26Z",
+          "ended_at": "2026-08-26T23:45:30Z",
+          "return_code": 1,
+          "message": "ERROR:  OFscVOT8AQA: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies"
+        },
+        {
+          "provider": "yt-dlp-caption",
+          "mode": "auto",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "started_at": "2026-08-26T23:45:30Z",
+          "ended_at": "2026-08-26T23:45:34Z",
+          "return_code": 1,
+          "message": "ERROR:  OFscVOT8AQA: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies"
+        },
+        {
+          "provider": "yt-dlp-media",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "message": "ERROR:  OFscVOT8AQA: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies",
+          "started_at": "2026-08-26T23:45:34Z",
+          "ended_at": "2026-08-26T23:45:38Z",
+          "return_code": 1
+        },
+        {
+          "provider": "browser-profile-media-capture",
+          "result": "MEDIA_OK",
+          "message": "{\"ok\": true, \"source\": \"REAL_MEDIA\", 
+\"access_mode\": \"BROWSER_PROFILE_MEDIA_CAPTURE\", \"duration\": 356.28, 
+\"video_duration\": 357, \"ad_detected\": false, \"ad_skipped\": false, 
+\"segments\": 4}",
+          "started_at": "2026-08-26T23:45:38Z",
+          "ended_at": "2026-08-26T23:51:45Z",
+          "return_code": null
+        },
+        {
+          "provider": "faster-whisper",
+          "result": "ASR_OK",
+          "message": "",
+          "started_at": "2026-08-26T23:53:10Z",
+          "ended_at": "2026-08-26T23:53:10Z"
+        }
+      ],
+      "forced_asr": false
+    },
+    {
+      "video_id": "O7xgMsUF3bQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "N_-igTqFZPE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "NX1juPMYZFk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "NSyQe2pbYa8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "NMFRTHIv4kQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "NLNIh26VqZY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "NDFoyNk__lk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "N6V8zmu61L0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "MwROXuG2zGE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "MlW12mwn80w",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "MjUG8zZZ4Wo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "MVKAzVatoC8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "MTesY3jBWL8",
+      "status": "PASS",
+      "source_type": "ASR_WHISPER",
+      "qa": {
+        "status": "PASS",
+        "reasons": [],
+        "segment_count": 8,
+        "word_count": 9221,
+        "coverage_seconds": 2227.88,
+        "coverage_ratio": 0.9959231113097899,
+        "language_ok": true
+      },
+      "attempts": [
+        {
+          "provider": "yt-dlp-caption",
+          "mode": "manual",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "started_at": "2026-08-26T23:53:10Z",
+          "ended_at": "2026-08-26T23:53:14Z",
+          "return_code": 1,
+          "message": "ERROR:  MTesY3jBWL8: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies"
+        },
+        {
+          "provider": "yt-dlp-caption",
+          "mode": "auto",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "started_at": "2026-08-26T23:53:14Z",
+          "ended_at": "2026-08-26T23:53:18Z",
+          "return_code": 1,
+          "message": "ERROR:  MTesY3jBWL8: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies"
+        },
+        {
+          "provider": "yt-dlp-media",
+          "result": "SIGN_IN_CONFIRM_BOT",
+          "message": "ERROR:  MTesY3jBWL8: Sign in to confirm you’re not a bot.
+Use --cookies-from-browser or --cookies for the authentication. See  
+https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for 
+how to manually pass cookies. Also see  
+https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for
+tips on effectively exporting YouTube cookies",
+          "started_at": "2026-08-26T23:53:18Z",
+          "ended_at": "2026-08-26T23:53:22Z",
+          "return_code": 1
+        },
+        {
+          "provider": "browser-profile-media-capture",
+          "result": "MEDIA_OK",
+          "message": "{\"ok\": true, \"source\": \"REAL_MEDIA\", 
+\"access_mode\": \"BROWSER_PROFILE_MEDIA_CAPTURE\", \"duration\": 2240.46, 
+\"video_duration\": 2237, \"ad_detected\": true, \"ad_skipped\": false, 
+\"segments\": 25}",
+          "started_at": "2026-08-26T23:53:22Z",
+          "ended_at": "2026-08-26T23:58:54Z",
+          "return_code": null
+        },
+        {
+          "provider": "faster-whisper",
+          "result": "ASR_OK",
+          "message": "",
+          "started_at": "2026-08-27T00:06:15Z",
+          "ended_at": "2026-08-27T00:06:15Z"
+        }
+      ],
+      "forced_asr": false
+    },
+    {
+      "video_id": "Lg_aQ0C6mEs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "LTBOm37Q1l0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "LMHkTQaQ7GQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "LFeOFJLnNUw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "LFR5l_Eykus",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "LEZQueddG8g",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "L6jPyTdKEto",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "L06FSViKqXk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "KrTq4N9kPD0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "KMqHaFr4uxg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "K8vbhpbCAEw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "JdkmfiTHZnA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "JR-9cTGUQVU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "J7rtRcIJ-UI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Ikgvi_HwQXk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "IWTSk9TDDoo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "IFN9CipMLhU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "HSYelQuo1hU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "HJGRBSK-OYw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "HHv2CySBIsk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Gg0hlm-NE8Q",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "GfUYOTBJlb4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "GU2-6gN8sYk",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "GPIpfmyXGJ8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "G83KfQp-HTY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "FZydVUC6zik",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "EwtBAOOn9Q4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "EiEWyQi4ke8",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "EfvYnuuKVHs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "EaPPMMHlVZI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "E-Y-Lp52ygM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "DoflkbAigSs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "DZ7AHwuZ5Jc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "D9Ykatz21xw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Ca9iL0YVdFs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "CTz5bwPvML4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "C5krOj7pcgU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "C234yek7Ei0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "BwbS6LgJeNc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Bjty6yl78-k",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "BKrv7t8lpsU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "B1tAaYcI6Hw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "Ay59w5p2O9M",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "AtB48p_O248",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "AsI2I-YVBsg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "AlSSi1jGrlU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "AXkMp4fA684",
+      "status": "SKIPPED",
+      "reason": "UNAVAILABLE"
+    },
+    {
+      "video_id": "AJYbSqcySjE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "A6-P6zlonQw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "A58-M9NQeKA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "9wBDuYvc8RM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "9sS0s4s__BM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "9kqPCf6yfvg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "9c-lqlgN6LY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "9MHK3xpGgkI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "95NVNR-yz4Q",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "92xShSgMPgo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "92bPPboE25o",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "8ME4Q4SFzZM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "8IuJGeiu6Ao",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "89xlMoXTFZU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "7SISzTa0DXQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "7O6t7b5bX1A",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "7MomFNfPKjM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "72aoQ0YvOqo",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "6hv9claUImA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "6XkKGZUcTcA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "6VroW_GLAu0",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "6Rscdcv_3vU",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "5si-VGrDS_E",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "5hi2MwgYOoM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "5fAUmZsAdAY",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "5bOQmTMS71Q",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "5RNtxpXviEE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "5EqkAnmaX9Q",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "4sKIcF9uZpg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "4OSlC2ugBtw",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "3u811uGqpbs",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "3rWuIYZ6IvE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "3gaCHj2IGDc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "3_HdojX8zcc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "3LeDRfQwgeM",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "3BCGxiIZIak",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "32l6VKEOGys",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "2rsbRtNSK0o",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "2oxQXSRdJ34",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "2mO-BJ_Ils4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "2lAQBpeTIbc",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "2JG6r9kzhMs",
+      "status": "SKIPPED",
+      "reason": "UNAVAILABLE"
+    },
+    {
+      "video_id": "1mPcxbz0cqA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "1Y-vd5iPXyA",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "1Oq1gkYO5BI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "19op6-S6dvg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "0lsTNIqqe58",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "0dgPdbFNS44",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "0UtoLgVIyQI",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "-u6L7hpJDgQ",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "-mmcYoK0ooE",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "-PFO8Uophfg",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    },
+    {
+      "video_id": "-MfUGsa8RK4",
+      "status": "SKIPPED",
+      "reason": "TRANSCRIPT_QA_PASSED"
+    }
+  ],
+  "generated_at": "2026-08-27T00:06:19Z"
+}
+YOUTUBE_ALL_TRANSCRIPTS: PASS

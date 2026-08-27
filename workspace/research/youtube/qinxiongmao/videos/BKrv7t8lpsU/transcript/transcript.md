@@ -1,0 +1,56 @@
+# Transcript: BKrv7t8lpsU
+
+- Source: `ASR_WHISPER`
+- Provider: `faster-whisper`
+- Language: `zh`
+
+## Segments
+
+- `00:00:00–00:02:01` 今天 我們 來 測 試 L um ina, 她 是 這個 影片 的 主 持 人 她 是 最近 的 M odel C - D ance 2. 5 和 C - D ream 5. 0 Pro Model L um ina 是 一個 O fficial By te Plus Visual C reat ivity and Content Creation platform 來 創 造 畫 面、 影片、 和 賣 相 的 C reat ive Ass ets 她 是 最近 的 M odel 她 是 完 美 的 和 很有 趣 的 C reat us、 E - Com merce Team、 Mark eters 和 A gen cies 她 想 建 立 V is ual Content 更 快 地 使 用 AI 我們 開始 吧 首先 我們 來 測 試 AI. By te Plus. com 和 L um ina 這裡 我們 有 一個 overview about the tool 你 會 有 最 高 模 式 例 如 image 是 C - D ream 5. 0 Pro 或 N ano Banana Pro 這 次 我們 會 在 新 的 C - D ance 2. 5 update 首先 我們 想 建 立 一些 畫 面 在 下面 你 會 有 chat box 和 your prompt 你可以 選 擇 A i image AI video AI chat A v atar 和 audio 這裡 你 會 有 最 高 模 式 例 如 C - D ream 5. 0 Pro 或 N ano Banana Pro 你可以 選 擇 R at io 你可以 選 擇 re ference images 或 char ac ters 我們 有 一個 real istic cinematic des ert landscape 在 Gold en Hour 有 一個 小 卡 通 T ravel ers 寫 上 cam els 你可以 看到 畫 面 的 質 素 就是 我們 想 要 的 exactly what we wanted a desert landscape T ravel ers 和 在 far behind O asis 你可以 下 載 或 分享 我們 可以 連 結 或 發 布 現在 我們 進 入 C - D ance 2. 5 我們 想 要 的 畫 面 現在 我們 在 C - D ance 2. 5 我們 有 our prompt here 確 認 C - D ance 2. 5 是 選 擇 的 你可以 選 擇 R at io 或 Res olution 有 一個 D uration 至 於 30 s in C - D ance 2. 5 這 很 棒 現在 你 只 要 打 得 很 棒 你可以 看到 現在 是 在 創 造 我們 選 擇 ad pit 你可以 選 擇 B ur ial Gener ations 好 東西 在 L umin ase 你可以 上 載 到 50 s 像 照 片、 影片、 音 樂 你的 角 色、 畫 面 還有 更 多 這裡 是 資 料 我們 來 看看
+- `00:02:03–00:02:07` 我們 差不多 在 這是 一個 很 棒 的 景 點
+- `00:02:19–00:02:23` 更 漂亮 than I imagined 我們 享 受 這個 place for a while
+- `00:02:26–00:02:29` 很 棒
+- `00:02:32–00:02:58` 的 景 點 是 cinematic 從 映 像 中 有 smooth transitions 在 拍 攝 之 間 沒有 詳 細 是 our prompt 是 our camera control M ult i - Sh ot as its best am azing 這裡 有 更 多 advanced example 我們 上 載 了 這 張 照 片 這 位 女 生 我們 想 讓 女 生 站 在 一 位 男 生 在 紐 約 旁 邊 他們 有 個 交 流 我們 來 看看 我
+- `00:03:02–00:03:06` 猜 這 可能 會 變 成 前 方 但是 我 真的 想 見 你 了
+- `00:03:08–00:03:14` 我 希望 你 會 說 那 句 話 我 可以 取 得 你的 號 碼 嗎 當然 你 不
+- `00:03:19–00:03:24` 可以 想 像 你 失 敗 了 看 起來 我 再 沒有 其 他 道 理 很
+- `00:03:27–00:03:44` 棒 的 M ult i - Sh ot scene 角 色 的 狀 況 在 拍 攝 之 間 全 都 在 一 臉 上 嘴 唇 有 一點 點 是 一 切 很 棒 的 L um ina 也 給 我們 影片 剪 輯 我們 有 這個 原 來 的 影片 我們 來 看看 對
+- `00:03:47–00:03:52` 這樣 很 棒 我不 能 等 待 你 J J 下次 見
+- `00:03:54–00:04:23` 我們 想 剪 輯 這 影片 我們 想 改 變 女 生 的 髮 型 但 不要 改 變 任 何 其 他 我們 不 想 再 剪 輯 整 個 影片 所以 L um ina with Se ed ance 2. 5 給 我們 影片 剪 輯 首先 你 去 Se ed ance 2. 5 你 去 影片 剪 輯 你 去 拍 攝 你的 剪 輯 你 想 改 變 你的 改 變 準備 好了 我們 只 要 改 變 女 生 髮 型 的 髮 型 保 持 其 他 東西 一樣 我們 完成 了 很 棒 的 這裡 是 資 料 我們 來 看看 對
+- `00:04:26–00:04:59` 這樣 很 棒 我不 能 等 待 你 J J 下次 見 如果 我們 把它 放 進 去 相 比 你 可以 看到 我們 只 想 改 變 女 生 髮 型 的 髮 型 所以 剪 輯 with Se ed ance 2. 5 L um ina is just as easy as that 另外 一個 例 子 我們 有 影片 剪 輯 我們 有 商 業 剪 輯 我們 有 剪 輯 的 剪 輯 我們 應該 剪 輯 剪 輯 剪 輯 一 步 一 步 剪 輯 剪 輯 我們 來 看看 今天 我們 在 剪 輯 我 最 愛 的 剪 輯 這
+- `00:05:13–00:05:16` 就是 我們 在 看 的
+- `00:05:22–00:05:44` 簡單 的 材 料 剪 輯 效 果 我 從 來 沒有 看 過 一個 更 好的 剪 輯 這是 第一 代 我們 在 Se ed ance 2. 5 這個 剪 輯 而且 很 棒 你可以 看到 剪 輯 的 狀 況 是 重 點 我們 沒有 用 任 何 剪 輯 或 任 何 剪 輯 的 照 片 我們 只 要 剪 輯 剪 輯 的 效 果 是 很 棒 的
+- `00:05:46–00:05:47` 你可以 看到
+- `00:05:49–00:06:03` 這 就是 一 步 一 步 的 剪 輯 甚 至 剪 輯 的 效 果 適 應 到 剪 輯 的 程 度 最後 你可以 看到 就是 我們 在 看 的 這 就是
+- `00:06:04–00:07:14` 瘋 狂 這 就是 很 棒 的 剪 輯 L um ina 在 剪 輯 上 是 很 棒 的 另外 一個 很 棒 的 剪 輯 是 mult il ang uage support 我們 有 兩 人 的 剪 輯 一 人 在 說 英 文 一 人 在 說 German 在 剪 輯 中 我們 來 看看 哈囉 schön dich kennen zu lernen ich habe schon viel von dir hört hast du die neue KI schon aus prob iert? Nice to meet you too Yes I have It 's honestly one of the most impressive AI systems I 've ever tested das bee in ro ch ende ist dass jeder einfach in seiner eigenen Spr ach sprechen kann das macht internation ale O mb ration viel fe ister er Ex actly I don 't have to think about translation anymore I can just focus on the ideas and the conversation dann können wir endlich gemeinsam an den Se ben pro jek ten arbeiten ohne Spr ach bere ine That 's the future I 've been waiting for Im agine what global teams can build together dann las st wir gemeinsam etwas große alles entwic keln Abs olutely Let 's build something amazing Ag ain mult ish ot scene on point camera control is perfect here char acter consistency Eng lish is perfect as a German native speaker some words were not accurate but all in all it 's just amazing Here the same mult il ang uage feature with a car showcase all in Spanish Welcome Would you like to see it closer? Of course It looks even better in person
+- `00:07:16–00:07:35` Every detail has been designed to offer the maximum comfort, performance and technology on every trip The attention to detail is really impressive Every element was designed to lead to a completely natural experience It feels perfectly balanced It 's exactly what I was looking for Cong ratulations En joy it I think this is the right one
+- `00:07:39–00:07:52` Perfect car commercial Perfect lip sync to the Spanish It 's all there It 's amazing Talk ing about commercials You can do also brand commercials Like here a wireless headset Let 's have a look
+- `00:08:13–00:08:43` As you can see From a single prompt To a full commercial Re ady to upload to social media To promote it B ite plus Lum ina Se ed ance 2. 5 I nte gr ation is just amazing If you liked Lum ina Just click the link in the description To get some free credits And there 's also a trial package There 's also exclusive bonus event Up to 50 % of a monthly plans J oin and get up to 7 minutes of 4 80 p Se ed ance 2. 5 for free So grab the chance See you in the next one
+- `00:09:09–00:09:40` 哎 对 是 第二 段 了 是 吧 R ing you 把它 当 第一 段 的话 这是 第二 段 所以 不是 嗯 不是 但是 呢 这 第一 段 呢 它 本 质 上 没有 造 成 低 点 的 台 升 对 吧 这个 通 道 继 续 延 续 所以 活 学 活 用 你 觉得 它 是 有 我觉得 也 没 问题 那 如果 说 我 把它 当 F B 结 构 呢 我 现在 看 见 这个 阳 线 能 不能 进 你 如果 认 为 它 是 F B 结 构 那就 不能 等 第二 次 了 因为 它 往 往 就 不会 给 第二 次 机 会 是 吧 指 引 看 哪 里 啊 第一 强 高 第二 更 高 是 吧
+- `00:09:41–00:09:42` 往 后 走 啊
+- `00:09:45–00:09:47` 走 出 预 期 没 问题
+- `00:09:49–00:09:52` 哎 又 下 来了 哎 又 下 来了
+- `00:09:56–00:10:18` 哎 又 回 到 成 本 价 了 又 回 到 我 成 本 价 了 我就 走 掉 是 吧 或者 你 不 走 也可以 因为 现在 又 走 出 了 新 的 结 构 就是 它 虽 然 没有 走 出 F B 结 构 但是 它 走了 一个 小 双 底 它 走了 一个 负 大 汇 条 它 有 没有 可能 继 续 向 上 呢 也可以 是 吧 你看 这里 边 灵 活 多 变 的 东 西 太 多 了 灵 活 应 对 所以 走 不 走 都 可以
+- `00:10:20–00:10:26` 我们 等 一 根 高 二 吧 这里 边 有 没有 出 高 一 出 了 如果 说 再 出 一 根 高 二 的话 就 结 定 不 走 是 吧 往 后
+- `00:10:29–00:10:53` 非常 好的 高 二 所以 你看 同 样 是 做 多 有 的人 的 预 期 就 不 一 样 有 的人 是 看 见 这个 线 才 进 有 的人 刚 才 在 这 进 了 所以 你看 你的 每 一 步 行 为 都 决 定 了 你 下一 步 的 操 作 是 吧 那 你的 独 徒 的 基 础 这 种 知 识 来 自 于 哪 来 自 于 你 长 时间 做 教 育 的 这 种 积 累 是 吧 积 累 继 续 支 撑 往 后 拿
+- `00:10:56–00:11:09` 哎 呦 下 来了 反 抽 成 本 价 是 赢 了 是 吧 是 赢 了 现在 价 格 又 来 到了 墙 高 点 这里 边 是 1 号 k 是 吧 2 号 k 3 号 k 往 后
+- `00:11:13–00:11:26` 这 根 k 线 算 不 算 空 头 型 号 k 线 算 是 吧 算 拼 败 非常 好的 拼 败 重 叠 度 也 不 高 最 好 等 一个 是 第一 就是 下一 根 k 线 入 场 k 线 等 一个 入 场 k 线 往 后 走
+- `00:11:28–00:11:38` 这 根 线 算 不 算 好的 空 头 入 场 k 线 不 算 本 账 算 多 头 确 实 k 线 它 不是 我们 想 要 的 空 头 线 号 k 线 我们 往 下
+- `00:11:40–00:11:56` 又 走了 一个 线 号 k 线 但是 这个 线 号 k 线 它的 问题 在 哪 重 叠 非常 好 这 就是 我们 刚 才 学 的 嘛 重 叠 度 太 高 了 它 本 质 上 是 一个 什么 是 一个 教 育 区 间 场 面 这个 影 线 场 上 的 影 线 也 不能 忽 略
+- `00:11:58–00:12:00` 跌 下去 了 往 后
+- `00:12:01–00:12:04` 我们 想 等 一 等 有 没有 第二 次 机 会
+- `00:12:10–00:12:11` 后
+- `00:12:14–00:13:10` 遗 憾 不 遗 憾 我们 要 不要 为 此 拍 大 腿 你看 看 多 好的 机 会 进 去 就 一直 没 亏 过 它 就 一直 都是 转 的 那 如果 说 是 左 侧 的 它 可能 进 去了 我们 第 77 节 目 里 边 R 3 和 R 4 R 3 现在 愣 投 降 进 去了 哇 他 这 笔 赚 了 很多 的 钱 他 就 觉得 你看 见 了 没有 看 见 了 没有 我就 说 进 吧 你们 都 打 着 想 都 不能 借 什么 了 你 啪 到 的 身 边 有 没有 这样 的人 其实 他 这 比 较 有 我们 觉得 这是 什么 是 运 气 的 成 分 多 一点 对 吧 这里 边 又 讲 到 一 句 话 也是 送 给 大家 真 正 让 你 赚 钱 的 匿 汇 不是 你 能 看 懂 的 能 解 读 的 也 不是 能 抓 住 的 你 像 这个 R 3 确 实 抓 住 了 但是 以 我们 的 副 盘 或者 说 学 习 来 讲 这 种 信 号 更 多 的时候 它 是 下 不 去 的 反 而 会 让 它 亏 钱
+- `00:13:11–00:13:32` 10 次 比 方 让 它 亏 了 6 次 有 4 次 不 亏 4 次 里 边 它 抓 住 了 两 次 后 边 这 6 次 它 可能 都 抓 住 了 所以 它 就 想 不 明白 一 不对 我 上 次 就 这么 做 的 为 啥 就 一直 亏 钱 了 能 理 解 吗 真 正 让 你 赚 钱 的 机 会 不是 你 能 看 懂 的 能 解 读 的 也 不是 能 抓 住 的 而 是 你 交 易 系 统 内 的
+- `00:13:40–00:14:10` 这个 阳 线 怎么 解 读 好像 是 在 这个 位 置 撑 住 了 但是 做 多 吧 又 没有 盈 亏 比 是 吧 我们 试 价 进 只 损 放 在 这 只 赢 最 多 是不是 也 只 能 看到 这里 1. 38 的 盈 亏 比 是 吧 除 非 我们 挂 单 进 程 挂 在 这 这样 的话 盈 亏 比 就 上 去了 所以 挂 单 是 这样 用 的 是 吧 走 没有 问题 或者 说 剪 仓 都 可以 是 吧 但是 做 多 我们 刚 才 说 这里 边 有 没有 做 多 了 逻 辑 有 但是 没有 盈 亏 比 是 吧 我们 继 续 往 后
+- `00:14:11–00:14:12` 内 包
+- `00:14:15–00:14:16` 继 续 内 包
+- `00:14:18–00:14:23` 还是 内 包 如果 说 现在 再 走 一 根 这样 的 K 线
+- `00:14:24–00:14:44` 那么 它 就 可能 发 展 成 什么 了 我们 12 斤 K 里 边 有 一个 叫 什么 上 升 三 反 非常 好 非常 好 那么 这样 的话 这 五 根 K 线 就 构 成 了 上 升 三 反 我是 最 喜欢 这 种 因为 上 升 三 反 本 质 上 它 是 什么 上 升 三 反 内 部 结 构 其实 是 啥 N 字 形 突 破
+- `00:14:46–00:14:47` 我们 继 续
+- `00:14:48–00:14:50` 跌 破 前 面 这个 根 扬 下 的 地 点
+- `00:14:53–00:15:11` 做 空 的 预 期 不 在 那 往 后 现在 这个 算 通 末 不 算 现在 做 空 的 预 期 有 没有 算 那 能 不能 进 不能 为 啥 对 其实 最 主 要 的 问题 是 重 叠 太 多 了 通 道 也 算 对 确 实 是 通 道
+- `00:15:13–00:15:17` 这个 交 易 区 间 在 交 易 区 间 里 边 所以 最 好 不 进 往 后
+- `00:15:22–00:15:22` 好像 要 突 破
+- `00:15:25–00:15:36` 这里 边 其实 走 出 了 一个 新 的 交 易 区 间 是 吧 这 种 时候 你 不管 是 多 单 还是 空 单 最 好 是 空 仓 离 场 光 望 对 吧 因为 这个 时候 可 涨 可 跌
+- `00:15:39–00:15:50` 如果 您 还 没有 订 阅 我的 频 道 欢 迎 点 击 小 铃 铛 订 阅 同 时 也 感 谢 您 的 点 赞 评 论 转 发 您 的 支持 是我 持 续 输 出 的 最 大 动 力 更 多 干 货 可以 微 信 扫 描 屏 幕 上 方 二 维 码 关 注 公 众 号 我们 下 期 再见
