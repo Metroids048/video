@@ -1,0 +1,141 @@
+# Transcript: 1Oq1gkYO5BI
+
+- Source: `ASR_WHISPER`
+- Provider: `faster-whisper`
+- Language: `zh`
+
+## Segments
+
+- `00:00:00–00:01:07` 7 位 貿 易 人 士 對 於 一 件 事 一 位 幸 運 貿 易 人 士 需要 100 萬 元 這是 一 名 民 眾 他們 會 看 待 相信 我們的 貿 易 人 士 我們 會 找 到 他的 貿 易 人 士 我 已經 貿 易 了 11 年 我 準備 去 測 試 這些 貿 易 人 士 為 何 有人 會 相信 他們 100 萬 元 你 相信 我 因為 你 會 給 我 更 多 的 錢 我 會 有 證 據 我 會 重 測 資 料 我 會 感 動 在 貿 易 人 士 貿 易 人 士 會 改 善 你 失 敗 了 三 個 貿 易 人 士 你 會 做 什麼 失 敗 了 三 個 貿 易 人 士 如果 我 失 敗 了 三 個 貿 易 人 士 我 會 試 著 明白 我 似 乎 失 敗 了 三 個 貿 易 人 士 你 曾 經 有 貿 易 人 士 嗎 當然 了 貿 易 人 士 是 一 種 過 程 我 認為 是 貿 易 人 士 所以 我的 感覺 是 可以 隱 瞞 的 我 覺得 有人 會 給 我 解 釋 我 沒有 把 貿 易 人 士 的 貿 易 人 士 你 認為 是 一個 貿 易 人 士 為 你 貿 易 人 士 的 貿 易 人 士 60 40 我 會 很 開心 給 你 90 % 的 貿 易 人 士 這 不是 你的 錢 這是 我的 課 堂 這是 我的 知 識 你 以 為 我 現在 有 很多 話 要 說 這 時候 我 準備 去 討 論
+- `00:01:12–00:02:54` 今天 在 G FT Games 七 貿 易 人 士 在 戰 爭 一 件 事 我說 七 貿 易 人 士 因為 有 一個 獨 有 的 貿 易 人 士 他們 會 為 我們 貿 易 人 士 尊 敬 我們的 貿 易 人 士 貿 易 人 士 想 介 紹 一下 嗎 大家好, 我是 Mad z 貿 易 人 士 我 已經 在 11 年 內 貿 易 人 士 我 準備 去 測 試 這些 人 士 大家好, 我是 F ive 我 已經 在 4 年 內 貿 易 人 士 我們 會 找 到 誰 是 貿 易 人 士 一 位 幸 運 的 貿 易 人 士 需要 100 k 誰 會 是 我們 會 找 到 的 我們 來 看看 貿 易 人 士 告訴 我們 你的 名 字 你 貿 易 人 士 的 名 字 和 你 貿 易 人 士 的 名 字 我 叫 Char lie 我是 AK DA Baker 我 已經 在 5 年 內 貿 易 人 士 和 我 貿 易 人 士 的 名 字 我 叫 AS AK A AS I M ONEY 我 已經 在 2 年 內 貿 易 人 士 我也 在 2 年 內 貿 易 人 士 和 我 貿 易 人 士 的 名 字 我 叫 Sh annon 我是 AK A Shan 我 貿 易 人 士 我 已經 在 6 年 內 貿 易 人 士 我是 A sti Mills 我 貿 易 人 士 我 貿 易 人 士 我 貿 易 人 士 我 叫 Daniel 我是 D J D Fore x 我 貿 易 人 士 我 貿 易 人 士 我 叫 Gold lyn x 我 已經 在 學 校 學 了 六 年 我 學 校 的 P ound vs. Y en and Gold 嗨, 我的 名 字 是 M K 我 學 校 了 兩 年 我 學 校 的 Gold 嗨, 我的 名 字 是 M ason 我是 K arts 我 學 校 了 六 年 我 學 校 的 All Cur rencies 讓 我們 來 問 一個 問題 一個 簡單 的 問題 為什麼 會 有人 相信 他們 學 校 的 100 K 你 相信 我 因為 你 會 給 他們 更 多 錢 你 會 放 在 飯 桌 上 然後 你 會 做 餅 乾 就是 心 裡 你
+- `00:02:56–00:03:02` 相信 我 因為 我 學 校 在 我的 系 統 上 有 背 後 的 效 果 可以 在 家 裡 玩 60 % 的 遊戲 你
+- `00:03:05–00:03:09` 相信 我 因為 我 自己 認為 我 會 做 餅 乾 而且 我 確 實 知道 我在 做 什麼
+- `00:03:11–00:03:18` 我 讓 學 校 的 結果 說 話 給 他們 跟 隨 系 統 有 好 心 理 我 從 來 沒有 賺 錢 你
+- `00:03:19–00:03:29` 相信 我 因為 我 學 校 的 100 K 因為 我 學 校 有 更 多 錢 我 再 重 減 資 料 我 相信 我的 體 育 技 術 而且 我 感 動 在 銷 售
+- `00:03:31–00:03:38` 你 相信 我 因為 我 學 校 的 100 K 因為 我 學 校 有 很多 人 他們 也 跟 隨 我 我 已經 有 擔 任 其 他 人
+- `00:03:40–00:03:46` 你 相信 我 因為 你看 這個 臉 這是 我 相信 你的 臉 那 就是 我 必 須 說 的 你 相信 我 因為 我 學 校 有 100 K
+- `00:03:48–00:04:11` 你 相信 我 因為 我 試 過 測 試 我 已經 做 過 了 現在 我們 知道 誰 這些 學 校 我們 來 看看 學 校 的 評 判 學 校 你 準備 要 問 一些 問題 嗎 嗯 哼 我們 去 吧 拿 走 你 會 做 什麼 會 是 你的 第一 支 付 款 我 再 重 減 資 料 我 再 重 減 資 料 所以 我 能 獲 得 更 多 的 評 判 我 第一 支 付 款 我 再 重 減 資 料
+- `00:04:13–00:04:16` 我 第一 支 付 款 我 可能 再 重 減 資 料 再 拿 走
+- `00:04:18–00:04:23` 放 一些 資 料 在 我的 個人 再 重 減 資 料 再 用 其 他 資 料 買 另 一 支 付 款
+- `00:04:25–00:04:35` 我 會 做 什麼 買 自己 更 多 的 資 料 所以 我 可以 再 重 減 資 料 慢慢 地 這是 我 第一 支 付 款 然後 再 買 更 多 的 資 料 繼續 我
+- `00:04:37–00:04:42` 會 再 重 減 資 料 再 買 更 多 的 資 料
+- `00:04:43–00:04:47` 我 會 買 更 多 的 資 料 再 重 減 資 料 再 重 減 資 料
+- `00:04:49–00:04:51` 我 會 去 購 物 讓 自己 知道 自己 的 資 料 繼續 走
+- `00:04:56–00:05:02` OK 評 判 你們 有 任 何 人 想 問 一個 問題 因為 他們 的 職 責
+- `00:05:03–00:05:38` 丹 尼 歐 對 你 覺得 什麼 意思 買 自己 的 資 料 所以 我 為 了 買 自己 的 資 料 是 因為 你 問 你 會 做 什麼 你的 第一 支 付 款 對 當 你 買 你的 第一 支 付 款 你 仍 然 是 一個 新 人 而且 這 件 事 仍 然 是 新 人 所以 誰 說 我 會 買 更 多 的 資 料 或 是 我 會 投 資 去 聽 聽 這 件 事 你 必 須 思 考 一下 你 不 可以 買 另 一 支 付 款 所以 如果 你 不 在 工作 或 是 沒有 另 一 支 付 款 你 必 須 拿 出 那 支 付 款 把 資 料 放 在 銀 行 上 然後 確 保 你 能 夠 繼續 購 物 所以 那 就是 OK 但 我的 問題 是 你 會 買 自己 的 資 料 更 多 的 資 料
+- `00:05:40–00:05:52` 你 會 買 你的 資 料 更 多 的 資 料 你 會 買 你的 資 料 更 多 的 資 料 我 只是 說 不要 買 自己 的 資 料 因為 那 些 資 料 你 必 須 購 買 你的 資 料 然後 購 買 更 多 的 資 料 那 就是 我 所 謂 的 意思 不要 買 自己 的 資 料
+- `00:05:53–00:06:00` OK 那 是 時間 那 是 時間 OK 我 的 問題 是 你 購 買 自己 的 資 料 你 會 購 買
+- `00:06:01–00:06:06` 2000 元 一 天 你 會 做 什麼
+- `00:06:08–00:06:09` 你知道 嗎 我 會 從 這邊 開始
+- `00:06:12–00:06:16` 2 grand up 我 一 天 都 在 召 喚 我 以前 都 在 召 喚 一 天 都 在 召 喚 對
+- `00:06:18–00:06:29` 我 應該 會 召 喚 一 天 你 必 須 知道 when to stop 你 只是 在 剪 輯 他 嗎 不 不 不 不 不 你 必 須 知道 when to stop 不 然 你 會 失 去 5 分鐘
+- `00:06:30–00:06:34` 我 也是 這樣 我 會 找 一個 人 去 做 rest of my day
+- `00:06:38–00:06:45` 我 會 保 護 我的 資 料 我 會 去 another trade with that but quick disclaimer I am a scal per so that 's a pretty normal scenario for me
+- `00:06:48–00:06:53` if my target is met system s followed I call it a day lift is trade another day
+- `00:06:55–00:07:00` What I do is I probably go get my hair done with half of that and then re - invest the other half
+- `00:07:03–00:07:32` Be ing up to being up 2000 it depends on what type of account you 're talking if it 's 100 k then you 're only up 2 % which is quite calm you leave your or personally I 'll leave my stop loss running in profit if it 's a 10 k account that 's 20 % I 'm leaving it I 'm ending the day yeah so 2000 is only 2 % of 100 k account so for me personally I 'd actually split that in half risk 1 % on the next trade so that means even if I lose I 've still got a grand for the day and otherwise if I win it 's just a bonus
+- `00:07:33–00:08:14` so you heard it jud ges are discussing between themselves let 's see who they 're eliminating so the first elimination I 'm so sorry I 'm so sorry but look how you just went straight she knew it was you ok ok we 're eliminating this person because guys trad ing 100 thousand dollars I don 't want him losing my 2 grand that he 's just made I don 't want him risking my 2 grand that he 's just made I would want him to call it a day and walk away because you 've made 2 % like bro call it a day
+- `00:08:15–00:08:20` so yeah for a laugh thank you first elimination is Daniel sorry Daniel
+- `00:08:22–00:09:00` and before we move on to the next round I do want to remind our traders and maybe our civilian who knows it could have been Daniel that 's just left I want to remind you guys it 's not about what you would do with your money but it 's about what you would do with someone else 's 100 k now it gets serious press ure changes people so what I 'm going to do is I 'm going to ask the judges to sw itch up the line by giving us the most trusted here at the end to the least trusted and remember t rad ers you are winning over the judges so here at the end you need to con v ince the judges why you should be trusted with 100 k most trusted I would put
+- `00:09:01–00:09:06` prob ably gold links as most trusted ok most trusted
+- `00:09:08–00:09:12` and probably I says le ast trusted oh
+- `00:09:13–00:09:14` to the end
+- `00:09:18–00:09:23` I want to switch you 3 and 4 switch how
+- `00:09:28–00:09:31` are you feeling about this line are you feeling like it 's a strong line
+- `00:09:32–00:09:33` c arts
+- `00:09:35–00:09:39` ne xt to ast i so carts become number 4 you guys move down
+- `00:09:41–00:09:52` what do you think yeah that 's right with that yeah yeah ok with that do you know what I think we need to see how the trader feels about the judges de cision so let 's go to ice
+- `00:09:56–00:10:31` person ally I don 't think I 'm the least trusted trader I understand that K oa may have only been out of prison for two years but someone that 's sec ured pay outs with F T MO in that time and other pro firms I feel like I should be right and that 's the most trusted trader would anyone else like to know why there have been pl aced I just want to know why why am I trusted that 's a very good question why is he trusted Char lie is trusted because Charlie has a bakery and Charlie makes bread from the bakery so
+- `00:10:33–00:10:35` that 's why any one else like to
+- `00:10:37–00:10:38` would anyone else like to say anything
+- `00:10:40–00:10:43` I 'd like to say I 'm very hon oured to be at the top
+- `00:10:46–00:10:54` why question is why did you put me at the top and the guy at the bottom sa id that he 's passed c ertain challenges and got pay outs
+- `00:10:56–00:10:57` he 's been to Joe
+- `00:11:03–00:11:03` Hi
+- `00:11:06–00:11:08` P erson ally I feel like
+- `00:11:09–00:11:21` Gold en 's here sa id how he manages people 's accounts but surely you must have to be FC - ir reg ulated in order to do that so I feel like I should be there where he is and he might have to be here where are you
+- `00:11:30–00:11:44` J ud ges one more question from you guys and then we 're going to do two elimin ations in this round oh ok you lose free trades in a row what do you do next me I 'm done m ight have a little cry but I 'm finished
+- `00:11:46–00:11:52` yeah same here I 'd be done but typically I only lose two trades and I 'm done for the day so the third one would be outside the system anyway
+- `00:11:55–00:12:06` l osing free is not part of the system max I can lose in a day is too but if I do lose free I 'm going to try under stand it I won 't change the system or strategy and I 'll just move on
+- `00:12:08–00:12:11` I simply won 't l ose free in a day I 'm not over risking like that
+- `00:12:12–00:12:16` I 'd like to say I 'll study and try again but I 'll probably have a cry and see if I can get back my boyfriend
+- `00:12:19–00:12:26` three means that my emotions got the better of me I have to call it a day I have to go to bed I have to wake up in the morning and try again that 's just it
+- `00:12:28–00:12:42` I love how nobody sp oke about the fact that if I lost three trades and they all had 0. 25 % risk that means I still have one more trade for the day and overall I 'm only risking 1 % in that day jud ges who are you el imin ating
+- `00:12:49–00:12:52` we are eliminating two traders
+- `00:12:54–00:13:01` because in trading ps ych ology is 90 % of the game and we don 't have room for tears
+- `00:13:02–00:13:04` so I 'm really sorry
+- `00:13:05–00:13:10` okay and gold links get out of here don 't touch me with a hundred K
+- `00:13:12–00:13:12` if
+- `00:13:15–00:13:35` I 'm trusting you with a hundred thousand pounds or dollars of my money I want to know have you ever re venge traded yeah of course re venge trading is part of the process the only way I can learn not to do it is by doing it so many times at now I know it 's definitely not a part of the process
+- `00:13:38–00:13:47` ear ly days I think it 's part of the game but you learn from it you get better with your psychology and trust in your system and then s ince then I 've never done it again
+- `00:13:49–00:13:59` you know I don 't want to just say the same thing but obviously in my earlier days I did revenge trade I did try to make some money back when I 'd lose money but you have to learn from that you have to make money from that so it 's long gone
+- `00:14:00–00:14:15` okay I would say I have definitely revenge trade I think that I 'm all women so my emotions can get high but at the end of the day it 's all about being strategic so I 'll always pull myself back in have a little debr ief and then take it from there
+- `00:14:20–00:15:17` I 'd like to say no I wouldn 't revenge trade because time is money and money is time and revenge trading just takes more of your time and it 's just not something that you should do that experience teaches you to not do jud ges B ased off of everyone 's answers do you feel like the civilian c ould still be in the room I 'm thinking possibly Yeah possibly so I 'm not sure I ain 't got a clue the civilian is there no you don 't know no I feel like I have an ink ling I feel like someone 's cop ying answers if you have an idea at this point make sure you drop a comment down below and let us know who you think is the civilian you know what I was going to do let 's do elimination elim ination but I think we should get two people you 'd like to eliminate to play rock paper scissors oh I 'm going to say sh am and carts sh am and carts are you guys ready for a game of rock paper scissors
+- `00:15:18–00:15:26` right so we 're going to do rock paper scissors go on shoot yeah yeah and it 's not best of free first person is out ready
+- `00:15:28–00:15:31` rock paper scissors sh
+- `00:15:34–00:15:47` ready and this is stra ight off the bat you 're out ready go rock paper scissors sho ot rock paper scissors sho ot I 'm
+- `00:15:49–00:15:58` going to ask e ach of these traders maybe civilian to say one word and that is the staple of your trading
+- `00:16:00–00:16:01` li qu id
+- `00:16:03–00:16:05` cons istent pr
+- `00:16:07–00:16:08` ice
+- `00:16:10–00:16:12` o - t - e o
+- `00:16:14–00:16:14` - t - e
+- `00:16:16–00:16:16` now
+- `00:16:19–00:16:27` we know first of all that we have an I CT trader in our lineup so you already know I am judging you but I want to know
+- `00:16:28–00:16:31` why that word that you used
+- `00:16:32–00:16:38` because one thing that you 'll see in intern on external ranges is that price al ways retr aces to the 50 % level
+- `00:16:40–00:16:43` can I also say as well we do have an I CT judge so
+- `00:16:45–00:16:47` five how are you fe eling about that I
+- `00:16:48–00:17:03` kind of like what he says though it does happen m ass I don 't know what he says but ok ok I said price I would have said liquidity it didn 't already get said but with price it has to be at certain points of a day so I wouldn 't actually make sense of my strategy
+- `00:17:08–00:17:15` I 'm consistent I trade the same thing day in day out if I see a trade I take it if I don 't see it I live to trade another day
+- `00:17:17–00:17:24` m oney makes the world go around the same with the markets it 's run by liquidity it 's run by money if you can follow the money you can get good trades
+- `00:17:29–00:17:29` this is very hard
+- `00:17:31–00:17:54` ok you hit profit on target on Monday what does the rest of the week look like yeah so for me this business as usual wh ether I hit hit my target on Monday you know t om orrow there 's new opportunities you got completely new price points like I say you 're going to miss out on opportunities just as much as s aving your profit so if I 've got confidence in myself I know I can do it ne xt day ne xt day I said
+- `00:17:56–00:18:07` we 're consistent so if we hit take profit on Monday nothing changes the risk is still the same st rategy is still the same we 're trading the same way Tuesday we see an opportunity we take it
+- `00:18:10–00:18:23` you know you said about hitting your targets it depends if you 're talking about the evaluation or the live stage if it 's the evaluation then obviously we 're waiting for the next stage if we 're live then we 'll just carry on going we stick to the strategy if we see another trade we take the other trade
+- `00:18:26–00:18:44` h itting my take profit tar get looks like I wanted to risk to reward ratio because that can give me consistency now I 'm not promising the most ret urn s with your 100 k account but what I 'm promising is a consistent 2 - 3 % a month so on Monday I 'll leave the charts alone any clarification on who you want to eliminate
+- `00:18:45–00:18:54` I can 't be the mean one all the time ok you 're really you as the judge you as the mean one al right
+- `00:18:55–00:18:56` me
+- `00:18:59–00:19:04` if it was me personally I would say Mr. consistent because it 's a bit too script ed but
+- `00:19:08–00:19:14` b aker boy I know the truth hurts but hey it only comes from below that 's the problem N
+- `00:19:15–00:19:19` FP is in 10 minutes you 're already in profit what are you doing
+- `00:19:21–00:19:56` that 's the easiest question to answer abs olutely nothing I 'm just I 've been watching the charts we 're just closing down you 're keeping your trade open during N FP you said I 'm done no like you 're in you 're floating oh I 'm floating oh then I 'm out that 's it you 're out I 'm closing out no trading for your news ok to this day I 've never traded as N FP so I 'm not going to start with someone else 's money ok ex it in the trade in my floating profit and potentially re - ent ering at least 50 minutes after N FP with a buffer zone you 're not making this very easy at all
+- `00:19:57–00:20:27` I would like to say if I was a trader I 'd probably keep my trade on because I trust my analysis and price is only going to go to my TP just saying I 'm applying ye a I 've traded you a study ok no what key to make sense but that depends on what time for you 're trading for me it 's 30 minute or 5 minute but N FP candle can finish me fast yeah fair play I am a day trader that holds trades so just wanted to try a little bit in the mix there I 'm really struggling
+- `00:20:30–00:20:37` all three are really great respons es yeah I saw it I want to ask ok
+- `00:20:38–00:20:45` how much money my game from my 100 k so what do you think our profit split sh ould be
+- `00:20:48–00:21:04` and to make this fair I feel like inst ead of them saying it out loud I 'm going to get my phone out and I 'm going to let them put the number down so we know no one 's cheating on no one 's copying ok so what do you think is a fair profit split for you trading my $ 1, 000
+- `00:21:05–00:21:11` ok right now I have their answers I 'm going to let them say their answers and I know if they 're lying ok
+- `00:21:14–00:21:18` 60 40 to who 60 to you
+- `00:21:22–00:21:24` I also said 60 to me 40 to you
+- `00:21:26–00:21:31` I said that the average profit from split is 80 to 20 so I 'll be happy with giving 90 to you and keeping 10
+- `00:21:35–00:21:46` based off that alone who are you eliminating one person and then next round will be one more question and then we will find out who is the winner c arts would you eliminate
+- `00:21:49–00:21:50` and eyes
+- `00:21:51–00:21:52` can I elaborate
+- `00:21:54–00:21:55` ok
+- `00:21:57–00:22:43` only reason and it 's nothing against you is because if they want 60 % or a 60 40 split and they want to keep 60 and you 're willing to give the investor 90 is that right they are so much more conf ident because they actually think they should get more of the pie so that 's nothing really against you it 's more because those two are so much more conf ident right judges wait wait wait wait wait Listen I understand what you 're saying about the confidence and the part like and I 'm not trying to fight your battles as you 're going to say your piece but really see the way you got to look about it is it 's not your money to begin with so getting a 10 % to yourself we should be gr ateful for get ting a 60 40 from my guy over here you know it 's not your money bro so you know that 's all I 'm going to say I asked you have anything you want to say
+- `00:22:45–00:23:09` so I 'd like I 'd like to point out the fact that there 's no ROI on it in the first place because I 'm being given their acc ount so whatever I made from it 's going to be profit for me anyway you lot have got a lot to say now Listen I 'm ready to talk my point under 60 40 is a fact that it 's my hard work and it 's my knowledge but respect ively it is your money so you deserve al most half but I don 't think you deserve a full half of what I 'm doing in the work so that 's why I think I should get 60 you should get 40
+- `00:23:11–00:23:22` every thing was said my hard work my system my psychology I mean look you 're sitting on the side and bu y a beach and getting money so how could you complain
+- `00:23:24–00:23:35` okay I think we 're going have to we 're going have to get them to play okay I want 60 40 60 40 play rock paper scissors because you 're both giving me the same thing and you both can 't have it
+- `00:23:37–00:23:40` two men I mean you both make money trading right so you don 't really matter
+- `00:23:42–00:23:49` right we 're g onna do rock paper scissors s hoot yeah ready rock paper scissors s hoot see you later
+- `00:23:54–00:23:57` you 're trading go ld
+- `00:23:58–00:23:59` on
+- `00:24:00–00:24:01` the five minute
+- `00:24:02–00:24:15` you 're looking at it you 're doing your anal ysis for the day you 're thinking okay what can we see here and then boom five minute kind of closes it 's a bullish eng ulf ing what are you doing
+- `00:24:17–00:24:58` for me that 's not enough to do anything I 'll only trade gold on a five minute between certain time frames and for my strategy of trading I need to see the order block with the liquidity so if I just see a bull ish eng ulf ing it doesn 't mean too much to me if that eng ulf ing is coming off an order block and there 's three valid points of liquidity then I 'm taking the trade like with any other time there 's three specific thing s that I actually tr ade mid night open week ly open and optimal trade entry so if I 'm seeing that five minute from one of my specific points then there 's nothing m uch that I 'm g onna do it 's extra confirmation to me okay so I 'm thinking we 're g onna have to do qu ick fire round so maybe if we get some buzz ers okay b uzz ers each and then nothing
+- `00:24:59–00:25:04` you 're yeah okay guys so turn your buzz er on when
+- `00:25:08–00:25:13` you pass a pro per account for the first time with the company
+- `00:25:14–00:25:15` K Y C what
+- `00:25:17–00:25:22` did you say? K Y C that was the answer
+- `00:25:25–00:25:38` so in today 's ep isode ice you won 100 k account with goat fund the trader how do you feel I feel extra again but I just have a question now we actually is pl end the profile at 90 %
+- `00:25:39–00:25:55` before we close out this episode ob viously we have our lovely winner here I think we need to figure out who the ci v ill ain is c ould it be ice or could it be some one who has be en eliminated trad ers come back ci v ill ain please step forward
+- `00:26:01–00:26:03` sh an trade
+- `00:26:06–00:26:09` okay so where did you get all of your know ledge from
+- `00:26:10–00:26:13` just wear the mouth here and there do you know what I mean
+- `00:26:15–00:26:18` love that love that maybe you could be a traitor
+- `00:26:20–00:26:58` yeah I think it was fair I think it was a bit mad that I had to win two games of rock paper scissors but clearly if anyone out there wants to game of rock paper scissors let 's get some money going cause I 've clearly got it but yeah I think it was fair other than that ob viously in the end I 'm disappointed I didn 't win it 's sad to get to the end and not be the winner but of all the people in my line I 'm glad it was some one some one that 's h umber 's eyes so I 'm so happy for everyone I thought go ld ings was a bit fishy from time she claimed acc ount s management and she trades g g and that raised my eyebrows and suspicion I personally did n 't rate five 's decision and put in me as the least trusted trader es pecially knowing that he also tr ades ac ity concepts but I hear it he also has the same sim ilar journey as me come
+- `00:27:02–00:28:39` from 市 場 無 心 事 市 場 無 心 事 來 來 回 回 就 還是 這些 但是 不 親 身 經 歷 這個 能 改 變 人 的 就 只有 南 牆 嘛 哈哈 哈哈 就 最後 一 段 禁 語 看看 有沒有 什麼 要 對 這些 新 人 們 說 的 就是 師 弟 師 妹 們 禁 語 的話 看 熊 摩 老師 的 視 頻 之 外 要 反 覆 看 之 外 還有 更 多 的是 主 動 學 習 因為 因為 在 這個 期 間 實 際 上 可能 我 自己 可能 跟 熊 摩 老師 就是 平 時 提 問 就是 講 課 的時候 提 了 比較 多 但 下來 的時候 可能 沒有 更 多 的 溝 通 那麼 我 自己 的 個人 的 習 慣 是 我 先 遇 到 問題 我 先 自己 找 答 案 那麼 找 答 案 的 最 佳 方 式 就是 看 書 問 人 那 你 自己 看 不 清 書 你就 問 熊 摩 老師 為什麼 因為 他是 把 這些 書 全部 看 了 然後 自己 有 東西 了 那 你 自己 不 願 意 幹 你就 怪 怪 給 別 人 幹 別 人 來 回 覆 裡 那麼 就是 我覺得 有 問題 趕 快 提 出 問題 不要 覺得 說 不好意思 問 或者 是 出 身 問題 就 問 在 那 自己 也 不 看 書 找 解 決 方 法 那麼 你 自己 找 不 出 那麼 你就 問 人 這 就是 最 重要 的 就是 學 習 的 態 度 這個 就是 學 習 的 方 法 主 動 學 習 終 身 學 習 對對 對 主 動 學 習 非常 好 小 賈 你看 你 有沒有 什麼 像 我 幫 助 你的 目前 階 段 或者 我 能 提 供 給 你的 一些 資 源 有 有 有 但是 不是 資 源 其實 我 現在 的話 就是 全 職 交 易 了
+- `00:28:41–00:29:33` 大概 一個 月 多 點 了吧 但是 我 發現 其實 我有 很多 空 虞 的 時間 因為 我的 13 時間 可能 是 24 小時 到 48 小時 然後 這 期 間 我想 知道 就是 熊 貓 老師 你 全 職 的時候 就 比如 說 除 了 錄 視 頻 你 還 會 幹 什麼 因為 我 發現 我 除 了 看 書 就是 看 書 你看 我 那麼 強 的 輸 出 能 力 和 歸 納 的 整 節 能 力 其實 最 開始 的時候 我們 學 生 21 年 的時候 當 時 我有 別 的 項 目 在 做 我 都 沒 想 過 說 我要 賣 口 有一 天 要 成 為 這樣 那 沒有 想 過 那 怎麼 著 了 後 來 我 副 排 練 也 想 了 那 我 為什麼 有 這麼 強 的 好的 表 達 能 力 這麼 強 的 歸 納 總 理 能 力 就是 跟我 大 量 的 看 書 然後 閱 讀 然後 對對 對 有 不 可 分 割 的 那個 關係 可能 跟 那個 做 企 業 也 有 也 有 關係 吧 因為 從 16 年 就 開始 創 業
+- `00:29:34–00:29:41` 然後 我的 意思 是 你 如果 還 不 嫌 棄 咱 們 社 交 的話 我 可以 再 給 你 讓 小 助 理 的 言 行 你 還 記得 你 小 助 理 是什麼
+- `00:29:42–00:32:06` 輕 鬆 輕 鬆 我 可以 讓 他 聯 繫 你 對 他 現在 還是 小 助 理 我 可以 讓 他 聯 繫 你 然後 給 你 送 V IP 你 否 則 今天 這個 財 網 不能 白 嫖 你 是 咱 們 因為 現在 是 平 起 平 坐 了 咱 們 不 存 在 老師 上 下 這種 關係 甚 至 有 時候 我要 跟你 學 習 所以 你看 你看 你 給 我 找 活 乾 我也 給 你 找 活 你 讓 很多 學 兒 來 給 我 提 問 問題 因為 他們 很多 人 現在 不好意思 找 我 因為 從 上 學 那個 時候 實 際 上 你就 會 意 識 到 有 些 人 他 不 懂 他是 真的 就 不 問 他 就 自己 悶 著 在 那 搞 自己 的 但 實 際 上 這種 學 習 思 路 是 錯 過 的 你 就是 該 問 而且 本 身 付 了 費 之後 本 身 就是 你的 權 利 只 要 不要 太 離 譜 對 吧 浪 費 是 很多 人 他 都有 提 到 巨 嬰 的 問題 我也 給 你 找 活 乾 就是 你 食 餐 的時候 可以 去 看看 咱 們 現在 這 兩 年 更 新 的 課 有 字 幕 有 這種 情況 質 量 特別 高 包括 你 剛 才 提 到 的 這個 訂 單 流 包括 產 論 我覺得 我 產 生 講 的 也 不錯 包括 價 格 行 為 當 時 咱 們 價 格 行 為 一 節 課 兩個 小時 現在 我也 重 新 錄 了 一 節 課 就 二 十 分鐘 也是 對 我 自己 要 求 一個 重 新 再 歸 納 再 學 習 再 整 理 的 過 程 對 因為 之前 我在 You Tube 上 找 不同 的人 我也 想 就是說 有沒有 什麼 其 他 項 目 做 因為 那個 時候 我就 想 特別 找 一 家 那 種 交 易 公 司 然後 自己 進 去 當 交 易 員 那 種 感覺 然後 在 油 管 上 認 識 了 一些 很多 這種 也是 交 易 類 的 博 主 也 錄 過 視 頻 講 過 但是 可能 發現 自己 也 不 太 適 合 說 做 這種 致 富 費 所以 說 我 現在 群 職 之後 反 倒 發現 自己 相 對 比較 空 亂 這個 時間 除 了 看 書 和 健 身 實 際 上 說 實 話 有點 老 廢 了 這種 感覺 所以 很多 人 不 理 解 說 做 交 易 每 天 都有 錢 賺 怎麼 可能 會 很 枯 燥 呢 就是 非常 非常 無 聊 因為 交 易 找 東西 來 打 發 時間 但是 你 如果 說 看 劇 或者 是 打 遊戲 什麼 的 又 浪 費 了 這個 時間 時間 是 很 寶 貴 的 那 你想 不 想 當 助 教 但是 當 助 教 有 一個 問題 就是 你 現在 跟 學 生 的 課 斷 層 斷 了 有點 太 厲害 對 他們 提 的 問題 你 可能 回 答 不 上 所以 你可以 走 一個 就 像 校 友 會 的 什麼 一個 東西 做 一個 像 一個 尊 神 讓 別 人 摩 拜 就可以 了
+- `00:32:07–00:33:01` 課 的時候 也 沒 這麼 誇 張 應該 課 的時候 或者 說 那個 直 播 的時候 你 如果 有 時間 的話 可以 聯 邁 一 起來 玩 一 玩 行 行 行 謝謝 聰 華 老師 那就 這樣 吧 其實 我想 說 是 可以 幫 大家 打 贏 因為 我 也是 其實 真 正 的 學 習 就是 你 把 你 自己 教 會 的 給 別 人 但是 我 自己 也 路 過 這種 視 頻 然後 發 不到 上面 去 但是 我 可能 覺得 這樣 不 適 合 但是 如果 說 打 一些 貨 的話 請 文 字 和 語 音 方面 的話 其實 我 應該 還 OK 那就 助 教 吧 那就 助 教 吧 你 等 我 通 知 我 回 頭 聯 繫 好吧 行 行 行 這是 他們 提 問 你 一些 課 上 的 就是 因為 現在 必 修 課 分 必 修 課 了 你 斷 層 斷 他 厲害 你 到 時候 就 如 實 說 我 回 答 不 上 來 你 去 問 什麼 老師 或者 說 去 抓 緊 修 必 修 課 就 行 行 那就 先 這樣 吧 今天 謝謝 好 嘞 然後 回 饋 等 會 我 讓 清 松 找 你 好吧

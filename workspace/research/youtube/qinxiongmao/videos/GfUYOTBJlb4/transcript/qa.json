@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "reasons": [],
+  "segment_count": 12,
+  "word_count": 4310,
+  "coverage_seconds": 1050.84,
+  "coverage_ratio": 0.9658455882352941,
+  "language_ok": true,
+  "forced_asr": false
+}

@@ -1,0 +1,55 @@
+{
+  "milestone": "M2.2",
+  "status": "PASS",
+  "channel": "qinxiongmao",
+  "discovered": 275,
+  "transcript_contract": {
+    "manual_caption": "IMPLEMENTED",
+    "auto_caption": "IMPLEMENTED",
+    "asr_fallback": "IMPLEMENTED",
+    "provider_hierarchy": [
+      "MANUAL_CAPTION",
+      "AUTO_CAPTION",
+      "ASR_WHISPER"
+    ],
+    "caption_availability_is_not_success_requirement": true,
+    "success_state": "TRANSCRIPT_QA_PASSED"
+  },
+  "real_e2e": {
+    "video_id": "zlksxbDIKXc",
+    "access_mode": "BROWSER_PROFILE_MEDIA_CAPTURE",
+    "acquisition_class": "REALTIME_FALLBACK",
+    "bulk_preferred": false,
+    "source": "ASR_WHISPER",
+    "words": 1570,
+    "coverage_ratio": 0.9575066312997347,
+    "qa": "PASS"
+  },
+  "caption_sample": {
+    "probed": 9,
+    "usable_captions": 0,
+    "classification": "CAPTION_NOT_AVAILABLE_IN_PROBED_SAMPLE",
+    "probe_scope": "fixed target + 8 low-frequency candidates"
+  },
+  "resume": {
+    "result": "SKIPPED",
+    "reason": "QA_PASSED",
+    "expensive_work_repeated": false
+  },
+  "bulk_cost_estimate": {
+    "videos": 275,
+    "known_durations": 275,
+    "total_seconds": 258548.0,
+    "total_hours": 71.81888888888889,
+    "median_seconds": 831.0,
+    "p90_seconds": 1675.0,
+    "realtime_fallback_minimum_wall_clock_seconds": 258548.0,
+    "note": "estimate only; no additional playback performed"
+  },
+  "scope": {
+    "visual": "NOT_STARTED",
+    "semantic_units": "NOT_STARTED",
+    "content_md": "NOT_STARTED",
+    "quant": "NOT_STARTED"
+  }
+}

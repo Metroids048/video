@@ -1,0 +1,19 @@
+{
+  "availability": "public",
+  "channel_id": "UCvv1D2u1q224apjc5OP_1ug",
+  "description": null,
+  "discovered_at": "2026-08-22T09:45:04Z",
+  "duration": 377,
+  "extraction_status": "TRANSCRIPT_QA_PASSED",
+  "live_status": null,
+  "published_at": null,
+  "thumbnail": null,
+  "title": "【第263期】牛市避坑指南书 | 牛市 | 避坑 | 指南 | 陷阱",
+  "url": "https://www.youtube.com/watch?v=zlksxbDIKXc",
+  "video_id": "zlksxbDIKXc",
+  "access_mode": "BROWSER_PROFILE_MEDIA_CAPTURE",
+  "source_type": "REAL_MEDIA",
+  "transcript_source": "ASR_WHISPER",
+  "acquisition_class": "REALTIME_FALLBACK",
+  "bulk_preferred": false
+}

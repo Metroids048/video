@@ -1,0 +1,17 @@
+{
+  "videos_discovered": 275,
+  "transcript_qa_passed": 273,
+  "private": 0,
+  "deleted": 0,
+  "unavailable": 2,
+  "blocked_by_youtube": 0,
+  "retryable_failed": 0,
+  "failed_unknown": 0,
+  "pending": 0,
+  "accessible": 273,
+  "transcript_coverage_percent": 99.2727,
+  "last_video_id": "-MfUGsa8RK4",
+  "gate": "YOUTUBE_ALL_TRANSCRIPTS",
+  "pass": true,
+  "updated_at": "2026-08-27T00:06:38Z"
+}
