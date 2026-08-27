@@ -160,15 +160,15 @@ def _media_checks(path: Path, label: str, prefix: str, expected_duration: float)
 
 def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bool = False, require_human_approval: bool = True) -> dict[str, Any]:
     """Run deterministic QA with three-layer gate logic and fingerprint checking."""
-    # Release Review is mandatory for a publishable final master. Legacy
-    # preview-only QA (which has no canonical final-with-captions.mp4 yet)
-    # remains available for deterministic diagnostics, but cannot be delivered.
-    if publishable and (ep_dir / "renders" / "final-with-captions.mp4").is_file():
+    release_review_block: str | None = None
+    if publishable:
         final_candidate = _final_video_path(ep_dir)
         from avs.qa.video_release import verify_video_release_review_current
         valid, reason = verify_video_release_review_current(ep_dir, final_candidate)
         if not valid:
-            raise ValueError("Release Review 未通过，禁止进入 QA。" + (reason or "请先执行 release-review"))
+            release_review_block = reason or "请先执行 release-review"
+            if (ep_dir / "renders" / "final-with-captions.mp4").is_file():
+                raise ValueError("Release Review 未通过，禁止进入 QA。" + release_review_block)
     delivery_dir = ep_dir / "delivery"
     report_path = delivery_dir / "qa-report.json"
 
@@ -189,6 +189,12 @@ def run_qa(ep_dir: Path, episode_id: str, *, publishable: bool = True, force: bo
 
     checks: list[QACheck] = []
     blocking_reasons: list[str] = []
+    if release_review_block is not None:
+        checks.append(QACheck(
+            "release_review_current", "当前视频存在有效 Release Review", False,
+            "error", release_review_block,
+        ))
+        blocking_reasons.append("Release Review 未通过: " + release_review_block)
 
     timeline_errors = list(timeline.get("errors", []))
     timeline_warnings = list(timeline.get("warnings", []))
