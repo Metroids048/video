@@ -1,0 +1,39 @@
+{
+  "pipeline": "QINXIONGMAO_RESEARCH_PIPELINE",
+  "clean_corpus": {
+    "gate": "CLEAN_CORPUS",
+    "status": "PASS",
+    "total": 275,
+    "accessible": 273,
+    "clean_qa_passed": 273,
+    "critical_unresolved": 0
+  },
+  "agent_corpus": {
+    "gate": "AGENT_CORPUS",
+    "status": "PASS",
+    "accessible": 273,
+    "included": 273
+  },
+  "rule_compilation": {
+    "gate": "RULE_COMPILATION",
+    "status": "PASS",
+    "rule_count": 1128,
+    "incomplete_count": 1125,
+    "strategy_spec_count": 3
+  },
+  "quant_research": {
+    "gate": "QUANT_RESEARCH",
+    "status": "RESEARCH_COMPLETE_NO_PROMOTABLE_STRATEGY",
+    "strategies_tested": 3,
+    "results": [],
+    "promotion_authorized": false,
+    "reason": "当前 Strategy Spec 为长段自然语言且缺少结构化 entry/exit/stop/timeframe/regime/sizing；未满足 Mechanizability Gate，未运行或伪造回测。",
+    "source_audit_passed": 3,
+    "mechanizability_passed": 0,
+    "fragment_accounted": 1125,
+    "synthesized": 0,
+    "evidence_report": "strategy_research/reports/quant-research-final.json"
+  },
+  "generated_at": "2026-08-27T11:17:40.275215+08:00",
+  "status": "COMPLETE"
+}

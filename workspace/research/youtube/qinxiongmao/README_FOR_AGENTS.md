@@ -1,7 +1,10 @@
 # 熊猫交易学社
 
-先读 `agent_bundle/CHANNEL_OVERVIEW.md`、`agent_bundle/TOPIC_INDEX.md`、`agent_bundle/VIDEO_INDEX.md`。
-单视频详情读 `videos/<video_id>/content.md`；原话读 `videos/<video_id>/transcript/transcript.md`；
-时间戳细节读 `semantic_units.jsonl` 与 `source_map.json`；画面证据读 `visual/`。
+读取层级：
 
-本目录是可恢复的研究语料 workspace，不应提交 Git。
+L1 Agent Corpus：`agent_corpus/README.md`、`agent_corpus/CHANNEL_MAP.md`、`agent_corpus/TOPIC_INDEX.md`
+L2 Clean Transcript：`videos/<id>/clean/transcript.cleaned.md`
+L3 Raw Transcript：`videos/<id>/transcript/transcript.md`
+L4 Raw canonical/timestamps：`videos/<id>/transcript/canonical.json`
+
+规则研究入口：`strategy_research/`。原始证据永不覆盖。
