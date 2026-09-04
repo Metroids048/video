@@ -1,0 +1,14 @@
+{
+  "gate": "CLEAN_CORPUS",
+  "status": "FAIL",
+  "total": 275,
+  "accessible": 273,
+  "clean_qa_passed": 76,
+  "critical_unresolved": 0,
+  "semantic_review_required": 511,
+  "artifacts": {
+    "index": "clean_corpus/clean-index.jsonl",
+    "critical": "clean_corpus/unresolved-critical.jsonl",
+    "semantic_review": "clean_corpus/semantic-review.jsonl"
+  }
+}
