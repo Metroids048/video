@@ -17,6 +17,12 @@ CRITICAL_TERMS = (
 )
 TIMEFRAME_RE = re.compile(r"(?:\d+\s*[mMhHdD]|\d+\s*分钟|\d+\s*小时|日线|周线|月线)")
 NUMBER_RE = re.compile(r"(?<![A-Za-z])(?:\d+(?:\.\d+)?|\d{1,3}(?:,\d{3})+)(?:\s*(?:%|倍|点|万|亿))?(?![A-Za-z])")
+SUSPICIOUS_ASR_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("MALFORMED_LATIN_TOKEN", re.compile(r"裸\s*[kK]\s*[sS]\s*[bB]")),
+    ("LIKELY_ASR_TERM", re.compile(r"航行分析课|关键为|供品上扣|仓卫(?:视水)?|备持备离|应亏笔|可负之性")),
+)
+FILLER_TERMS = ("对吧", "然后", "这个", "好吧", "能理解", "你看")
+FILLER_THRESHOLD = 12
 
 # Conservative aliases observed in the corpus. Context decides whether a replacement is safe.
 ASR_ALIASES: dict[str, dict[str, Any]] = {
@@ -63,6 +69,19 @@ def normalize_text(text: str) -> str:
     value = re.sub(r"([（【《])[ ]+", r"\1", value)
     value = re.sub(r"[ \t]*\n[ \t]*", " ", value)
     return value.strip()
+
+
+def semantic_suspects(text: str) -> list[dict[str, Any]]:
+    """Find high-signal ASR/noise patterns that require human or audio review."""
+    issues: list[dict[str, Any]] = []
+    for code, pattern in SUSPICIOUS_ASR_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            issues.append({"code": code, "evidence": match.group(0), "severity": "REVIEW_REQUIRED"})
+    filler_count = sum(text.count(term) for term in FILLER_TERMS)
+    if filler_count >= FILLER_THRESHOLD:
+        issues.append({"code": "EXCESSIVE_SPOKEN_FILLER", "count": filler_count, "severity": "REVIEW_REQUIRED"})
+    return issues
 
 
 def _context_score(alias: str, title: str, previous: str, current: str, following: str) -> tuple[float, str]:
@@ -113,7 +132,7 @@ def clean_video(root: Path, row: dict[str, Any], *, resume: bool = True) -> dict
     qa_path = clean_root / "clean_qa.json"
     if resume and qa_path.exists():
         prior = _read_json(qa_path, {}) or {}
-        if prior.get("status") == "CLEAN_QA_PASSED":
+        if prior.get("status") == "CLEAN_QA_PASSED" and prior.get("semantic_status") == "PASS":
             return {"video_id": video_id, "status": "SKIPPED", **prior}
     canonical_path = vroot / "transcript" / "canonical.json"
     canonical = _read_json(canonical_path, {}) or {}
@@ -124,6 +143,7 @@ def clean_video(root: Path, row: dict[str, Any], *, resume: bool = True) -> dict
     cleaned_segments: list[dict[str, Any]] = []
     maps: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
+    semantic_issues: list[dict[str, Any]] = []
     for index, segment in enumerate(segments):
         previous = str(segments[index - 1].get("text", "")) if index else ""
         following = str(segments[index + 1].get("text", "")) if index + 1 < len(segments) else ""
@@ -134,6 +154,8 @@ def clean_video(root: Path, row: dict[str, Any], *, resume: bool = True) -> dict
             maps.append(mapping)
         if unknown:
             unresolved.append({"video_id": video_id, "segment_id": segment.get("segment_id"), **unknown})
+        for issue in semantic_suspects(str(clean.get("text", ""))):
+            semantic_issues.append({"video_id": video_id, "segment_id": segment.get("segment_id"), **issue})
     raw_text = str(canonical.get("text") or " ".join(str(s.get("text", "")) for s in segments))
     cleaned_text = " ".join(str(s.get("text", "")) for s in cleaned_segments)
     raw_numbers = sorted(set(NUMBER_RE.findall(normalize_text(raw_text))))
@@ -143,7 +165,7 @@ def clean_video(root: Path, row: dict[str, Any], *, resume: bool = True) -> dict
     # splits 否/则、只/有 and similar compounds across tokens.
     polarity_changed = sorted(_polarity_tokens(normalize_text(raw_text))) != sorted(_polarity_tokens(normalize_text(cleaned_text)))
     critical_unresolved = [x for x in unresolved if x.get("critical")]
-    status = "CLEAN_QA_PASSED" if not missing_numbers and not polarity_changed and not critical_unresolved else "CLEAN_QA_FAILED"
+    status = "CLEAN_QA_PASSED" if not missing_numbers and not polarity_changed and not critical_unresolved and not semantic_issues else "CLEAN_QA_FAILED"
     cleaned = {"video_id": video_id, "source_type": canonical.get("source_type"), "raw_transcript": "transcript/canonical.json",
                "clean_version": "deterministic-v1", "text": cleaned_text, "segments": cleaned_segments}
     _write_json(clean_root / "cleaned.json", cleaned)
@@ -155,12 +177,14 @@ def clean_video(root: Path, row: dict[str, Any], *, resume: bool = True) -> dict
     (clean_root / "transcript.cleaned.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (clean_root / "correction_map.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in maps), encoding="utf-8")
     (clean_root / "unresolved.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in unresolved), encoding="utf-8")
+    (clean_root / "semantic_review.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in semantic_issues), encoding="utf-8")
     qa = {"status": status, "raw_segment_count": len(segments), "clean_segment_count": len(cleaned_segments),
           "source_mapping_complete": len(cleaned_segments) == len(segments) and all(s.get("raw_segment_id") for s in cleaned_segments),
           "numbers_preserved": not missing_numbers, "missing_numbers": missing_numbers,
           "critical_terms_checked": True, "polarity_preserved": not polarity_changed,
           "unresolved_count": len(unresolved), "critical_unresolved_count": len(critical_unresolved),
-          "correction_count": len(maps)}
+          "correction_count": len(maps), "semantic_status": "PASS" if not semantic_issues else "REVIEW_REQUIRED",
+          "semantic_issue_count": len(semantic_issues)}
     _write_json(qa_path, qa)
     return {"video_id": video_id, "status": status, **qa}
 
@@ -172,12 +196,17 @@ def clean_corpus_gate(root: Path, rows: list[dict[str, Any]] | None = None) -> d
     unresolved_critical = 0
     for row in accessible:
         qa = _read_json(root / "videos" / str(row["video_id"]) / "clean" / "clean_qa.json", {}) or {}
-        passed += qa.get("status") == "CLEAN_QA_PASSED"
+        passed += qa.get("status") == "CLEAN_QA_PASSED" and qa.get("semantic_status") == "PASS"
         unresolved_critical += int(qa.get("critical_unresolved_count", 0) or 0)
     terminal = sum(1 for r in rows if str(r.get("extraction_status")) in {"PRIVATE", "DELETED", "UNAVAILABLE"})
-    status = "WAITING_FOR_INPUT" if not rows else ("PASS" if len(accessible) == passed and unresolved_critical == 0 and len(accessible) + terminal == len(rows) else "FAIL")
+    semantic_review_required = sum(
+        int((_read_json(root / "videos" / str(r["video_id"]) / "clean" / "clean_qa.json", {}) or {}).get("semantic_issue_count", 0) or 0)
+        for r in accessible
+    )
+    status = "WAITING_FOR_INPUT" if not rows else ("PASS" if len(accessible) == passed and unresolved_critical == 0 and semantic_review_required == 0 and len(accessible) + terminal == len(rows) else "FAIL")
     return {"gate": "CLEAN_CORPUS", "status": status, "total": len(rows), "accessible": len(accessible),
-            "clean_qa_passed": passed, "critical_unresolved": unresolved_critical}
+            "clean_qa_passed": passed, "critical_unresolved": unresolved_critical,
+            "semantic_review_required": semantic_review_required}
 
 
 def plan_local_audio_repair(root: Path, video_id: str, segment_id: str, *, window_sec: int = 30, model: str = "large-v3") -> dict[str, Any]:

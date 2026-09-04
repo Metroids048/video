@@ -40,7 +40,7 @@ def write_agent_readme(root: Path, *, agent_ready: bool) -> None:
                 "L2 Clean Transcript：`videos/<id>/clean/transcript.cleaned.md`\nL3 Raw Transcript：`videos/<id>/transcript/transcript.md`\n"
                 "L4 Raw canonical/timestamps：`videos/<id>/transcript/canonical.json`\n\n规则研究入口：`strategy_research/`。原始证据永不覆盖。\n")
     else:
-        text = (f"# {channel}\n\nClean Corpus 尚未完成。默认读取：`TRANSCRIPT_INDEX.md` → `videos/<id>/transcript/transcript.md` → `videos/<id>/transcript/canonical.json`。\n"
+        text = (f"# {channel}\n\nClean Corpus 尚未完成。先查看 `clean_corpus/semantic-review.jsonl`，再按 `videos/<id>/clean/transcript.cleaned.md` → `videos/<id>/transcript/transcript.md` → `videos/<id>/transcript/canonical.json` 逐段复核。\n"
                 "清洗完成后自动切换到 `agent_corpus/`；原始证据永不覆盖。\n")
     (root / "README_FOR_AGENTS.md").write_text(text, encoding="utf-8")
 
@@ -56,6 +56,7 @@ def write_clean_corpus_outputs(root: Path, rows: list[dict[str, Any]], clean_gat
     _write(corpus / "glossary.json", {"version": "v1", "terms": glossary})
     clean_index: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
+    semantic_review: list[dict[str, Any]] = []
     correction_count = 0
     for row in rows:
         vid = str(row["video_id"])
@@ -70,10 +71,14 @@ def write_clean_corpus_outputs(root: Path, rows: list[dict[str, Any]], clean_gat
         unresolved_path = root / "videos" / vid / "clean" / "unresolved.jsonl"
         if unresolved_path.exists():
             unresolved.extend(json.loads(line) | {"video_id": vid} for line in unresolved_path.read_text(encoding="utf-8").splitlines() if line.strip())
+        semantic_path = root / "videos" / vid / "clean" / "semantic_review.jsonl"
+        if semantic_path.exists():
+            semantic_review.extend(json.loads(line) for line in semantic_path.read_text(encoding="utf-8").splitlines() if line.strip())
     (corpus / "clean-index.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in clean_index), encoding="utf-8")
     (corpus / "unresolved-critical.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in unresolved if x.get("critical")), encoding="utf-8")
-    _write(corpus / "corrections-summary.json", {"videos": len(rows), "correction_count": correction_count, "unresolved_count": len(unresolved), "critical_unresolved_count": sum(bool(x.get("critical")) for x in unresolved)})
-    _write(root / "reports" / "clean-corpus-final.json", {**clean_gate, "artifacts": {"index": "clean_corpus/clean-index.jsonl", "critical": "clean_corpus/unresolved-critical.jsonl"}})
+    (corpus / "semantic-review.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in semantic_review), encoding="utf-8")
+    _write(corpus / "corrections-summary.json", {"videos": len(rows), "correction_count": correction_count, "unresolved_count": len(unresolved), "critical_unresolved_count": sum(bool(x.get("critical")) for x in unresolved), "semantic_review_count": len(semantic_review)})
+    _write(root / "reports" / "clean-corpus-final.json", {**clean_gate, "artifacts": {"index": "clean_corpus/clean-index.jsonl", "critical": "clean_corpus/unresolved-critical.jsonl", "semantic_review": "clean_corpus/semantic-review.jsonl"}})
 
 
 def run_research_pipeline(root: Path, *, resume: bool = True) -> dict[str, Any]:

@@ -49,3 +49,34 @@ def test_terminal_unavailable_rows_do_not_fake_a_clean_pass(tmp_path: Path) -> N
     result = run_research_pipeline(tmp_path)
     assert result["state"]["clean_corpus"]["status"] == "PASS"
     assert result["state"]["clean_corpus"]["accessible"] == 1
+
+
+def test_semantic_asr_suspects_block_clean_gate(tmp_path: Path) -> None:
+    _seed(tmp_path)
+    canonical_path = tmp_path / "videos/v1/transcript/canonical.json"
+    canonical = json.loads(canonical_path.read_text(encoding="utf-8"))
+    canonical["segments"][0]["text"] = "航行分析课里讲裸 ks b 结构，关键为要等信号。"
+    canonical["text"] = " ".join(s["text"] for s in canonical["segments"])
+    canonical_path.write_text(json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_pipeline(tmp_path, resume=False)
+
+    assert result["state"]["clean_corpus"]["status"] == "FAIL"
+    qa = json.loads((tmp_path / "videos/v1/clean/clean_qa.json").read_text(encoding="utf-8"))
+    assert qa["semantic_status"] == "REVIEW_REQUIRED"
+    assert qa["semantic_issue_count"] >= 1
+    assert (tmp_path / "clean_corpus/semantic-review.jsonl").exists()
+
+
+def test_semantic_clean_failure_stops_knowledge_build(tmp_path: Path) -> None:
+    _seed(tmp_path)
+    canonical_path = tmp_path / "videos/v1/transcript/canonical.json"
+    canonical = json.loads(canonical_path.read_text(encoding="utf-8"))
+    canonical["segments"][0]["text"] = "裸 ks b 结构仍然需要人工核对。"
+    canonical["text"] = " ".join(s["text"] for s in canonical["segments"])
+    canonical_path.write_text(json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_pipeline(tmp_path, resume=False)
+
+    assert result["state"]["agent_corpus"]["status"] == "WAITING_FOR_INPUT"
+    assert not (tmp_path / "videos/v1/knowledge/knowledge_qa.json").exists()
